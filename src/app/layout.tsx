@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { cn } from "@/lib/utils";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: "Paw Spot Global — 반려견 동반 장소 안내",
@@ -14,8 +15,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ko">
-      <body className={inter.className}>{children}</body>
+    <html lang="ko" className={cn("font-sans", inter.variable)}>
+      <body>{children}</body>
     </html>
   );
 }
