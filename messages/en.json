@@ -1,0 +1,173 @@
+{
+  "home": {
+    "hero": {
+      "titleLine1": "Find dog-friendly places",
+      "titleLine2": "on the map — instantly.",
+      "subtitleLine1": "Browse cafes, restaurants, travel spots, and vet clinics by category.",
+      "subtitleLine2": "Check indoor access, carrier policies, dog size limits,",
+      "subtitleLine3": "and entry requirements before you visit.",
+      "searchPlaceholder": "Search cafes in Itaewon, restaurants in Gangnam...",
+      "searchButton": "Search",
+      "illustrationCaption": "Dog + map illustration",
+      "quickCafe": "Find Cafes",
+      "quickRestaurant": "Find Restaurants",
+      "quickTravel": "Find Travel Spots",
+      "quickVet": "Find Vets"
+    },
+    "categories": {
+      "title": "Browse places by category",
+      "cafe": {
+        "title": "Cafe",
+        "description": "Find dog-friendly cafes near you on the map",
+        "label": "Browse cafes"
+      },
+      "restaurant": {
+        "title": "Restaurant",
+        "description": "Find places where you can dine with your dog",
+        "label": "Browse restaurants"
+      },
+      "travel": {
+        "title": "Travel Spot",
+        "description": "Discover dog-friendly parks, trails, and attractions",
+        "label": "Browse spots"
+      },
+      "vet": {
+        "title": "Vet Clinic",
+        "description": "Find nearby vet clinics and contact info",
+        "label": "Browse vets"
+      }
+    },
+    "info": {
+      "title": "What to check before you visit",
+      "indoor": {
+        "title": "Indoor access",
+        "description": "Check if indoor seating is available or outdoor only"
+      },
+      "carrier": {
+        "title": "Carrier / stroller policy",
+        "description": "See if a carrier or stroller is required for entry"
+      },
+      "size": {
+        "title": "Dog size limits",
+        "description": "Find out which size dogs are welcome"
+      },
+      "requirements": {
+        "title": "Entry requirements",
+        "description": "Review leash, poop bag, and other entry rules"
+      },
+      "lastVerified": {
+        "title": "Last verified date",
+        "description": "See when and how information was last confirmed"
+      }
+    },
+    "recentPlaces": {
+      "title": "Recently verified in Daejeon",
+      "verifiedAt": "Verified:",
+      "viewAll": "View all places on map"
+    },
+    "footer": "© 2026 Paw Spot Global. Place information is subject to change."
+  },
+  "places": {
+    "list": {
+      "title": "Places",
+      "description": "Find dog-friendly places near you on the map.",
+      "searchPlaceholder": "Search cafes, restaurants, parks near you...",
+      "searchButton": "Search",
+      "filter": "Filters",
+      "myLocation": "Near me",
+      "locationDefault": "Near Daejeon center",
+      "locationCurrent": "Near your location",
+      "locationDenied": "Location access denied. Showing results near Daejeon center.",
+      "resultCount": "{count} places",
+      "loadMore": "Load more",
+      "empty": "No places match your filters.",
+      "mapPlaceholder": "Map area (Google Maps integration coming soon)"
+    },
+    "filters": {
+      "title": "Filters",
+      "reset": "Reset",
+      "apply": "Show results",
+      "category": {
+        "all": "All",
+        "cafe": "Cafe",
+        "restaurant": "Restaurant",
+        "travel": "Travel"
+      },
+      "indoor": {
+        "title": "Dog access",
+        "all": "All",
+        "indoorAllowed": "Indoor allowed",
+        "outdoorOnly": "Outdoor only",
+        "excludeUnknown": "Exclude unconfirmed"
+      },
+      "carrier": {
+        "title": "Carrier / stroller",
+        "notRequired": "No carrier needed",
+        "required": "Carrier required",
+        "strollerOk": "Stroller OK"
+      },
+      "dogSize": {
+        "title": "Dog size",
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large"
+      },
+      "supplies": {
+        "title": "Supplies required",
+        "leash": "Leash required",
+        "wasteBag": "Waste bag required",
+        "muzzle": "Muzzle required",
+        "comingSoon": "Supply filters coming soon."
+      },
+      "reliability": {
+        "title": "Info reliability",
+        "30days": "Verified in last 30 days",
+        "90days": "Verified in last 90 days"
+      }
+    },
+    "sort": {
+      "distance": "Nearest first",
+      "recent": "Recently verified",
+      "indoorFirst": "Indoor priority",
+      "noCarrierFirst": "No carrier priority"
+    },
+    "card": {
+      "verifiedAt": "Verified:",
+      "caution": "Note:",
+      "detail": "Details",
+      "indoor": {
+        "allowed": "Indoor allowed",
+        "outdoorOnly": "Outdoor only",
+        "unknown": "Indoor unconfirmed"
+      },
+      "carrier": {
+        "notRequired": "No carrier needed",
+        "required": "Carrier required"
+      },
+      "size": {
+        "small": "Small dog",
+        "medium": "Medium dog",
+        "large": "Large dog"
+      },
+      "category": {
+        "cafe": "Cafe",
+        "restaurant": "Restaurant",
+        "travel": "Travel Spot"
+      }
+    }
+  },
+  "header": {
+    "home": "Home",
+    "places": "Places",
+    "vets": "Vets",
+    "guide": "How to Use",
+    "verifyStandards": "Verification Standards"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong.",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "close": "Close"
+  }
+}

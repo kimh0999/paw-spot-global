@@ -1,18 +1,19 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
-
-const navLinks = [
-  { label: "홈", href: "/" },
-  { label: "플레이스", href: "/places" },
-  { label: "동물병원", href: "/vets" },
-  { label: "이용 방법", href: "/guide" },
-  { label: "검증 기준", href: "/verify-standards" },
-];
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
+import LocaleSwitcher from "@/components/i18n/LocaleSwitcher";
 
 export default function Header() {
-  const [lang, setLang] = useState<"ko" | "en">("ko");
+  const t = useTranslations("header");
+
+  const navLinks = [
+    { label: t("home"), href: "/" },
+    { label: t("places"), href: "/places" },
+    { label: t("vets"), href: "/vets" },
+    { label: t("guide"), href: "/guide" },
+    { label: t("verifyStandards"), href: "/verify-standards" },
+  ];
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
@@ -37,21 +38,7 @@ export default function Header() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-1 bg-gray-100 rounded-full p-1 shrink-0">
-            {(["ko", "en"] as const).map((l) => (
-              <button
-                key={l}
-                onClick={() => setLang(l)}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                  lang === l
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                {l.toUpperCase()}
-              </button>
-            ))}
-          </div>
+          <LocaleSwitcher />
         </div>
       </div>
     </header>

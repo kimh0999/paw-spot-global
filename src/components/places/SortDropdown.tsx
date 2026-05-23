@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import type { SortOption } from "@/types/place";
 
@@ -9,15 +10,17 @@ interface SortDropdownProps {
   onChange: (value: SortOption) => void;
 }
 
-const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: "distance", label: "거리순 추천" },
-  { value: "recent", label: "최근 확인순" },
-  { value: "indoor-first", label: "실내 가능 우선" },
-  { value: "no-carrier-first", label: "이동장 불필요 우선" },
-];
-
 export default function SortDropdown({ value, onChange }: SortDropdownProps) {
+  const t = useTranslations("places");
   const [isOpen, setIsOpen] = useState(false);
+
+  const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+    { value: "distance", label: t("sort.distance") },
+    { value: "recent", label: t("sort.recent") },
+    { value: "indoor-first", label: t("sort.indoorFirst") },
+    { value: "no-carrier-first", label: t("sort.noCarrierFirst") },
+  ];
+
   const selectedLabel = SORT_OPTIONS.find((o) => o.value === value)?.label ?? "";
 
   return (

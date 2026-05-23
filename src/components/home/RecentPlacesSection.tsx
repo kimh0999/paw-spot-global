@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+
 const recentPlaces = [
   {
     id: 1,
@@ -46,12 +48,14 @@ const statusColor = {
   bad: "text-red-600",
 } as const;
 
-export default function RecentPlacesSection() {
+export default async function RecentPlacesSection() {
+  const t = await getTranslations("home.recentPlaces");
+
   return (
     <section className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-8">
-          대전에서 최근 확인된 장소
+          {t("title")}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {recentPlaces.map((place) => (
@@ -83,7 +87,7 @@ export default function RecentPlacesSection() {
                   ))}
                 </div>
                 <p className="text-xs text-gray-400 mt-3">
-                  확인일: {place.verifiedAt}
+                  {t("verifiedAt")} {place.verifiedAt}
                 </p>
               </div>
             </div>
@@ -92,7 +96,7 @@ export default function RecentPlacesSection() {
 
         <div className="flex justify-center mt-10">
           <button className="px-8 py-3 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 active:bg-orange-700 transition-colors">
-            지도에서 전체 장소 보기
+            {t("viewAll")}
           </button>
         </div>
       </div>

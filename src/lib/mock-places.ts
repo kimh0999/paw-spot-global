@@ -1,3 +1,4 @@
+// TODO: Korean strings in caution and verificationMethod fields will be replaced with enum/i18n keys after DB integration
 import type { Place } from "@/types/place";
 
 export const MOCK_PLACES: Place[] = [

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import Header from "@/components/Header";
 import PlaceCard from "@/components/places/PlaceCard";
@@ -21,19 +22,21 @@ const DEFAULT_FILTERS: PlaceFilters = {
   recent: "all",
 };
 
-const CATEGORIES: { value: CategoryFilterValue; label: string }[] = [
-  { value: "all", label: "전체" },
-  { value: "cafe", label: "카페" },
-  { value: "restaurant", label: "음식점" },
-  { value: "travel", label: "여행지" },
-];
-
 function parseVerifiedAt(verifiedAt: string): Date {
   const [year, month, day] = verifiedAt.split(".").map(Number);
   return new Date(year, month - 1, day);
 }
 
 export default function PlacesPage() {
+  const t = useTranslations("places");
+
+  const CATEGORIES: { value: CategoryFilterValue; label: string }[] = [
+    { value: "all", label: t("filters.category.all") },
+    { value: "cafe", label: t("filters.category.cafe") },
+    { value: "restaurant", label: t("filters.category.restaurant") },
+    { value: "travel", label: t("filters.category.travel") },
+  ];
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilterValue>("all");
   const [filters, setFilters] = useState<PlaceFilters>(DEFAULT_FILTERS);
@@ -108,7 +111,7 @@ export default function PlacesPage() {
     filters.dogSizes.length +
     (filters.recent !== "all" ? 1 : 0);
 
-  const locationLabel = useMyLocation ? "현재 위치 기준" : "대전 중심 기준";
+  const locationLabel = useMyLocation ? t("list.locationCurrent") : t("list.locationDefault");
 
   return (
     <div className="min-h-screen bg-white">
@@ -116,24 +119,22 @@ export default function PlacesPage() {
 
       {/* 검색 + 카테고리 */}
       <div className="bg-white border-b border-gray-100 px-4 sm:px-6 pt-8 pb-5">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">플레이스</h1>
-        <p className="text-sm text-gray-500 mb-5">
-          반려견과 함께 갈 수 있는 장소를 지도에서 찾아보세요.
-        </p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">{t("list.title")}</h1>
+        <p className="text-sm text-gray-500 mb-5">{t("list.description")}</p>
 
         <div className="flex gap-2 mb-4">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="대전 카페, 유성구 음식점, 산책 가능한 여행지 검색"
+            placeholder={t("list.searchPlaceholder")}
             className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
           />
           <button
             type="button"
             className="px-5 py-2.5 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 active:bg-orange-700 transition-colors shrink-0 text-sm"
           >
-            검색
+            {t("list.searchButton")}
           </button>
         </div>
 
@@ -157,15 +158,16 @@ export default function PlacesPage() {
 
       {/* 지도 */}
       <div className="h-80 sm:h-96">
-        <MapPanel selectedPlaceName={selectedPlace?.name} />
+        <MapPanel
+          selectedPlaceName={selectedPlace?.name}
+          placeholder={t("list.mapPlaceholder")}
+        />
       </div>
 
       {/* 위치 거부 안내 */}
       {locationDenied && (
         <div className="bg-amber-50 border-b border-amber-100 px-4 sm:px-6 py-2.5">
-          <p className="text-xs text-amber-700">
-            위치 권한이 없어 대전 중심 기준으로 보여드립니다.
-          </p>
+          <p className="text-xs text-amber-700">{t("list.locationDenied")}</p>
         </div>
       )}
 
@@ -181,7 +183,7 @@ export default function PlacesPage() {
           }`}
         >
           <span>📍</span>
-          내 위치 기준
+          {t("list.myLocation")}
         </button>
 
         <button
@@ -193,7 +195,7 @@ export default function PlacesPage() {
               : "border-gray-300 text-gray-700 hover:border-gray-400 bg-white"
           }`}
         >
-          필터
+          {t("list.filter")}
           {activeFilterCount > 0 && (
             <span className="bg-orange-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
               {activeFilterCount}
@@ -207,7 +209,7 @@ export default function PlacesPage() {
       {/* 결과 수 */}
       <div className="px-4 sm:px-6 py-3">
         <p className="text-sm text-gray-600">
-          {locationLabel} 주변 장소 {filteredAndSorted.length}곳
+          {locationLabel} {t("list.resultCount", { count: filteredAndSorted.length })}
         </p>
       </div>
 
@@ -229,14 +231,14 @@ export default function PlacesPage() {
                 type="button"
                 className="px-8 py-3 border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
               >
-                더 보기
+                {t("list.loadMore")}
               </button>
             </div>
           </>
         ) : (
           <div className="py-20 text-center text-gray-400">
             <p className="text-4xl mb-3">🐾</p>
-            <p className="text-sm">해당 조건에 맞는 장소가 없습니다.</p>
+            <p className="text-sm">{t("list.empty")}</p>
           </div>
         )}
       </div>

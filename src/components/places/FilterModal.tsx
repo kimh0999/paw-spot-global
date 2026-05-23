@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 import type {
   PlaceFilters,
   DogSize,
@@ -15,36 +19,6 @@ interface FilterModalProps {
   onApply: () => void;
 }
 
-const INDOOR_OPTIONS: { value: IndoorFilter; label: string }[] = [
-  { value: "all", label: "전체" },
-  { value: "indoor", label: "실내 가능" },
-  { value: "outdoor", label: "야외만 가능" },
-  { value: "exclude-unknown", label: "확인 필요 제외" },
-];
-
-const CARRIER_OPTIONS: { value: CarrierFilter; label: string }[] = [
-  { value: "not-required", label: "이동장 불필요" },
-  { value: "required", label: "이동장 필수" },
-  { value: "stroller-ok", label: "유모차 가능" },
-];
-
-const DOG_SIZE_OPTIONS: { value: DogSize; label: string }[] = [
-  { value: "small", label: "소형견" },
-  { value: "medium", label: "중형견" },
-  { value: "large", label: "대형견" },
-];
-
-const SUPPLY_OPTIONS = [
-  { value: "leash", label: "목줄 필요" },
-  { value: "waste-bag", label: "배변봉투 필요" },
-  { value: "muzzle", label: "입마개 필요" },
-];
-
-const RECENT_OPTIONS: { value: RecentFilter; label: string }[] = [
-  { value: "30days", label: "최근 30일 확인" },
-  { value: "90days", label: "최근 90일 확인" },
-];
-
 const chipBase = "px-3 py-1.5 rounded-full text-sm border transition-colors";
 const chipActive = "bg-orange-500 border-orange-500 text-white";
 const chipInactive = "border-gray-300 text-gray-700 hover:border-gray-400 bg-white";
@@ -57,6 +31,39 @@ export default function FilterModal({
   onReset,
   onApply,
 }: FilterModalProps) {
+  const t = useTranslations("places");
+  const tCommon = useTranslations("common");
+
+  const INDOOR_OPTIONS: { value: IndoorFilter; label: string }[] = [
+    { value: "all", label: t("filters.indoor.all") },
+    { value: "indoor", label: t("filters.indoor.indoorAllowed") },
+    { value: "outdoor", label: t("filters.indoor.outdoorOnly") },
+    { value: "exclude-unknown", label: t("filters.indoor.excludeUnknown") },
+  ];
+
+  const CARRIER_OPTIONS: { value: CarrierFilter; label: string }[] = [
+    { value: "not-required", label: t("filters.carrier.notRequired") },
+    { value: "required", label: t("filters.carrier.required") },
+    { value: "stroller-ok", label: t("filters.carrier.strollerOk") },
+  ];
+
+  const DOG_SIZE_OPTIONS: { value: DogSize; label: string }[] = [
+    { value: "small", label: t("filters.dogSize.small") },
+    { value: "medium", label: t("filters.dogSize.medium") },
+    { value: "large", label: t("filters.dogSize.large") },
+  ];
+
+  const SUPPLY_OPTIONS = [
+    { value: "leash", label: t("filters.supplies.leash") },
+    { value: "waste-bag", label: t("filters.supplies.wasteBag") },
+    { value: "muzzle", label: t("filters.supplies.muzzle") },
+  ];
+
+  const RECENT_OPTIONS: { value: RecentFilter; label: string }[] = [
+    { value: "30days", label: t("filters.reliability.30days") },
+    { value: "90days", label: t("filters.reliability.90days") },
+  ];
+
   const toggleDogSize = (size: DogSize) => {
     const next = filters.dogSizes.includes(size)
       ? filters.dogSizes.filter((s) => s !== size)
@@ -84,11 +91,11 @@ export default function FilterModal({
         }`}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-          <h2 className="font-bold text-gray-900 text-base">플레이스 필터</h2>
+          <h2 className="font-bold text-gray-900 text-base">{t("filters.title")}</h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="닫기"
+            aria-label={tCommon("close")}
             className="text-gray-400 hover:text-gray-600 text-xl leading-none transition-colors"
           >
             ✕
@@ -97,7 +104,7 @@ export default function FilterModal({
 
         <div className="flex-1 overflow-y-auto px-5 py-5 space-y-7">
           <section>
-            <p className="text-sm font-semibold text-gray-900 mb-2.5">반려견 동반 조건</p>
+            <p className="text-sm font-semibold text-gray-900 mb-2.5">{t("filters.indoor.title")}</p>
             <div className="flex flex-wrap gap-2">
               {INDOOR_OPTIONS.map(({ value, label }) => (
                 <button
@@ -113,7 +120,7 @@ export default function FilterModal({
           </section>
 
           <section>
-            <p className="text-sm font-semibold text-gray-900 mb-2.5">이동장 / 유모차</p>
+            <p className="text-sm font-semibold text-gray-900 mb-2.5">{t("filters.carrier.title")}</p>
             <div className="flex flex-wrap gap-2">
               {CARRIER_OPTIONS.map(({ value, label }) => (
                 <button
@@ -129,7 +136,7 @@ export default function FilterModal({
           </section>
 
           <section>
-            <p className="text-sm font-semibold text-gray-900 mb-2.5">강아지 크기</p>
+            <p className="text-sm font-semibold text-gray-900 mb-2.5">{t("filters.dogSize.title")}</p>
             <div className="flex flex-wrap gap-2">
               {DOG_SIZE_OPTIONS.map(({ value, label }) => (
                 <button
@@ -145,7 +152,7 @@ export default function FilterModal({
           </section>
 
           <section>
-            <p className="text-sm font-semibold text-gray-900 mb-2.5">준비물</p>
+            <p className="text-sm font-semibold text-gray-900 mb-2.5">{t("filters.supplies.title")}</p>
             <div className="flex flex-wrap gap-2">
               {SUPPLY_OPTIONS.map(({ value, label }) => (
                 <button
@@ -157,11 +164,11 @@ export default function FilterModal({
                 </button>
               ))}
             </div>
-            <p className="text-xs text-gray-400 mt-2">준비물 필터는 추후 지원 예정입니다.</p>
+            <p className="text-xs text-gray-400 mt-2">{t("filters.supplies.comingSoon")}</p>
           </section>
 
           <section>
-            <p className="text-sm font-semibold text-gray-900 mb-2.5">정보 신뢰도</p>
+            <p className="text-sm font-semibold text-gray-900 mb-2.5">{t("filters.reliability.title")}</p>
             <div className="flex flex-wrap gap-2">
               {RECENT_OPTIONS.map(({ value, label }) => (
                 <button
@@ -183,14 +190,14 @@ export default function FilterModal({
             onClick={onReset}
             className="flex-1 py-2.5 border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            초기화
+            {t("filters.reset")}
           </button>
           <button
             type="button"
             onClick={onApply}
             className="flex-1 py-2.5 bg-orange-500 rounded-xl text-sm font-semibold text-white hover:bg-orange-600 transition-colors"
           >
-            결과 보기
+            {t("filters.apply")}
           </button>
         </div>
       </div>

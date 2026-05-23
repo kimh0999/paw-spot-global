@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 import type { Place, ConditionStatus } from "@/types/place";
 import ConditionBadge from "./ConditionBadge";
 
@@ -12,42 +16,38 @@ const categoryIcon: Record<Place["category"], string> = {
   travel: "🌿",
 };
 
-const categoryLabel: Record<Place["category"], string> = {
-  cafe: "Cafe",
-  restaurant: "Restaurant",
-  travel: "Travel Spot",
-};
-
 const cardBg: Record<Place["category"], string> = {
   cafe: "from-amber-100 to-orange-50",
   restaurant: "from-orange-100 to-red-50",
   travel: "from-green-100 to-emerald-50",
 };
 
-function getConditionChips(place: Place): Array<{ label: string; status: ConditionStatus }> {
+export default function PlaceCard({ place, onClick }: PlaceCardProps) {
+  const t = useTranslations("places");
+
+  const categoryLabel: Record<Place["category"], string> = {
+    cafe: t("card.category.cafe"),
+    restaurant: t("card.category.restaurant"),
+    travel: t("card.category.travel"),
+  };
+
   const chips: Array<{ label: string; status: ConditionStatus }> = [];
 
-  if (place.indoorAllowed === true) chips.push({ label: "실내 가능", status: "good" });
-  else if (place.indoorAllowed === false) chips.push({ label: "야외만 가능", status: "warning" });
-  else chips.push({ label: "실내 확인 필요", status: "warning" });
+  if (place.indoorAllowed === true) chips.push({ label: t("card.indoor.allowed"), status: "good" });
+  else if (place.indoorAllowed === false) chips.push({ label: t("card.indoor.outdoorOnly"), status: "warning" });
+  else chips.push({ label: t("card.indoor.unknown"), status: "warning" });
 
-  if (place.carrierRequired === false) chips.push({ label: "이동장 불필요", status: "good" });
-  else if (place.carrierRequired === true) chips.push({ label: "이동장 필요", status: "bad" });
+  if (place.carrierRequired === false) chips.push({ label: t("card.carrier.notRequired"), status: "good" });
+  else if (place.carrierRequired === true) chips.push({ label: t("card.carrier.required"), status: "bad" });
 
   const sizeLabel: Record<string, string> = {
-    small: "소형견",
-    medium: "중형견",
-    large: "대형견",
+    small: t("card.size.small"),
+    medium: t("card.size.medium"),
+    large: t("card.size.large"),
   };
   place.dogSizesAllowed.forEach((size) => {
     chips.push({ label: sizeLabel[size], status: "good" });
   });
-
-  return chips;
-}
-
-export default function PlaceCard({ place, onClick }: PlaceCardProps) {
-  const chips = getConditionChips(place);
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-md hover:border-orange-200 transition-all">
@@ -72,20 +72,20 @@ export default function PlaceCard({ place, onClick }: PlaceCardProps) {
 
         {place.caution && (
           <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-2.5 py-1.5 mb-3">
-            유의: {place.caution}
+            {t("card.caution")} {place.caution}
           </p>
         )}
 
         <div className="flex items-center justify-between mt-1">
           <p className="text-xs text-gray-400">
-            확인일: {place.verifiedAt} · {place.verificationMethod}
+            {t("card.verifiedAt")} {place.verifiedAt} · {place.verificationMethod}
           </p>
           <button
             type="button"
             onClick={onClick}
             className="text-xs font-semibold text-orange-600 hover:text-orange-700 transition-colors"
           >
-            자세히
+            {t("card.detail")}
           </button>
         </div>
       </div>

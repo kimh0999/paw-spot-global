@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Category {
+  RESTAURANT
+  CAFE
+  TRAVEL
+  ETC
+}
+
+enum IndoorPolicy {
+  ALLOWED
+  OUTDOOR_ONLY
+  NOT_ALLOWED
+  UNKNOWN
+}
+
+enum DogSize {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+enum CarrierPolicy {
+  NOT_REQUIRED
+  REQUIRED
+  OPTIONAL
+  UNKNOWN
+}
+
+enum VerificationMethod {
+  PHONE
+  DM
+  WEBSITE
+  ON_SITE
+  USER_REPORT
+}
+
+enum PlaceVisibility {
+  VISIBLE
+  HIDDEN
+  DRAFT
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  image     String?
+  role      Role     @default(USER)
+  locale    String   @default("en")
+  createdAt DateTime @default(now())
+
+  dogs      Dog[]
+}
+
+model Place {
+  id           String          @id @default(cuid())
+  tourApiId    String?         @unique
+  nameKr       String
+  nameEn       String?
+  category     Category
+  address      String
+
+  location     Unsupported("geography(Point, 4326)")
+
+  phone        String?
+  website      String?
+  instagram    String?
+  thumbnailUrl String?
+
+  visibility   PlaceVisibility @default(DRAFT)
+
+  condition     PlaceCondition?
+  verifications Verification[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([category])
+  @@index([visibility])
+}
+
+model PlaceCondition {
+  id                String        @id @default(cuid())
+  placeId           String        @unique
+  place             Place         @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  indoor            IndoorPolicy
+  carrier           CarrierPolicy
+  strollerAllowed   Boolean
+  allowedSizes      DogSize[]
+  breedRestrictions String?
+  requiredItems     String[]
+  cautions          String?
+
+  updatedAt         DateTime @updatedAt
+}
+
+model Verification {
+  id          String             @id @default(cuid())
+  placeId     String
+  place       Place              @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  verifiedBy  String
+  method      VerificationMethod
+  verifiedAt  DateTime
+  note        String?
+  createdAt   DateTime           @default(now())
+
+  @@index([placeId])
+}
+
+model Dog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  size      DogSize
+  breed     String?
+  createdAt DateTime @default(now())
+}
