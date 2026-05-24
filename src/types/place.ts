@@ -32,3 +32,19 @@ export interface Place {
   lat: number;
   lng: number;
 }
+
+export interface PlaceListItem {
+  id: string;
+  nameKr: string;
+  nameEn: string | null;
+  category: "cafe" | "restaurant" | "travel" | "etc";
+  address: string;
+  thumbnailUrl: string | null;
+  indoorAllowed: boolean | null;
+  carrierRequired: boolean | null;
+  strollerAllowed: boolean | null;
+  dogSizesAllowed: DogSize[];
+  caution: string | null;
+  latestVerifiedAt: string | null;
+  verificationMethod: string | null;
+}

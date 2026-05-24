@@ -1,35 +1,43 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 
-import type { Place, ConditionStatus } from "@/types/place";
+import type { PlaceListItem, ConditionStatus } from "@/types/place";
+import { displayPlaceName, isSupportedLocale } from "@/lib/i18n/locale";
 import ConditionBadge from "./ConditionBadge";
 
 interface PlaceCardProps {
-  place: Place;
+  place: PlaceListItem;
   onClick?: () => void;
 }
 
-const categoryIcon: Record<Place["category"], string> = {
+const categoryIcon: Record<PlaceListItem["category"], string> = {
   cafe: "☕",
   restaurant: "🍽️",
   travel: "🌿",
+  etc: "📍",
 };
 
-const cardBg: Record<Place["category"], string> = {
+const cardBg: Record<PlaceListItem["category"], string> = {
   cafe: "from-amber-100 to-orange-50",
   restaurant: "from-orange-100 to-red-50",
   travel: "from-green-100 to-emerald-50",
+  etc: "from-gray-100 to-slate-50",
 };
 
 export default function PlaceCard({ place, onClick }: PlaceCardProps) {
   const t = useTranslations("places");
+  const rawLocale = useLocale();
+  const locale = isSupportedLocale(rawLocale) ? rawLocale : "en";
 
-  const categoryLabel: Record<Place["category"], string> = {
+  const categoryLabels: Partial<Record<PlaceListItem["category"], string>> = {
     cafe: t("card.category.cafe"),
     restaurant: t("card.category.restaurant"),
     travel: t("card.category.travel"),
   };
+  const categoryLabel = categoryLabels[place.category] ?? place.category;
+
+  const { primary: placeName } = displayPlaceName(place, locale);
 
   const chips: Array<{ label: string; status: ConditionStatus }> = [];
 
@@ -59,9 +67,9 @@ export default function PlaceCard({ place, onClick }: PlaceCardProps) {
 
       <div className="p-4">
         <p className="text-xs text-gray-400 mb-1">
-          {categoryLabel[place.category]} · {place.area} · {place.distanceKm}km
+          {categoryLabel}
         </p>
-        <h3 className="font-bold text-gray-900 text-base leading-snug">{place.name}</h3>
+        <h3 className="font-bold text-gray-900 text-base leading-snug">{placeName}</h3>
         <p className="text-xs text-gray-500 mt-0.5 mb-3 leading-relaxed">{place.address}</p>
 
         <div className="flex flex-wrap gap-1.5 mb-3">
@@ -78,7 +86,8 @@ export default function PlaceCard({ place, onClick }: PlaceCardProps) {
 
         <div className="flex items-center justify-between mt-1">
           <p className="text-xs text-gray-400">
-            {t("card.verifiedAt")} {place.verifiedAt} · {place.verificationMethod}
+            {t("card.verifiedAt")} {place.latestVerifiedAt ?? "-"}
+            {place.verificationMethod ? ` · ${place.verificationMethod}` : ""}
           </p>
           <button
             type="button"

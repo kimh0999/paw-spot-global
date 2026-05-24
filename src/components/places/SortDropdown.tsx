@@ -15,7 +15,6 @@ export default function SortDropdown({ value, onChange }: SortDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-    { value: "distance", label: t("sort.distance") },
     { value: "recent", label: t("sort.recent") },
     { value: "indoor-first", label: t("sort.indoorFirst") },
     { value: "no-carrier-first", label: t("sort.noCarrierFirst") },
