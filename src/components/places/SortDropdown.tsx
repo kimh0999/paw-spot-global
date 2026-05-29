@@ -20,7 +20,9 @@ export default function SortDropdown({ value, onChange }: SortDropdownProps) {
     { value: "no-carrier-first", label: t("sort.noCarrierFirst") },
   ];
 
-  const selectedLabel = SORT_OPTIONS.find((o) => o.value === value)?.label ?? "";
+  const selectedLabel =
+    SORT_OPTIONS.find((o) => o.value === value)?.label ??
+    (value === "distance" ? t("sort.distance") : "");
 
   return (
     <div className="relative">

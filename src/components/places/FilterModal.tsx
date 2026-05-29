@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 
 import type {
   PlaceFilters,
-  DogSize,
+  DogSizeFilter,
   IndoorFilter,
   CarrierFilter,
   RecentFilter,
@@ -38,38 +38,26 @@ export default function FilterModal({
     { value: "all", label: t("filters.indoor.all") },
     { value: "indoor", label: t("filters.indoor.indoorAllowed") },
     { value: "outdoor", label: t("filters.indoor.outdoorOnly") },
+    { value: "partial-area", label: t("filters.indoor.partialArea") },
     { value: "exclude-unknown", label: t("filters.indoor.excludeUnknown") },
   ];
 
   const CARRIER_OPTIONS: { value: CarrierFilter; label: string }[] = [
     { value: "not-required", label: t("filters.carrier.notRequired") },
     { value: "required", label: t("filters.carrier.required") },
-    { value: "stroller-ok", label: t("filters.carrier.strollerOk") },
   ];
 
-  const DOG_SIZE_OPTIONS: { value: DogSize; label: string }[] = [
+  const DOG_SIZE_OPTIONS: { value: DogSizeFilter; label: string }[] = [
+    { value: "all", label: t("filters.dogSize.all") },
     { value: "small", label: t("filters.dogSize.small") },
     { value: "medium", label: t("filters.dogSize.medium") },
     { value: "large", label: t("filters.dogSize.large") },
-  ];
-
-  const SUPPLY_OPTIONS = [
-    { value: "leash", label: t("filters.supplies.leash") },
-    { value: "waste-bag", label: t("filters.supplies.wasteBag") },
-    { value: "muzzle", label: t("filters.supplies.muzzle") },
   ];
 
   const RECENT_OPTIONS: { value: RecentFilter; label: string }[] = [
     { value: "30days", label: t("filters.reliability.30days") },
     { value: "90days", label: t("filters.reliability.90days") },
   ];
-
-  const toggleDogSize = (size: DogSize) => {
-    const next = filters.dogSizes.includes(size)
-      ? filters.dogSizes.filter((s) => s !== size)
-      : [...filters.dogSizes, size];
-    onChange({ ...filters, dogSizes: next });
-  };
 
   const toggleCarrier = (value: CarrierFilter) => {
     onChange({ ...filters, carrier: filters.carrier === value ? "all" : value });
@@ -103,6 +91,7 @@ export default function FilterModal({
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-5 space-y-7">
+          {/* 실내 동반 여부 */}
           <section>
             <p className="text-sm font-semibold text-gray-900 mb-2.5">{t("filters.indoor.title")}</p>
             <div className="flex flex-wrap gap-2">
@@ -119,6 +108,7 @@ export default function FilterModal({
             </div>
           </section>
 
+          {/* 이동장/유모차 */}
           <section>
             <p className="text-sm font-semibold text-gray-900 mb-2.5">{t("filters.carrier.title")}</p>
             <div className="flex flex-wrap gap-2">
@@ -135,6 +125,7 @@ export default function FilterModal({
             </div>
           </section>
 
+          {/* 반려견 크기 (단일 선택) */}
           <section>
             <p className="text-sm font-semibold text-gray-900 mb-2.5">{t("filters.dogSize.title")}</p>
             <div className="flex flex-wrap gap-2">
@@ -142,8 +133,8 @@ export default function FilterModal({
                 <button
                   key={value}
                   type="button"
-                  onClick={() => toggleDogSize(value)}
-                  className={`${chipBase} ${filters.dogSizes.includes(value) ? chipActive : chipInactive}`}
+                  onClick={() => onChange({ ...filters, dogSize: value })}
+                  className={`${chipBase} ${filters.dogSize === value ? chipActive : chipInactive}`}
                 >
                   {label}
                 </button>
@@ -151,22 +142,7 @@ export default function FilterModal({
             </div>
           </section>
 
-          <section>
-            <p className="text-sm font-semibold text-gray-900 mb-2.5">{t("filters.supplies.title")}</p>
-            <div className="flex flex-wrap gap-2">
-              {SUPPLY_OPTIONS.map(({ value, label }) => (
-                <button
-                  key={value}
-                  type="button"
-                  className={`${chipBase} ${chipInactive}`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-gray-400 mt-2">{t("filters.supplies.comingSoon")}</p>
-          </section>
-
+          {/* 정보 신뢰도 */}
           <section>
             <p className="text-sm font-semibold text-gray-900 mb-2.5">{t("filters.reliability.title")}</p>
             <div className="flex flex-wrap gap-2">

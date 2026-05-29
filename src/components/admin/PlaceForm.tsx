@@ -3,9 +3,11 @@
 import { useFormState, useFormStatus } from "react-dom";
 
 import {
-  CARRIER_POLICIES,
-  DOG_SIZES,
+  CARRIER_STROLLER_POLICIES,
   INDOOR_POLICIES,
+  LEASH_POLICIES,
+  MAX_DOG_SIZES,
+  MUZZLE_POLICIES,
   PLACE_CATEGORIES,
   PLACE_VISIBILITY,
   REQUIRED_ITEMS,
@@ -19,6 +21,45 @@ type ActionState = {
 
 type PlaceFormProps = {
   action: (prevState: ActionState, formData: FormData) => Promise<ActionState>;
+};
+
+const INDOOR_LABELS: Record<string, string> = {
+  ALLOWED: "실내 가능",
+  OUTDOOR_ONLY: "실외/테라스만 가능",
+  PARTIAL_AREA: "일부 구역만 가능",
+  NOT_ALLOWED: "동반 불가",
+  UNKNOWN: "확인 필요",
+};
+
+const CARRIER_STROLLER_LABELS: Record<string, string> = {
+  REQUIRED: "이동장/유모차 필수",
+  NOT_REQUIRED: "필수 아님",
+  UNKNOWN: "확인 필요",
+};
+
+const MAX_DOG_SIZE_LABELS: Record<string, string> = {
+  SMALL: "소형견까지 가능",
+  MEDIUM: "중형견까지 가능",
+  LARGE: "대형견까지 가능",
+  UNKNOWN: "확인 필요",
+};
+
+const LEASH_LABELS: Record<string, string> = {
+  REQUIRED: "목줄 필수",
+  NOT_REQUIRED: "필수 아님",
+  PARTIAL_AREA: "일부 공간에서만 필요",
+  UNKNOWN: "확인 필요",
+};
+
+const MUZZLE_LABELS: Record<string, string> = {
+  REQUIRED: "입마개 필수",
+  NOT_REQUIRED: "필수 아님",
+  CONDITIONAL: "일부 견종/상황에 따라 필요",
+  UNKNOWN: "확인 필요",
+};
+
+const REQUIRED_ITEM_LABELS: Record<string, string> = {
+  POOP_BAG: "배변봉투",
 };
 
 function SubmitButton() {
@@ -172,7 +213,7 @@ export function PlaceForm({ action }: PlaceFormProps) {
         <h2 className="text-lg font-semibold">반려견 동반 조건</h2>
 
         <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">실내 동반 정책 *</span>
+          <span className="text-sm font-medium">실내 동반 여부 *</span>
           <select
             name="condition.indoor"
             required
@@ -180,50 +221,71 @@ export function PlaceForm({ action }: PlaceFormProps) {
           >
             {INDOOR_POLICIES.map((p) => (
               <option key={p} value={p}>
-                {p}
+                {INDOOR_LABELS[p] ?? p}
               </option>
             ))}
           </select>
         </label>
 
         <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">이동장 정책 *</span>
+          <span className="text-sm font-medium">이동장/유모차 여부 *</span>
           <select
-            name="condition.carrier"
+            name="condition.carrierStrollerPolicy"
             required
             className="rounded border px-3 py-2"
           >
-            {CARRIER_POLICIES.map((p) => (
+            {CARRIER_STROLLER_POLICIES.map((p) => (
               <option key={p} value={p}>
-                {p}
+                {CARRIER_STROLLER_LABELS[p] ?? p}
               </option>
             ))}
           </select>
         </label>
 
-        <label className="flex items-center gap-2">
-          <input
-            name="condition.strollerAllowed"
-            type="checkbox"
-            className="h-4 w-4"
-          />
-          <span className="text-sm font-medium">유모차 가능</span>
+        <label className="flex flex-col gap-1">
+          <span className="text-sm font-medium">반려견 최대 허용 크기 *</span>
+          <select
+            name="condition.maxDogSize"
+            required
+            className="rounded border px-3 py-2"
+          >
+            {MAX_DOG_SIZES.map((s) => (
+              <option key={s} value={s}>
+                {MAX_DOG_SIZE_LABELS[s] ?? s}
+              </option>
+            ))}
+          </select>
         </label>
 
-        <fieldset className="flex flex-col gap-2 rounded border p-3">
-          <legend className="px-1 text-sm font-medium">허용 사이즈 * (1개 이상)</legend>
-          {DOG_SIZES.map((s) => (
-            <label key={s} className="flex items-center gap-2">
-              <input
-                name="condition.allowedSizes"
-                type="checkbox"
-                value={s}
-                className="h-4 w-4"
-              />
-              <span className="text-sm">{s}</span>
-            </label>
-          ))}
-        </fieldset>
+        <label className="flex flex-col gap-1">
+          <span className="text-sm font-medium">목줄 여부 *</span>
+          <select
+            name="condition.leash"
+            required
+            className="rounded border px-3 py-2"
+          >
+            {LEASH_POLICIES.map((p) => (
+              <option key={p} value={p}>
+                {LEASH_LABELS[p] ?? p}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="flex flex-col gap-1">
+          <span className="text-sm font-medium">입마개 여부 *</span>
+          <select
+            name="condition.muzzle"
+            required
+            className="rounded border px-3 py-2"
+          >
+            {MUZZLE_POLICIES.map((p) => (
+              <option key={p} value={p}>
+                {MUZZLE_LABELS[p] ?? p}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">견종 제한</span>
@@ -244,7 +306,7 @@ export function PlaceForm({ action }: PlaceFormProps) {
                 value={item}
                 className="h-4 w-4"
               />
-              <span className="text-sm">{item}</span>
+              <span className="text-sm">{REQUIRED_ITEM_LABELS[item] ?? item}</span>
             </label>
           ))}
         </fieldset>

@@ -21,6 +21,7 @@ enum Category {
 enum IndoorPolicy {
   ALLOWED
   OUTDOOR_ONLY
+  PARTIAL_AREA
   NOT_ALLOWED
   UNKNOWN
 }
@@ -31,10 +32,39 @@ enum DogSize {
   LARGE
 }
 
+enum MaxDogSize {
+  SMALL
+  MEDIUM
+  LARGE
+  UNKNOWN
+}
+
+// Retained in schema to prevent Prisma from dropping the DB type.
+// No longer used by any model field — remove in a separate migration after verifying safety.
 enum CarrierPolicy {
   NOT_REQUIRED
   REQUIRED
   OPTIONAL
+  UNKNOWN
+}
+
+enum CarrierStrollerPolicy {
+  REQUIRED
+  NOT_REQUIRED
+  UNKNOWN
+}
+
+enum LeashPolicy {
+  REQUIRED
+  NOT_REQUIRED
+  PARTIAL_AREA
+  UNKNOWN
+}
+
+enum MuzzlePolicy {
+  REQUIRED
+  NOT_REQUIRED
+  CONDITIONAL
   UNKNOWN
 }
 
@@ -92,19 +122,20 @@ model Place {
 }
 
 model PlaceCondition {
-  id                String        @id @default(cuid())
-  placeId           String        @unique
-  place             Place         @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  id                    String                @id @default(cuid())
+  placeId               String                @unique
+  place                 Place                 @relation(fields: [placeId], references: [id], onDelete: Cascade)
 
-  indoor            IndoorPolicy
-  carrier           CarrierPolicy
-  strollerAllowed   Boolean
-  allowedSizes      DogSize[]
-  breedRestrictions String?
-  requiredItems     String[]
-  cautions          String?
+  indoor                IndoorPolicy
+  carrierStrollerPolicy CarrierStrollerPolicy @default(UNKNOWN)
+  maxDogSize            MaxDogSize            @default(UNKNOWN)
+  leash                 LeashPolicy           @default(UNKNOWN)
+  muzzle                MuzzlePolicy          @default(UNKNOWN)
+  breedRestrictions     String?
+  requiredItems         String[]
+  cautions              String?
 
-  updatedAt         DateTime @updatedAt
+  updatedAt             DateTime              @updatedAt
 }
 
 model Verification {

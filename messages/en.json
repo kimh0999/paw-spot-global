@@ -78,6 +78,7 @@
       "locationDefault": "Near Daejeon center",
       "locationCurrent": "Near your location",
       "locationDenied": "Location access denied. Showing results near Daejeon center.",
+      "locationBlocked": "Location access is blocked. Please allow it in your browser settings.",
       "resultCount": "{count} places",
       "loadMore": "Load more",
       "empty": "No places match your filters.",
@@ -97,27 +98,21 @@
         "title": "Dog access",
         "all": "All",
         "indoorAllowed": "Indoor allowed",
-        "outdoorOnly": "Outdoor only",
+        "outdoorOnly": "Outdoor / terrace only",
+        "partialArea": "Partial area only",
         "excludeUnknown": "Exclude unconfirmed"
       },
       "carrier": {
         "title": "Carrier / stroller",
         "notRequired": "No carrier needed",
-        "required": "Carrier required",
-        "strollerOk": "Stroller OK"
+        "required": "Carrier / stroller required"
       },
       "dogSize": {
-        "title": "Dog size",
+        "title": "My dog's size",
+        "all": "All sizes",
         "small": "Small",
         "medium": "Medium",
         "large": "Large"
-      },
-      "supplies": {
-        "title": "Supplies required",
-        "leash": "Leash required",
-        "wasteBag": "Waste bag required",
-        "muzzle": "Muzzle required",
-        "comingSoon": "Supply filters coming soon."
       },
       "reliability": {
         "title": "Info reliability",
@@ -135,19 +130,32 @@
       "verifiedAt": "Verified:",
       "caution": "Note:",
       "detail": "Details",
+      "conditions": "Conditions",
       "indoor": {
         "allowed": "Indoor allowed",
-        "outdoorOnly": "Outdoor only",
+        "outdoorOnly": "Outdoor / terrace only",
+        "partialArea": "Partial area only",
+        "notAllowed": "Dogs not allowed",
         "unknown": "Indoor unconfirmed"
       },
-      "carrier": {
-        "notRequired": "No carrier needed",
-        "required": "Carrier required"
+      "carrierStroller": {
+        "required": "Carrier required",
+        "notRequired": "No carrier needed"
       },
-      "size": {
-        "small": "Small dog",
-        "medium": "Medium dog",
-        "large": "Large dog"
+      "maxDogSize": {
+        "small": "Small dogs only",
+        "medium": "Up to medium",
+        "large": "All sizes welcome"
+      },
+      "leash": {
+        "required": "Leash required",
+        "notRequired": "No leash required",
+        "partialArea": "Leash in some areas"
+      },
+      "muzzle": {
+        "required": "Muzzle required",
+        "notRequired": "No muzzle required",
+        "conditional": "Muzzle for some breeds"
       },
       "category": {
         "cafe": "Cafe",

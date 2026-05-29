@@ -4,6 +4,7 @@ import { useTranslations, useLocale } from "next-intl";
 
 import type { PlaceListItem, ConditionStatus } from "@/types/place";
 import { displayPlaceName, isSupportedLocale } from "@/lib/i18n/locale";
+import { formatDistance } from "@/lib/geo/distance";
 import ConditionBadge from "./ConditionBadge";
 
 interface PlaceCardProps {
@@ -38,24 +39,46 @@ export default function PlaceCard({ place, onClick }: PlaceCardProps) {
   const categoryLabel = categoryLabels[place.category] ?? place.category;
 
   const { primary: placeName } = displayPlaceName(place, locale);
+  const distanceText =
+    place.distanceMeters != null
+      ? formatDistance(place.distanceMeters, locale)
+      : null;
 
   const chips: Array<{ label: string; status: ConditionStatus }> = [];
 
-  if (place.indoorAllowed === true) chips.push({ label: t("card.indoor.allowed"), status: "good" });
-  else if (place.indoorAllowed === false) chips.push({ label: t("card.indoor.outdoorOnly"), status: "warning" });
-  else chips.push({ label: t("card.indoor.unknown"), status: "warning" });
+  // Indoor chip
+  switch (place.indoor) {
+    case "allowed":
+      chips.push({ label: t("card.indoor.allowed"), status: "good" });
+      break;
+    case "outdoor_only":
+      chips.push({ label: t("card.indoor.outdoorOnly"), status: "warning" });
+      break;
+    case "partial_area":
+      chips.push({ label: t("card.indoor.partialArea"), status: "warning" });
+      break;
+    case "not_allowed":
+      chips.push({ label: t("card.indoor.notAllowed"), status: "bad" });
+      break;
+    default:
+      chips.push({ label: t("card.indoor.unknown"), status: "warning" });
+  }
 
-  if (place.carrierRequired === false) chips.push({ label: t("card.carrier.notRequired"), status: "good" });
-  else if (place.carrierRequired === true) chips.push({ label: t("card.carrier.required"), status: "bad" });
+  // Carrier/stroller chip (skip unknown)
+  if (place.carrierStrollerPolicy === "not_required") {
+    chips.push({ label: t("card.carrierStroller.notRequired"), status: "good" });
+  } else if (place.carrierStrollerPolicy === "required") {
+    chips.push({ label: t("card.carrierStroller.required"), status: "bad" });
+  }
 
-  const sizeLabel: Record<string, string> = {
-    small: t("card.size.small"),
-    medium: t("card.size.medium"),
-    large: t("card.size.large"),
-  };
-  place.dogSizesAllowed.forEach((size) => {
-    chips.push({ label: sizeLabel[size], status: "good" });
-  });
+  // Max dog size chip (skip unknown/null)
+  if (place.maxDogSize === "small") {
+    chips.push({ label: t("card.maxDogSize.small"), status: "warning" });
+  } else if (place.maxDogSize === "medium") {
+    chips.push({ label: t("card.maxDogSize.medium"), status: "warning" });
+  } else if (place.maxDogSize === "large") {
+    chips.push({ label: t("card.maxDogSize.large"), status: "good" });
+  }
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-md hover:border-orange-200 transition-all">
@@ -70,7 +93,12 @@ export default function PlaceCard({ place, onClick }: PlaceCardProps) {
           {categoryLabel}
         </p>
         <h3 className="font-bold text-gray-900 text-base leading-snug">{placeName}</h3>
-        <p className="text-xs text-gray-500 mt-0.5 mb-3 leading-relaxed">{place.address}</p>
+        <div className="mb-3">
+          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{place.address}</p>
+          {distanceText && (
+            <p className="text-xs text-orange-600 font-medium mt-0.5">{distanceText}</p>
+          )}
+        </div>
 
         <div className="flex flex-wrap gap-1.5 mb-3">
           {chips.map((chip) => (

@@ -1,9 +1,11 @@
 import { z } from "zod";
 
 import {
-  CARRIER_POLICIES,
-  DOG_SIZES,
+  CARRIER_STROLLER_POLICIES,
   INDOOR_POLICIES,
+  LEASH_POLICIES,
+  MAX_DOG_SIZES,
+  MUZZLE_POLICIES,
   PLACE_CATEGORIES,
   PLACE_VISIBILITY,
   REQUIRED_ITEMS,
@@ -27,9 +29,10 @@ export const placeInputSchema = z.object({
 
   condition: z.object({
     indoor: z.enum(INDOOR_POLICIES),
-    carrier: z.enum(CARRIER_POLICIES),
-    strollerAllowed: z.boolean(),
-    allowedSizes: z.array(z.enum(DOG_SIZES)).min(1),
+    carrierStrollerPolicy: z.enum(CARRIER_STROLLER_POLICIES),
+    maxDogSize: z.enum(MAX_DOG_SIZES),
+    leash: z.enum(LEASH_POLICIES),
+    muzzle: z.enum(MUZZLE_POLICIES),
     breedRestrictions: z.string().max(500).nullish(),
     requiredItems: z.array(z.enum(REQUIRED_ITEMS)),
     cautions: z.string().max(1000).nullish(),
