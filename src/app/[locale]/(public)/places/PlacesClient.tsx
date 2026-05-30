@@ -10,6 +10,10 @@ import FilterModal from "@/components/places/FilterModal";
 import SortDropdown from "@/components/places/SortDropdown";
 import MapPanel from "@/components/places/MapPanel";
 import SelectedPlacePanel from "@/components/places/SelectedPlacePanel";
+import {
+  getActiveFilterCount,
+  getFilteredAndSortedPlaces,
+} from "@/lib/places/filtering";
 import type {
   CategoryFilterValue,
   PlaceFilters,
@@ -28,11 +32,6 @@ const DEFAULT_FILTERS: PlaceFilters = {
   dogSize: "all",
   recent: "all",
 };
-
-function parseVerifiedAt(verifiedAt: string): Date {
-  const [year, month, day] = verifiedAt.split(".").map(Number);
-  return new Date(year, month - 1, day);
-}
 
 export default function PlacesClient({ initialPlaces, userLocation }: PlacesClientProps) {
   const t = useTranslations("places");
@@ -105,83 +104,18 @@ export default function PlacesClient({ initialPlaces, userLocation }: PlacesClie
     setSelectedPlaceId((prev) => (prev === placeId ? null : placeId));
   };
 
-  const filteredAndSorted = initialPlaces
-    .filter((p) => {
-      if (selectedCategory !== "all" && p.category !== selectedCategory) return false;
-
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const nameKrMatch = p.nameKr.toLowerCase().includes(q);
-        const nameEnMatch = p.nameEn?.toLowerCase().includes(q) ?? false;
-        const addressMatch = p.address.toLowerCase().includes(q);
-        if (!nameKrMatch && !nameEnMatch && !addressMatch) return false;
-      }
-
-      // Indoor filter — UNKNOWN/null always passes (정보 없음 ≠ 거부)
-      if (filters.indoor === "indoor") {
-        if (p.indoor !== "allowed" && p.indoor !== "unknown" && p.indoor !== null) return false;
-      }
-      if (filters.indoor === "outdoor") {
-        if (p.indoor !== "outdoor_only" && p.indoor !== "unknown" && p.indoor !== null) return false;
-      }
-      if (filters.indoor === "partial-area") {
-        if (p.indoor !== "partial_area" && p.indoor !== "unknown" && p.indoor !== null) return false;
-      }
-      if (filters.indoor === "exclude-unknown") {
-        if (p.indoor === "unknown" || p.indoor === null) return false;
-      }
-
-      // Carrier/stroller filter — UNKNOWN/null always passes
-      if (filters.carrier === "not-required") {
-        if (p.carrierStrollerPolicy !== "not_required" && p.carrierStrollerPolicy !== "unknown" && p.carrierStrollerPolicy !== null) return false;
-      }
-      if (filters.carrier === "required") {
-        if (p.carrierStrollerPolicy !== "required" && p.carrierStrollerPolicy !== "unknown" && p.carrierStrollerPolicy !== null) return false;
-      }
-
-      // Dog size filter — UNKNOWN/null always passes; filter by max allowed size
-      // small: all sizes pass (SMALL/MEDIUM/LARGE all allow small dogs)
-      // medium: exclude SMALL-only places
-      // large: exclude SMALL-only and MEDIUM-only places
-      if (filters.dogSize === "medium" && p.maxDogSize === "small") return false;
-      if (filters.dogSize === "large" && (p.maxDogSize === "small" || p.maxDogSize === "medium")) return false;
-
-      // Recent filter
-      if (filters.recent !== "all") {
-        const days = filters.recent === "30days" ? 30 : 90;
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - days);
-        if (!p.latestVerifiedAt || parseVerifiedAt(p.latestVerifiedAt) < cutoff) return false;
-      }
-
-      return true;
-    })
-    .sort((a, b) => {
-      switch (sortOption) {
-        case "recent":
-          return (b.latestVerifiedAt ?? "").localeCompare(a.latestVerifiedAt ?? "");
-        case "indoor-first": {
-          const aScore = a.indoor === "allowed" ? 0 : 1;
-          const bScore = b.indoor === "allowed" ? 0 : 1;
-          return aScore - bScore;
-        }
-        case "no-carrier-first": {
-          const aScore = a.carrierStrollerPolicy === "not_required" ? 0 : 1;
-          const bScore = b.carrierStrollerPolicy === "not_required" ? 0 : 1;
-          return aScore - bScore;
-        }
-        default:
-          return 0;
-      }
-    });
+  const filteredAndSorted = getFilteredAndSortedPlaces({
+    places: initialPlaces,
+    selectedCategory,
+    searchQuery,
+    filters,
+    sortOption,
+    referenceDate: new Date(),
+  });
 
   const selectedPlace = initialPlaces.find((p) => p.id === selectedPlaceId);
 
-  const activeFilterCount =
-    (filters.indoor !== "all" ? 1 : 0) +
-    (filters.carrier !== "all" ? 1 : 0) +
-    (filters.dogSize !== "all" ? 1 : 0) +
-    (filters.recent !== "all" ? 1 : 0);
+  const activeFilterCount = getActiveFilterCount(filters);
 
   const mapPlaceholder = t("list.mapPlaceholder");
 
