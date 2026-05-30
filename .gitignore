@@ -17,3 +17,5 @@ build/
 .bkit/
 
 /src/generated/prisma
+
+global/
