@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import Header from "@/components/Header";
@@ -11,6 +11,7 @@ import SortDropdown from "@/components/places/SortDropdown";
 import MapPanel from "@/components/places/MapPanel";
 import SelectedPlacePanel from "@/components/places/SelectedPlacePanel";
 import { usePlaceListState } from "@/components/places/hooks/usePlaceListState";
+import { useUserLocationQuery } from "@/components/places/hooks/useUserLocationQuery";
 import type { CategoryFilterValue, PlaceListItem } from "@/types/place";
 
 interface PlacesClientProps {
@@ -21,8 +22,6 @@ interface PlacesClientProps {
 export default function PlacesClient({ initialPlaces, userLocation }: PlacesClientProps) {
   const t = useTranslations("places");
   const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const router = useRouter();
 
   const CATEGORIES: { value: CategoryFilterValue; label: string }[] = [
     { value: "all", label: t("filters.category.all") },
@@ -56,50 +55,19 @@ export default function PlacesClient({ initialPlaces, userLocation }: PlacesClie
     referenceDate,
   });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isLocating, setIsLocating] = useState(false);
-  const [locationDenied, setLocationDenied] = useState(false);
-  const [locationBlocked, setLocationBlocked] = useState(false);
-
-  const hasLocationInUrl =
-    searchParams.get("lat") !== null && searchParams.get("lng") !== null;
+  const {
+    isLocating,
+    locationDenied,
+    locationBlocked,
+    hasLocationInUrl,
+    handleMyLocation,
+  } = useUserLocationQuery();
 
   useEffect(() => {
     if (searchParams.get("sort") === "distance") {
       setSortOption("distance");
     }
   }, [searchParams, setSortOption]);
-
-  const handleMyLocation = () => {
-    if (!navigator.geolocation) {
-      setLocationDenied(true);
-      return;
-    }
-    const wasAlreadyDenied = locationDenied;
-    setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setIsLocating(false);
-        setLocationDenied(false);
-        setLocationBlocked(false);
-        const { latitude, longitude } = position.coords;
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("lat", String(latitude));
-        params.set("lng", String(longitude));
-        params.set("sort", "distance");
-        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-      },
-      (err) => {
-        setIsLocating(false);
-        if (wasAlreadyDenied || err.code === 1) {
-          setLocationBlocked(true);
-          setLocationDenied(false);
-        } else {
-          setLocationDenied(true);
-        }
-      },
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 },
-    );
-  };
 
   const mapPlaceholder = t("list.mapPlaceholder");
 
