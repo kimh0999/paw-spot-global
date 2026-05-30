@@ -10,28 +10,13 @@ import FilterModal from "@/components/places/FilterModal";
 import SortDropdown from "@/components/places/SortDropdown";
 import MapPanel from "@/components/places/MapPanel";
 import SelectedPlacePanel from "@/components/places/SelectedPlacePanel";
-import {
-  getActiveFilterCount,
-  getFilteredAndSortedPlaces,
-} from "@/lib/places/filtering";
-import type {
-  CategoryFilterValue,
-  PlaceFilters,
-  PlaceListItem,
-  SortOption,
-} from "@/types/place";
+import { usePlaceListState } from "@/components/places/hooks/usePlaceListState";
+import type { CategoryFilterValue, PlaceListItem } from "@/types/place";
 
 interface PlacesClientProps {
   initialPlaces: PlaceListItem[];
   userLocation: { lat: number; lng: number } | null;
 }
-
-const DEFAULT_FILTERS: PlaceFilters = {
-  indoor: "all",
-  carrier: "all",
-  dogSize: "all",
-  recent: "all",
-};
 
 export default function PlacesClient({ initialPlaces, userLocation }: PlacesClientProps) {
   const t = useTranslations("places");
@@ -46,18 +31,34 @@ export default function PlacesClient({ initialPlaces, userLocation }: PlacesClie
     { value: "travel", label: t("filters.category.travel") },
   ];
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<CategoryFilterValue>("all");
-  const [filters, setFilters] = useState<PlaceFilters>(DEFAULT_FILTERS);
-  const [sortOption, setSortOption] = useState<SortOption>(() => {
-    const s = searchParams.get("sort");
-    return s === "distance" ? "distance" : "recent";
+  const initialSortOption =
+    searchParams.get("sort") === "distance" ? "distance" : "recent";
+  const [referenceDate] = useState(() => new Date());
+  const {
+    selectedCategory,
+    setSelectedCategory,
+    searchQuery,
+    setSearchQuery,
+    filters,
+    setFilters,
+    sortOption,
+    setSortOption,
+    selectedPlaceId,
+    setSelectedPlaceId,
+    filteredAndSorted,
+    selectedPlace,
+    activeFilterCount,
+    resetFilters,
+    handlePlaceSelect,
+  } = usePlaceListState({
+    initialPlaces,
+    initialSortOption,
+    referenceDate,
   });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [locationDenied, setLocationDenied] = useState(false);
   const [locationBlocked, setLocationBlocked] = useState(false);
-  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
 
   const hasLocationInUrl =
     searchParams.get("lat") !== null && searchParams.get("lng") !== null;
@@ -66,7 +67,7 @@ export default function PlacesClient({ initialPlaces, userLocation }: PlacesClie
     if (searchParams.get("sort") === "distance") {
       setSortOption("distance");
     }
-  }, [searchParams]);
+  }, [searchParams, setSortOption]);
 
   const handleMyLocation = () => {
     if (!navigator.geolocation) {
@@ -99,23 +100,6 @@ export default function PlacesClient({ initialPlaces, userLocation }: PlacesClie
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 },
     );
   };
-
-  const handleCardClick = (placeId: string) => {
-    setSelectedPlaceId((prev) => (prev === placeId ? null : placeId));
-  };
-
-  const filteredAndSorted = getFilteredAndSortedPlaces({
-    places: initialPlaces,
-    selectedCategory,
-    searchQuery,
-    filters,
-    sortOption,
-    referenceDate: new Date(),
-  });
-
-  const selectedPlace = initialPlaces.find((p) => p.id === selectedPlaceId);
-
-  const activeFilterCount = getActiveFilterCount(filters);
 
   const mapPlaceholder = t("list.mapPlaceholder");
 
@@ -166,7 +150,7 @@ export default function PlacesClient({ initialPlaces, userLocation }: PlacesClie
             <MapPanel
               places={filteredAndSorted}
               selectedPlaceId={selectedPlaceId}
-              onSelectPlace={handleCardClick}
+              onSelectPlace={handlePlaceSelect}
               placeholder={mapPlaceholder}
               userLocation={userLocation}
               onRequestUserLocation={handleMyLocation}
@@ -241,7 +225,7 @@ export default function PlacesClient({ initialPlaces, userLocation }: PlacesClie
                     >
                       <PlaceCard
                         place={place}
-                        onClick={() => handleCardClick(place.id)}
+                        onClick={() => handlePlaceSelect(place.id)}
                       />
                     </div>
                   ))}
@@ -286,7 +270,7 @@ export default function PlacesClient({ initialPlaces, userLocation }: PlacesClie
           <MapPanel
             places={filteredAndSorted}
             selectedPlaceId={selectedPlaceId}
-            onSelectPlace={handleCardClick}
+            onSelectPlace={handlePlaceSelect}
             placeholder={mapPlaceholder}
             userLocation={userLocation}
             onRequestUserLocation={handleMyLocation}
@@ -300,7 +284,7 @@ export default function PlacesClient({ initialPlaces, userLocation }: PlacesClie
         filters={filters}
         onClose={() => setIsFilterOpen(false)}
         onChange={setFilters}
-        onReset={() => setFilters(DEFAULT_FILTERS)}
+        onReset={resetFilters}
         onApply={() => setIsFilterOpen(false)}
       />
     </div>
