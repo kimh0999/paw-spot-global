@@ -1,4 +1,4 @@
-export type ConditionStatus = "good" | "warning" | "bad";
+export type ConditionStatus = "good" | "warning" | "bad" | "neutral";
 
 export type PlaceCategory = "cafe" | "restaurant" | "travel";
 export type CategoryFilterValue = "all" | PlaceCategory;
@@ -34,4 +34,32 @@ export interface PlaceListItem {
   caution: string | null;
   latestVerifiedAt: string | null;
   verificationMethod: string | null;
+}
+
+export interface PlaceDetail {
+  id: string;
+  nameKr: string;
+  nameEn: string | null;
+  category: "cafe" | "restaurant" | "travel" | "etc";
+  address: string;
+  phone: string | null;
+  website: string | null;
+  instagram: string | null;
+  thumbnailUrl: string | null;
+  location: { lat: number; lng: number } | null;
+  condition: {
+    indoor: PlaceListItem["indoor"];
+    carrierStrollerPolicy: PlaceListItem["carrierStrollerPolicy"];
+    maxDogSize: PlaceListItem["maxDogSize"];
+    leash: PlaceListItem["leash"];
+    muzzle: PlaceListItem["muzzle"];
+    breedRestrictions: string | null;
+    requiredItems: string[];
+    cautions: string | null;
+  } | null;
+  latestVerification: {
+    verifiedAt: string;
+    method: string;
+    note: string | null;
+  } | null;
 }

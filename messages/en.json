@@ -162,6 +162,73 @@
         "restaurant": "Restaurant",
         "travel": "Travel Spot"
       }
+    },
+    "detail": {
+      "back": "Back to places",
+      "beforeYouGo": {
+        "title": "Before You Go",
+        "subtitle": "Can I bring my dog here?",
+        "noCondition": "Condition information is not available yet.",
+        "checkWithStore": "Check with store",
+        "indoor": {
+          "label": "Indoor access",
+          "allowed": "Indoor access allowed",
+          "outdoor_only": "Outdoor area only",
+          "partial_area": "Partial indoor area",
+          "not_allowed": "Dogs not allowed",
+          "unknown": "Check with store"
+        },
+        "carrier": {
+          "label": "Carrier / Stroller",
+          "required": "Carrier or stroller required",
+          "not_required": "No carrier needed",
+          "unknown": "Check with store"
+        },
+        "dogSize": {
+          "label": "Dog size limit",
+          "small": "Small dogs only",
+          "medium": "Up to medium size",
+          "large": "All sizes welcome",
+          "unknown": "Check with store"
+        },
+        "leash": {
+          "label": "Leash",
+          "required": "Leash required",
+          "not_required": "Leash not required",
+          "partial_area": "Leash in some areas",
+          "unknown": "Check with store"
+        },
+        "muzzle": {
+          "label": "Muzzle",
+          "required": "Muzzle required",
+          "not_required": "No muzzle required",
+          "conditional": "Muzzle for some breeds",
+          "unknown": "Check with store"
+        },
+        "breedRestriction": "Breed restriction",
+        "requiredItems": "Required items",
+        "poopBag": "Poop bag",
+        "cautions": "Cautions"
+      },
+      "info": {
+        "title": "Place Info",
+        "website": "Website",
+        "viewOnMaps": "View on Google Maps"
+      },
+      "verification": {
+        "title": "Verification Info",
+        "lastVerified": "Last verified",
+        "method": "Method",
+        "note": "Note",
+        "notVerified": "Not verified yet"
+      },
+      "koreanInquiry": {
+        "title": "Ask the store in Korean",
+        "description": "Copy the text below to contact the store.",
+        "copy": "Copy",
+        "copied": "Copied!"
+      },
+      "disclaimer": "Store policies may change. Please confirm with the store before your visit."
     }
   },
   "header": {

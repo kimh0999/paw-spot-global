@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { getLocale } from "next-intl/server";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -19,7 +20,10 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} className={cn("font-sans", inter.variable)}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

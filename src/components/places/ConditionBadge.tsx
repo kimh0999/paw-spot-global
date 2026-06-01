@@ -9,6 +9,7 @@ const chipStyle: Record<ConditionStatus, string> = {
   good: "bg-green-50 text-green-700 border-green-200",
   warning: "bg-amber-50 text-amber-700 border-amber-200",
   bad: "bg-red-50 text-red-600 border-red-200",
+  neutral: "bg-gray-100 text-gray-500 border-gray-200",
 };
 
 export default function ConditionBadge({ label, status }: ConditionBadgeProps) {

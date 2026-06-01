@@ -2,6 +2,8 @@
 
 import { useTranslations, useLocale } from "next-intl";
 
+import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 import { formatDistance } from "@/lib/geo/distance";
 import { displayPlaceName, isSupportedLocale } from "@/lib/i18n/locale";
 import type { ConditionStatus, PlaceListItem } from "@/types/place";
@@ -173,13 +175,9 @@ export default function SelectedPlacePanel({ place, onClose }: SelectedPlacePane
           </div>
         )}
 
-        <button
-          type="button"
-          disabled
-          className="w-full py-3 bg-gray-100 text-gray-400 font-semibold rounded-xl text-sm cursor-not-allowed"
-        >
-          {t("card.detail")}
-        </button>
+        <Button asChild className="w-full">
+          <Link href={`/places/${place.id}`}>{t("card.detail")}</Link>
+        </Button>
 
         <div className="h-2" />
       </div>

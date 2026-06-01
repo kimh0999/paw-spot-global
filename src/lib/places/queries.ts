@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
-import type { PlaceListItem } from "@/types/place";
+import type { PlaceListItem, PlaceDetail } from "@/types/place";
 
 export interface GetPlacesOptions {
   lat?: number;
@@ -195,6 +195,97 @@ export function toPlaceListItem(row: RawPlace, coord?: CoordQueryRow): PlaceList
       : null,
     verificationMethod: latestVerification
       ? mapVerificationMethod(String(latestVerification.method))
+      : null,
+  };
+}
+
+export async function getPlaceById(id: string): Promise<PlaceDetail | null> {
+  const place = await prisma.place.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      nameKr: true,
+      nameEn: true,
+      category: true,
+      address: true,
+      phone: true,
+      website: true,
+      instagram: true,
+      thumbnailUrl: true,
+      visibility: true,
+      condition: {
+        select: {
+          indoor: true,
+          carrierStrollerPolicy: true,
+          maxDogSize: true,
+          leash: true,
+          muzzle: true,
+          breedRestrictions: true,
+          requiredItems: true,
+          cautions: true,
+        },
+      },
+      verifications: {
+        orderBy: { verifiedAt: "desc" },
+        take: 1,
+        select: {
+          verifiedAt: true,
+          method: true,
+          note: true,
+        },
+      },
+    },
+  });
+
+  if (!place || place.visibility !== "VISIBLE") return null;
+
+  const coords = await prisma.$queryRaw<
+    Array<{ id: string; lat: unknown; lng: unknown }>
+  >`
+    SELECT
+      id,
+      ST_Y(location::geometry) AS lat,
+      ST_X(location::geometry) AS lng
+    FROM "Place"
+    WHERE id = ${id}
+  `;
+  const coord = coords[0];
+  const lat = toNumberOrNull(coord?.lat);
+  const lng = toNumberOrNull(coord?.lng);
+
+  const latestVerification = place.verifications[0] ?? null;
+
+  return {
+    id: place.id,
+    nameKr: place.nameKr,
+    nameEn: place.nameEn ?? null,
+    category: mapCategory(String(place.category)),
+    address: place.address,
+    phone: place.phone ?? null,
+    website: place.website ?? null,
+    instagram: place.instagram ?? null,
+    thumbnailUrl: place.thumbnailUrl ?? null,
+    location: lat != null && lng != null ? { lat, lng } : null,
+    condition: place.condition
+      ? {
+          indoor: mapIndoorPolicy(String(place.condition.indoor)),
+          carrierStrollerPolicy: mapCarrierStrollerPolicy(
+            String(place.condition.carrierStrollerPolicy),
+          ),
+          maxDogSize: mapMaxDogSize(String(place.condition.maxDogSize)),
+          leash: mapLeashPolicy(String(place.condition.leash)),
+          muzzle: mapMuzzlePolicy(String(place.condition.muzzle)),
+          breedRestrictions: place.condition.breedRestrictions ?? null,
+          requiredItems: place.condition.requiredItems as string[],
+          cautions: place.condition.cautions ?? null,
+        }
+      : null,
+    latestVerification: latestVerification
+      ? {
+          verifiedAt: formatVerifiedAt(latestVerification.verifiedAt),
+          method: mapVerificationMethod(String(latestVerification.method)),
+          note: latestVerification.note ?? null,
+        }
       : null,
   };
 }
