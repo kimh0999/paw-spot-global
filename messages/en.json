@@ -244,5 +244,54 @@
     "retry": "Retry",
     "cancel": "Cancel",
     "close": "Close"
+  },
+  "admin": {
+    "places": {
+      "title": "Places",
+      "description": "Manage all registered dog-friendly places.",
+      "addPlace": "Add place",
+      "total": "Total",
+      "visible": "Visible",
+      "draft": "Draft",
+      "hidden": "Hidden",
+      "missingCondition": "No condition",
+      "notVerified": "Not verified",
+      "edit": "Edit",
+      "conditionMissing": "Missing condition",
+      "conditionSummary": "Condition",
+      "noPlaces": "No places registered yet.",
+      "checkRequired": "Check required",
+      "latestVerification": "Latest verification",
+      "address": "Address",
+      "category": "Category",
+      "status": "Status",
+      "placeName": "Place",
+      "indoor": {
+        "label": "Indoor",
+        "ALLOWED": "Indoor allowed",
+        "OUTDOOR_ONLY": "Outdoor only",
+        "PARTIAL_AREA": "Partial area",
+        "NOT_ALLOWED": "Not allowed",
+        "UNKNOWN": "Check required"
+      },
+      "carrier": {
+        "label": "Carrier / Stroller",
+        "REQUIRED": "Required",
+        "NOT_REQUIRED": "Not required",
+        "UNKNOWN": "Check required"
+      },
+      "dogSize": {
+        "label": "Max dog size",
+        "SMALL": "Small only",
+        "MEDIUM": "Up to medium",
+        "LARGE": "All sizes",
+        "UNKNOWN": "Check required"
+      },
+      "visibility": {
+        "VISIBLE": "Visible",
+        "DRAFT": "Draft",
+        "HIDDEN": "Hidden"
+      }
+    }
   }
 }

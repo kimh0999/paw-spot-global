@@ -309,3 +309,84 @@ export async function getPlaces(options: GetPlacesOptions = {}): Promise<PlaceLi
 
   return items;
 }
+
+export interface AdminPlaceRow {
+  id: string;
+  nameKr: string;
+  nameEn: string | null;
+  category: string;
+  address: string;
+  visibility: string;
+  thumbnailUrl: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  condition: {
+    indoor: string;
+    carrierStrollerPolicy: string;
+    maxDogSize: string;
+  } | null;
+  latestVerification: {
+    verifiedAt: string;
+    method: string;
+    note: string | null;
+  } | null;
+}
+
+export async function getAdminPlaces(): Promise<AdminPlaceRow[]> {
+  const rows = await prisma.place.findMany({
+    select: {
+      id: true,
+      nameKr: true,
+      nameEn: true,
+      category: true,
+      address: true,
+      visibility: true,
+      thumbnailUrl: true,
+      createdAt: true,
+      updatedAt: true,
+      condition: {
+        select: {
+          indoor: true,
+          carrierStrollerPolicy: true,
+          maxDogSize: true,
+        },
+      },
+      verifications: {
+        orderBy: { verifiedAt: "desc" },
+        take: 1,
+        select: {
+          verifiedAt: true,
+          method: true,
+          note: true,
+        },
+      },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  return rows.map((row) => ({
+    id: row.id,
+    nameKr: row.nameKr,
+    nameEn: row.nameEn ?? null,
+    category: String(row.category),
+    address: row.address,
+    visibility: String(row.visibility),
+    thumbnailUrl: row.thumbnailUrl ?? null,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    condition: row.condition
+      ? {
+          indoor: String(row.condition.indoor),
+          carrierStrollerPolicy: String(row.condition.carrierStrollerPolicy),
+          maxDogSize: String(row.condition.maxDogSize),
+        }
+      : null,
+    latestVerification: row.verifications[0]
+      ? {
+          verifiedAt: formatVerifiedAt(row.verifications[0].verifiedAt),
+          method: mapVerificationMethod(String(row.verifications[0].method)),
+          note: row.verifications[0].note ?? null,
+        }
+      : null,
+  }));
+}

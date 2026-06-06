@@ -244,5 +244,54 @@
     "retry": "다시 시도",
     "cancel": "취소",
     "close": "닫기"
+  },
+  "admin": {
+    "places": {
+      "title": "장소 관리",
+      "description": "등록된 반려견 동반 장소 전체를 관리합니다.",
+      "addPlace": "장소 추가",
+      "total": "전체",
+      "visible": "노출 중",
+      "draft": "초안",
+      "hidden": "숨김",
+      "missingCondition": "조건 없음",
+      "notVerified": "미확인",
+      "edit": "수정",
+      "conditionMissing": "조건 정보 없음",
+      "conditionSummary": "조건 요약",
+      "noPlaces": "아직 등록된 장소가 없습니다.",
+      "checkRequired": "확인 필요",
+      "latestVerification": "최신 검증일",
+      "address": "주소",
+      "category": "카테고리",
+      "status": "노출 상태",
+      "placeName": "장소명",
+      "indoor": {
+        "label": "실내",
+        "ALLOWED": "실내 가능",
+        "OUTDOOR_ONLY": "실외만 가능",
+        "PARTIAL_AREA": "일부 구역만",
+        "NOT_ALLOWED": "동반 불가",
+        "UNKNOWN": "확인 필요"
+      },
+      "carrier": {
+        "label": "이동장/유모차",
+        "REQUIRED": "필수",
+        "NOT_REQUIRED": "불필요",
+        "UNKNOWN": "확인 필요"
+      },
+      "dogSize": {
+        "label": "최대 강아지 크기",
+        "SMALL": "소형견까지",
+        "MEDIUM": "중형견까지",
+        "LARGE": "대형견 가능",
+        "UNKNOWN": "확인 필요"
+      },
+      "visibility": {
+        "VISIBLE": "노출 중",
+        "DRAFT": "초안",
+        "HIDDEN": "숨김"
+      }
+    }
   }
 }
