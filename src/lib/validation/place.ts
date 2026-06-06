@@ -46,3 +46,15 @@ export const placeInputSchema = z.object({
 });
 
 export type PlaceInput = z.infer<typeof placeInputSchema>;
+
+export const placeUpdateSchema = placeInputSchema.extend({
+  verification: z
+    .object({
+      method: z.enum(["PHONE", "DM", "WEBSITE", "ON_SITE"]),
+      verifiedAt: z.coerce.date(),
+      note: z.string().max(500).optional(),
+    })
+    .optional(),
+});
+
+export type PlaceUpdate = z.infer<typeof placeUpdateSchema>;

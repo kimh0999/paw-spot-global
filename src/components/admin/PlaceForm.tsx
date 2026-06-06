@@ -19,8 +19,41 @@ type ActionState = {
   error?: string;
 };
 
+export type PlaceFormInitialValues = {
+  nameKr?: string;
+  nameEn?: string;
+  category?: string;
+  address?: string;
+  lat?: number | null;
+  lng?: number | null;
+  phone?: string | null;
+  website?: string | null;
+  instagram?: string | null;
+  thumbnailUrl?: string | null;
+  tourApiId?: string | null;
+  visibility?: string;
+  condition?: {
+    indoor?: string;
+    carrierStrollerPolicy?: string;
+    maxDogSize?: string;
+    leash?: string;
+    muzzle?: string;
+    breedRestrictions?: string | null;
+    requiredItems?: string[];
+    cautions?: string | null;
+  };
+  verification?: {
+    method?: string;
+    verifiedAt?: string;
+    note?: string | null;
+  };
+};
+
 type PlaceFormProps = {
   action: (prevState: ActionState, formData: FormData) => Promise<ActionState>;
+  initialValues?: PlaceFormInitialValues;
+  submitLabel?: string;
+  successContent?: React.ReactNode;
 };
 
 const INDOOR_LABELS: Record<string, string> = {
@@ -62,7 +95,7 @@ const REQUIRED_ITEM_LABELS: Record<string, string> = {
   POOP_BAG: "배변봉투",
 };
 
-function SubmitButton() {
+function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -70,22 +103,31 @@ function SubmitButton() {
       disabled={pending}
       className="rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
     >
-      {pending ? "저장 중..." : "장소 등록"}
+      {pending ? "저장 중..." : label}
     </button>
   );
 }
 
-export function PlaceForm({ action }: PlaceFormProps) {
+export function PlaceForm({
+  action,
+  initialValues,
+  submitLabel = "장소 등록",
+  successContent,
+}: PlaceFormProps) {
   const [state, formAction] = useFormState(action, {});
 
   if (state.success) {
     return (
-      <div className="rounded border border-green-500 p-4">
-        <p className="font-medium text-green-700">장소가 등록되었습니다.</p>
-        <p className="mt-1 text-sm text-muted-foreground">ID: {state.placeId}</p>
-      </div>
+      successContent ?? (
+        <div className="rounded border border-green-500 p-4">
+          <p className="font-medium text-green-700">장소가 등록되었습니다.</p>
+          <p className="mt-1 text-sm text-muted-foreground">ID: {state.placeId}</p>
+        </div>
+      )
     );
   }
+
+  const iv = initialValues;
 
   return (
     <form action={formAction} className="flex flex-col gap-8">
@@ -105,18 +147,29 @@ export function PlaceForm({ action }: PlaceFormProps) {
             name="nameKr"
             required
             maxLength={200}
+            defaultValue={iv?.nameKr ?? ""}
             className="rounded border px-3 py-2"
           />
         </label>
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">장소명 (영어)</span>
-          <input name="nameEn" maxLength={200} className="rounded border px-3 py-2" />
+          <input
+            name="nameEn"
+            maxLength={200}
+            defaultValue={iv?.nameEn ?? ""}
+            className="rounded border px-3 py-2"
+          />
         </label>
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">카테고리 *</span>
-          <select name="category" required className="rounded border px-3 py-2">
+          <select
+            name="category"
+            required
+            defaultValue={iv?.category ?? "RESTAURANT"}
+            className="rounded border px-3 py-2"
+          >
             {PLACE_CATEGORIES.map((c) => (
               <option key={c} value={c}>
                 {c}
@@ -131,6 +184,7 @@ export function PlaceForm({ action }: PlaceFormProps) {
             name="address"
             required
             maxLength={500}
+            defaultValue={iv?.address ?? ""}
             className="rounded border px-3 py-2"
           />
         </label>
@@ -145,6 +199,7 @@ export function PlaceForm({ action }: PlaceFormProps) {
               min={33}
               max={43}
               required
+              defaultValue={iv?.lat ?? ""}
               className="rounded border px-3 py-2"
             />
           </label>
@@ -157,6 +212,7 @@ export function PlaceForm({ action }: PlaceFormProps) {
               min={124}
               max={132}
               required
+              defaultValue={iv?.lng ?? ""}
               className="rounded border px-3 py-2"
             />
           </label>
@@ -166,7 +222,7 @@ export function PlaceForm({ action }: PlaceFormProps) {
           <span className="text-sm font-medium">노출 상태</span>
           <select
             name="visibility"
-            defaultValue="DRAFT"
+            defaultValue={iv?.visibility ?? "DRAFT"}
             className="rounded border px-3 py-2"
           >
             {PLACE_VISIBILITY.map((v) => (
@@ -184,27 +240,51 @@ export function PlaceForm({ action }: PlaceFormProps) {
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">전화번호</span>
-          <input name="phone" maxLength={30} className="rounded border px-3 py-2" />
+          <input
+            name="phone"
+            maxLength={30}
+            defaultValue={iv?.phone ?? ""}
+            className="rounded border px-3 py-2"
+          />
         </label>
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">웹사이트</span>
-          <input name="website" type="url" className="rounded border px-3 py-2" />
+          <input
+            name="website"
+            type="url"
+            defaultValue={iv?.website ?? ""}
+            className="rounded border px-3 py-2"
+          />
         </label>
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">인스타그램</span>
-          <input name="instagram" maxLength={100} className="rounded border px-3 py-2" />
+          <input
+            name="instagram"
+            maxLength={100}
+            defaultValue={iv?.instagram ?? ""}
+            className="rounded border px-3 py-2"
+          />
         </label>
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">대표 이미지 URL</span>
-          <input name="thumbnailUrl" type="url" className="rounded border px-3 py-2" />
+          <input
+            name="thumbnailUrl"
+            type="url"
+            defaultValue={iv?.thumbnailUrl ?? ""}
+            className="rounded border px-3 py-2"
+          />
         </label>
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">TourAPI ID</span>
-          <input name="tourApiId" className="rounded border px-3 py-2" />
+          <input
+            name="tourApiId"
+            defaultValue={iv?.tourApiId ?? ""}
+            className="rounded border px-3 py-2"
+          />
         </label>
       </section>
 
@@ -217,6 +297,7 @@ export function PlaceForm({ action }: PlaceFormProps) {
           <select
             name="condition.indoor"
             required
+            defaultValue={iv?.condition?.indoor ?? "UNKNOWN"}
             className="rounded border px-3 py-2"
           >
             {INDOOR_POLICIES.map((p) => (
@@ -232,6 +313,7 @@ export function PlaceForm({ action }: PlaceFormProps) {
           <select
             name="condition.carrierStrollerPolicy"
             required
+            defaultValue={iv?.condition?.carrierStrollerPolicy ?? "UNKNOWN"}
             className="rounded border px-3 py-2"
           >
             {CARRIER_STROLLER_POLICIES.map((p) => (
@@ -247,6 +329,7 @@ export function PlaceForm({ action }: PlaceFormProps) {
           <select
             name="condition.maxDogSize"
             required
+            defaultValue={iv?.condition?.maxDogSize ?? "UNKNOWN"}
             className="rounded border px-3 py-2"
           >
             {MAX_DOG_SIZES.map((s) => (
@@ -262,6 +345,7 @@ export function PlaceForm({ action }: PlaceFormProps) {
           <select
             name="condition.leash"
             required
+            defaultValue={iv?.condition?.leash ?? "UNKNOWN"}
             className="rounded border px-3 py-2"
           >
             {LEASH_POLICIES.map((p) => (
@@ -277,6 +361,7 @@ export function PlaceForm({ action }: PlaceFormProps) {
           <select
             name="condition.muzzle"
             required
+            defaultValue={iv?.condition?.muzzle ?? "UNKNOWN"}
             className="rounded border px-3 py-2"
           >
             {MUZZLE_POLICIES.map((p) => (
@@ -292,6 +377,7 @@ export function PlaceForm({ action }: PlaceFormProps) {
           <input
             name="condition.breedRestrictions"
             maxLength={500}
+            defaultValue={iv?.condition?.breedRestrictions ?? ""}
             className="rounded border px-3 py-2"
           />
         </label>
@@ -304,6 +390,7 @@ export function PlaceForm({ action }: PlaceFormProps) {
                 name="condition.requiredItems"
                 type="checkbox"
                 value={item}
+                defaultChecked={iv?.condition?.requiredItems?.includes(item) ?? false}
                 className="h-4 w-4"
               />
               <span className="text-sm">{REQUIRED_ITEM_LABELS[item] ?? item}</span>
@@ -317,6 +404,7 @@ export function PlaceForm({ action }: PlaceFormProps) {
             name="condition.cautions"
             maxLength={1000}
             rows={3}
+            defaultValue={iv?.condition?.cautions ?? ""}
             className="rounded border px-3 py-2"
           />
         </label>
@@ -331,6 +419,7 @@ export function PlaceForm({ action }: PlaceFormProps) {
           <select
             name="verification.method"
             required
+            defaultValue={iv?.verification?.method ?? "PHONE"}
             className="rounded border px-3 py-2"
           >
             {(["PHONE", "DM", "WEBSITE", "ON_SITE"] as const).map((m) => (
@@ -347,6 +436,7 @@ export function PlaceForm({ action }: PlaceFormProps) {
             name="verification.verifiedAt"
             type="date"
             required
+            defaultValue={iv?.verification?.verifiedAt ?? ""}
             className="rounded border px-3 py-2"
           />
         </label>
@@ -356,12 +446,13 @@ export function PlaceForm({ action }: PlaceFormProps) {
           <input
             name="verification.note"
             maxLength={500}
+            defaultValue={iv?.verification?.note ?? ""}
             className="rounded border px-3 py-2"
           />
         </label>
       </section>
 
-      <SubmitButton />
+      <SubmitButton label={submitLabel} />
     </form>
   );
 }

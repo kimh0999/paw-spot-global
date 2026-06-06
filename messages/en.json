@@ -291,7 +291,13 @@
         "VISIBLE": "Visible",
         "DRAFT": "Draft",
         "HIDDEN": "Hidden"
-      }
+      },
+      "editTitle": "Edit place",
+      "editDescription": "Update the place information, conditions, and verification data.",
+      "backToList": "Back to list",
+      "saveChanges": "Save changes",
+      "saveSuccess": "Changes saved successfully.",
+      "saveFailed": "Failed to save changes."
     }
   }
 }

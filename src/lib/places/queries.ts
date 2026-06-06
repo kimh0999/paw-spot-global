@@ -332,6 +332,144 @@ export interface AdminPlaceRow {
   } | null;
 }
 
+function formatDateForInput(date: Date): string {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+export interface AdminPlaceDetail {
+  id: string;
+  nameKr: string;
+  nameEn: string | null;
+  category: string;
+  address: string;
+  lat: number | null;
+  lng: number | null;
+  phone: string | null;
+  website: string | null;
+  instagram: string | null;
+  thumbnailUrl: string | null;
+  tourApiId: string | null;
+  visibility: string;
+  createdAt: Date;
+  updatedAt: Date;
+  condition: {
+    indoor: string;
+    carrierStrollerPolicy: string;
+    maxDogSize: string;
+    leash: string;
+    muzzle: string;
+    breedRestrictions: string | null;
+    requiredItems: string[];
+    cautions: string | null;
+  } | null;
+  latestVerification: {
+    method: string;
+    verifiedAt: string;
+    note: string | null;
+    verifiedBy: string;
+  } | null;
+}
+
+export async function getAdminPlaceById(id: string): Promise<AdminPlaceDetail | null> {
+  const place = await prisma.place.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      nameKr: true,
+      nameEn: true,
+      category: true,
+      address: true,
+      phone: true,
+      website: true,
+      instagram: true,
+      thumbnailUrl: true,
+      tourApiId: true,
+      visibility: true,
+      createdAt: true,
+      updatedAt: true,
+      condition: {
+        select: {
+          indoor: true,
+          carrierStrollerPolicy: true,
+          maxDogSize: true,
+          leash: true,
+          muzzle: true,
+          breedRestrictions: true,
+          requiredItems: true,
+          cautions: true,
+        },
+      },
+      verifications: {
+        orderBy: { verifiedAt: "desc" },
+        take: 1,
+        select: {
+          method: true,
+          verifiedAt: true,
+          note: true,
+          verifiedBy: true,
+        },
+      },
+    },
+  });
+
+  if (!place) return null;
+
+  const coords = await prisma.$queryRaw<Array<{ id: string; lat: unknown; lng: unknown }>>`
+    SELECT
+      id,
+      ST_Y(location::geometry) AS lat,
+      ST_X(location::geometry) AS lng
+    FROM "Place"
+    WHERE id = ${id}
+  `;
+  const coord = coords[0];
+  const lat = toNumberOrNull(coord?.lat);
+  const lng = toNumberOrNull(coord?.lng);
+
+  const latestVerification = place.verifications[0] ?? null;
+
+  return {
+    id: place.id,
+    nameKr: place.nameKr,
+    nameEn: place.nameEn ?? null,
+    category: String(place.category),
+    address: place.address,
+    lat,
+    lng,
+    phone: place.phone ?? null,
+    website: place.website ?? null,
+    instagram: place.instagram ?? null,
+    thumbnailUrl: place.thumbnailUrl ?? null,
+    tourApiId: place.tourApiId ?? null,
+    visibility: String(place.visibility),
+    createdAt: place.createdAt,
+    updatedAt: place.updatedAt,
+    condition: place.condition
+      ? {
+          indoor: String(place.condition.indoor),
+          carrierStrollerPolicy: String(place.condition.carrierStrollerPolicy),
+          maxDogSize: String(place.condition.maxDogSize),
+          leash: String(place.condition.leash),
+          muzzle: String(place.condition.muzzle),
+          breedRestrictions: place.condition.breedRestrictions ?? null,
+          requiredItems: place.condition.requiredItems as string[],
+          cautions: place.condition.cautions ?? null,
+        }
+      : null,
+    latestVerification: latestVerification
+      ? {
+          method: String(latestVerification.method),
+          verifiedAt: formatDateForInput(latestVerification.verifiedAt),
+          note: latestVerification.note ?? null,
+          verifiedBy: latestVerification.verifiedBy,
+        }
+      : null,
+  };
+}
+
 export async function getAdminPlaces(): Promise<AdminPlaceRow[]> {
   const rows = await prisma.place.findMany({
     select: {
