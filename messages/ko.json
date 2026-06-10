@@ -245,6 +245,29 @@
     "cancel": "취소",
     "close": "닫기"
   },
+  "auth": {
+    "logout": "로그아웃",
+    "login": {
+      "title": "관리자 로그인",
+      "description": "관리자로 등록된 Google 계정으로 로그인하세요.",
+      "google": "Google로 계속하기",
+      "signingIn": "로그인 중...",
+      "alreadySignedIn": "이미 로그인되어 있습니다.",
+      "loginFailed": "로그인에 실패했습니다. 다시 시도해 주세요.",
+      "accessDenied": "이 Google 계정에는 관리자 권한이 없습니다.",
+      "configurationError": "인증 설정이 올바르지 않습니다. 사이트 관리자에게 문의하세요."
+    },
+    "forbidden": {
+      "title": "관리자 권한이 필요합니다",
+      "description": "현재 계정에는 이 페이지에 접근할 권한이 없습니다.",
+      "backHome": "홈으로 돌아가기",
+      "loginWithAdmin": "관리자 계정으로 로그인"
+    },
+    "actions": {
+      "signInRequired": "관리자 계정으로 로그인해야 합니다.",
+      "forbidden": "관리자 권한이 필요합니다."
+    }
+  },
   "admin": {
     "places": {
       "title": "장소 관리",

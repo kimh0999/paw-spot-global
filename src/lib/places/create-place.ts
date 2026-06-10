@@ -1,14 +1,13 @@
 import { randomUUID } from "crypto";
 
+import type { VerifiedAdmin } from "@/lib/auth/require-admin";
 import { prisma } from "@/lib/db/prisma";
 import { pointFromLngLat } from "@/lib/geo/postgis";
 import type { PlaceInput } from "@/lib/validation/place";
 
-const TEMP_VERIFIED_BY = "local-admin";
-// TODO: Auth.js 도입 후 session.user.id 또는 email로 교체
-
 export async function createPlaceRecord(
   input: PlaceInput,
+  admin: VerifiedAdmin,
 ): Promise<{ placeId: string }> {
   const { location, condition, verification, ...placeData } = input;
   const id = randomUUID();
@@ -54,7 +53,7 @@ export async function createPlaceRecord(
     await tx.verification.create({
       data: {
         placeId: id,
-        verifiedBy: TEMP_VERIFIED_BY,
+        verifiedBy: admin.email,
         method: verification.method,
         verifiedAt: verification.verifiedAt,
         note: verification.note ?? null,

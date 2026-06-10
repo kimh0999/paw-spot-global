@@ -245,6 +245,29 @@
     "cancel": "Cancel",
     "close": "Close"
   },
+  "auth": {
+    "logout": "Sign out",
+    "login": {
+      "title": "Administrator sign in",
+      "description": "Sign in with the Google account registered as an administrator.",
+      "google": "Continue with Google",
+      "signingIn": "Signing in...",
+      "alreadySignedIn": "You are already signed in.",
+      "loginFailed": "Sign-in failed. Please try again.",
+      "accessDenied": "This Google account does not have administrator access.",
+      "configurationError": "Authentication is not configured correctly. Contact the site administrator."
+    },
+    "forbidden": {
+      "title": "Administrator access required",
+      "description": "Your account does not have permission to access this page.",
+      "backHome": "Back to home",
+      "loginWithAdmin": "Sign in with an administrator account"
+    },
+    "actions": {
+      "signInRequired": "You must sign in as an administrator.",
+      "forbidden": "Administrator permission is required."
+    }
+  },
   "admin": {
     "places": {
       "title": "Places",

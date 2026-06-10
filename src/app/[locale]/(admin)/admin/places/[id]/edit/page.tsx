@@ -20,7 +20,7 @@ export default async function AdminPlaceEditPage({ params }: Props) {
   const place = await getAdminPlaceById(id);
   if (!place) notFound();
 
-  const boundAction = updatePlace.bind(null, id);
+  const boundAction = updatePlace.bind(null, safeLocale, id);
 
   const initialValues = {
     nameKr: place.nameKr,
