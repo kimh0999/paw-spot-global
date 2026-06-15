@@ -1,5 +1,11 @@
 import { prisma } from "@/lib/db/prisma";
-import type { PlaceListItem, PlaceDetail } from "@/types/place";
+import type {
+  HomePlaceItem,
+  PlaceDetail,
+  PlaceListItem,
+} from "@/types/place";
+
+const HOME_PLACE_LIMIT = 6;
 
 export interface GetPlacesOptions {
   lat?: number;
@@ -197,6 +203,57 @@ export function toPlaceListItem(row: RawPlace, coord?: CoordQueryRow): PlaceList
       ? mapVerificationMethod(String(latestVerification.method))
       : null,
   };
+}
+
+export async function getHomePlaces(): Promise<HomePlaceItem[]> {
+  const rows = await prisma.place.findMany({
+    where: { visibility: "VISIBLE" },
+    select: {
+      id: true,
+      nameKr: true,
+      nameEn: true,
+      category: true,
+      address: true,
+      thumbnailUrl: true,
+      condition: {
+        select: {
+          indoor: true,
+          carrierStrollerPolicy: true,
+          maxDogSize: true,
+        },
+      },
+      verifications: {
+        orderBy: { verifiedAt: "desc" },
+        take: 1,
+        select: {
+          verifiedAt: true,
+        },
+      },
+    },
+    orderBy: { updatedAt: "desc" },
+    take: HOME_PLACE_LIMIT,
+  });
+
+  return rows.map((row) => ({
+    id: row.id,
+    nameKr: row.nameKr,
+    nameEn: row.nameEn ?? null,
+    category: mapCategory(String(row.category)),
+    address: row.address,
+    thumbnailUrl: row.thumbnailUrl ?? null,
+    indoor: row.condition
+      ? mapIndoorPolicy(String(row.condition.indoor))
+      : null,
+    carrierStrollerPolicy: row.condition
+      ? mapCarrierStrollerPolicy(String(row.condition.carrierStrollerPolicy))
+      : null,
+    maxDogSize: row.condition
+      ? mapMaxDogSize(String(row.condition.maxDogSize))
+      : null,
+    latestVerifiedAt: row.verifications[0]
+      ? formatVerifiedAt(row.verifications[0].verifiedAt)
+      : null,
+  }));
 }
 
 export async function getPlaceById(id: string): Promise<PlaceDetail | null> {

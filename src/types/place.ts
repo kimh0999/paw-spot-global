@@ -36,6 +36,20 @@ export interface PlaceListItem {
   verificationMethod: string | null;
 }
 
+export type HomePlaceItem = Pick<
+  PlaceListItem,
+  | "id"
+  | "nameKr"
+  | "nameEn"
+  | "category"
+  | "address"
+  | "thumbnailUrl"
+  | "indoor"
+  | "carrierStrollerPolicy"
+  | "maxDogSize"
+  | "latestVerifiedAt"
+>;
+
 export interface PlaceDetail {
   id: string;
   nameKr: string;

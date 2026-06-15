@@ -63,11 +63,12 @@ export async function updatePlace(
     return { error: "저장 중 오류가 발생했습니다." };
   }
 
-  for (const locale of ["en", "ko"]) {
-    revalidatePath(`/${locale}/admin/places`);
-    revalidatePath(`/${locale}/admin/places/${id}/edit`);
-    revalidatePath(`/${locale}/places`);
-    revalidatePath(`/${locale}/places/${id}`);
+  for (const targetLocale of ["en", "ko"]) {
+    revalidatePath(`/${targetLocale}`);
+    revalidatePath(`/${targetLocale}/admin/places`);
+    revalidatePath(`/${targetLocale}/admin/places/${id}/edit`);
+    revalidatePath(`/${targetLocale}/places`);
+    revalidatePath(`/${targetLocale}/places/${id}`);
   }
 
   return { success: true, placeId: id };

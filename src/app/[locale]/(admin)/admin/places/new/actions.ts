@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 
 import {
@@ -49,11 +50,22 @@ export async function createPlace(
     };
   }
 
+  let placeId: string;
+
   try {
-    const { placeId } = await createPlaceRecord(parsed.data, admin);
-    return { success: true, placeId };
+    const result = await createPlaceRecord(parsed.data, admin);
+    placeId = result.placeId;
   } catch (err) {
     console.error("[createPlace]", err);
     return { error: "저장 중 오류가 발생했습니다." };
   }
+
+  for (const targetLocale of ["en", "ko"]) {
+    revalidatePath(`/${targetLocale}`);
+    revalidatePath(`/${targetLocale}/admin/places`);
+    revalidatePath(`/${targetLocale}/places`);
+    revalidatePath(`/${targetLocale}/places/${placeId}`);
+  }
+
+  return { success: true, placeId };
 }

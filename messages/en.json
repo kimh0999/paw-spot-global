@@ -61,9 +61,12 @@
       }
     },
     "recentPlaces": {
-      "title": "Recently verified in Daejeon",
+      "title": "Explore dog-friendly places",
+      "description": "Browse recently updated places that are currently available to the public.",
       "verifiedAt": "Verified:",
-      "viewAll": "View all places on map"
+      "viewAll": "View all places",
+      "empty": "No places are available yet.",
+      "checkRequired": "Check required"
     },
     "footer": "© 2026 Paw Spot Global. Place information is subject to change."
   },
@@ -160,7 +163,8 @@
       "category": {
         "cafe": "Cafe",
         "restaurant": "Restaurant",
-        "travel": "Travel Spot"
+        "travel": "Travel Spot",
+        "etc": "Other"
       }
     },
     "detail": {
