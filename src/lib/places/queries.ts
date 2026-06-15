@@ -58,6 +58,16 @@ export function mapMuzzlePolicy(policy: string): PlaceListItem["muzzle"] {
   }
 }
 
+export function mapVaccinationCertificatePolicy(
+  policy: string,
+): "required" | "not_required" | "unknown" {
+  switch (policy) {
+    case "REQUIRED": return "required";
+    case "NOT_REQUIRED": return "not_required";
+    default: return "unknown";
+  }
+}
+
 export function mapCategory(
   cat: string,
 ): "cafe" | "restaurant" | "travel" | "etc" {
@@ -277,6 +287,7 @@ export async function getPlaceById(id: string): Promise<PlaceDetail | null> {
           maxDogSize: true,
           leash: true,
           muzzle: true,
+          vaccinationCertificatePolicy: true,
           breedRestrictions: true,
           requiredItems: true,
           cautions: true,
@@ -332,6 +343,9 @@ export async function getPlaceById(id: string): Promise<PlaceDetail | null> {
           maxDogSize: mapMaxDogSize(String(place.condition.maxDogSize)),
           leash: mapLeashPolicy(String(place.condition.leash)),
           muzzle: mapMuzzlePolicy(String(place.condition.muzzle)),
+          vaccinationCertificatePolicy: mapVaccinationCertificatePolicy(
+            String(place.condition.vaccinationCertificatePolicy),
+          ),
           breedRestrictions: place.condition.breedRestrictions ?? null,
           requiredItems: place.condition.requiredItems as string[],
           cautions: place.condition.cautions ?? null,
@@ -418,6 +432,7 @@ export interface AdminPlaceDetail {
     maxDogSize: string;
     leash: string;
     muzzle: string;
+    vaccinationCertificatePolicy: string;
     breedRestrictions: string | null;
     requiredItems: string[];
     cautions: string | null;
@@ -454,6 +469,7 @@ export async function getAdminPlaceById(id: string): Promise<AdminPlaceDetail | 
           maxDogSize: true,
           leash: true,
           muzzle: true,
+          vaccinationCertificatePolicy: true,
           breedRestrictions: true,
           requiredItems: true,
           cautions: true,
@@ -511,6 +527,7 @@ export async function getAdminPlaceById(id: string): Promise<AdminPlaceDetail | 
           maxDogSize: String(place.condition.maxDogSize),
           leash: String(place.condition.leash),
           muzzle: String(place.condition.muzzle),
+          vaccinationCertificatePolicy: String(place.condition.vaccinationCertificatePolicy),
           breedRestrictions: place.condition.breedRestrictions ?? null,
           requiredItems: place.condition.requiredItems as string[],
           cautions: place.condition.cautions ?? null,

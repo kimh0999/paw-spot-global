@@ -68,6 +68,12 @@ enum MuzzlePolicy {
   UNKNOWN
 }
 
+enum VaccinationCertificatePolicy {
+  REQUIRED
+  NOT_REQUIRED
+  UNKNOWN
+}
+
 enum VerificationMethod {
   PHONE
   DM
@@ -130,10 +136,11 @@ model PlaceCondition {
   carrierStrollerPolicy CarrierStrollerPolicy @default(UNKNOWN)
   maxDogSize            MaxDogSize            @default(UNKNOWN)
   leash                 LeashPolicy           @default(UNKNOWN)
-  muzzle                MuzzlePolicy          @default(UNKNOWN)
-  breedRestrictions     String?
-  requiredItems         String[]
-  cautions              String?
+  muzzle                        MuzzlePolicy                    @default(UNKNOWN)
+  vaccinationCertificatePolicy  VaccinationCertificatePolicy    @default(UNKNOWN)
+  breedRestrictions             String?
+  requiredItems                 String[]
+  cautions                      String?
 
   updatedAt             DateTime              @updatedAt
 }

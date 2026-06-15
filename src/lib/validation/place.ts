@@ -9,6 +9,7 @@ import {
   PLACE_CATEGORIES,
   PLACE_VISIBILITY,
   REQUIRED_ITEMS,
+  VACCINATION_CERTIFICATE_POLICIES,
 } from "@/lib/constants";
 
 export const placeInputSchema = z.object({
@@ -33,6 +34,7 @@ export const placeInputSchema = z.object({
     maxDogSize: z.enum(MAX_DOG_SIZES),
     leash: z.enum(LEASH_POLICIES),
     muzzle: z.enum(MUZZLE_POLICIES),
+    vaccinationCertificatePolicy: z.enum(VACCINATION_CERTIFICATE_POLICIES).default("UNKNOWN"),
     breedRestrictions: z.string().max(500).nullish(),
     requiredItems: z.array(z.enum(REQUIRED_ITEMS)),
     cautions: z.string().max(1000).nullish(),

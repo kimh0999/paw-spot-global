@@ -71,6 +71,15 @@ export default async function BeforeYouGoCard({ condition, locale }: Props) {
       label: t("muzzle.label"),
       ...(muzzleMap[condition.muzzle ?? ""] ?? none),
     });
+
+    const vaccinationMap: Record<string, { value: string; status: ConditionStatus }> = {
+      required: { value: t("vaccination.required"), status: "warning" },
+      not_required: { value: t("vaccination.not_required"), status: "good" },
+    };
+    conditionRows.push({
+      label: t("vaccination.label"),
+      ...(vaccinationMap[condition.vaccinationCertificatePolicy ?? ""] ?? none),
+    });
   }
 
   return (

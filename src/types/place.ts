@@ -67,6 +67,7 @@ export interface PlaceDetail {
     maxDogSize: PlaceListItem["maxDogSize"];
     leash: PlaceListItem["leash"];
     muzzle: PlaceListItem["muzzle"];
+    vaccinationCertificatePolicy: "required" | "not_required" | "unknown" | null;
     breedRestrictions: string | null;
     requiredItems: string[];
     cautions: string | null;

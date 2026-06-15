@@ -12,6 +12,7 @@ export {
   PLACE_CATEGORIES,
   PLACE_VISIBILITY,
   REQUIRED_ITEMS,
+  VACCINATION_CERTIFICATE_POLICIES,
 } from "@/lib/places/constants";
 export type {
   CarrierStrollerPolicy,
@@ -22,6 +23,7 @@ export type {
   PlaceCategory,
   PlaceVisibilityType,
   RequiredItem,
+  VaccinationCertificatePolicy,
 } from "@/lib/places/constants";
 
 // Used for Dog.size — do NOT add UNKNOWN here

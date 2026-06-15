@@ -19,6 +19,7 @@ export type ParsedPlaceFormData = {
     maxDogSize: string;
     leash: string;
     muzzle: string;
+    vaccinationCertificatePolicy: string;
     breedRestrictions: string | null;
     requiredItems: string[];
     cautions: string | null;
@@ -69,6 +70,7 @@ export function parsePlaceFormData(formData: FormData): ParsedPlaceFormData {
       maxDogSize: String(formData.get("condition.maxDogSize") ?? ""),
       leash: String(formData.get("condition.leash") ?? ""),
       muzzle: String(formData.get("condition.muzzle") ?? ""),
+      vaccinationCertificatePolicy: String(formData.get("condition.vaccinationCertificatePolicy") ?? "UNKNOWN"),
       breedRestrictions: nullIfEmpty(formData.get("condition.breedRestrictions")),
       requiredItems: formData.getAll("condition.requiredItems").map(String),
       cautions: nullIfEmpty(formData.get("condition.cautions")),

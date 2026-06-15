@@ -17,6 +17,9 @@ export type LeashPolicy = (typeof LEASH_POLICIES)[number];
 export const MUZZLE_POLICIES = ["REQUIRED", "NOT_REQUIRED", "CONDITIONAL", "UNKNOWN"] as const;
 export type MuzzlePolicy = (typeof MUZZLE_POLICIES)[number];
 
+export const VACCINATION_CERTIFICATE_POLICIES = ["REQUIRED", "NOT_REQUIRED", "UNKNOWN"] as const;
+export type VaccinationCertificatePolicy = (typeof VACCINATION_CERTIFICATE_POLICIES)[number];
+
 // CARRIER, STROLLER, LEASH, MUZZLE removed — now covered by dedicated enum fields
 export const REQUIRED_ITEMS = ["POOP_BAG"] as const;
 export type RequiredItem = (typeof REQUIRED_ITEMS)[number];

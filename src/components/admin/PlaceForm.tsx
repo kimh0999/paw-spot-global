@@ -13,6 +13,7 @@ import {
   PLACE_CATEGORIES,
   PLACE_VISIBILITY,
   REQUIRED_ITEMS,
+  VACCINATION_CERTIFICATE_POLICIES,
 } from "@/lib/constants";
 
 import { LocationPickerMap } from "./LocationPickerMap";
@@ -42,6 +43,7 @@ export type PlaceFormInitialValues = {
     maxDogSize?: string;
     leash?: string;
     muzzle?: string;
+    vaccinationCertificatePolicy?: string;
     breedRestrictions?: string | null;
     requiredItems?: string[];
     cautions?: string | null;
@@ -95,6 +97,12 @@ const MUZZLE_LABELS: Record<string, string> = {
   UNKNOWN: "확인 필요",
 };
 
+const VACCINATION_LABELS: Record<string, string> = {
+  REQUIRED: "필수",
+  NOT_REQUIRED: "불필요",
+  UNKNOWN: "확인 필요",
+};
+
 const REQUIRED_ITEM_LABELS: Record<string, string> = {
   POOP_BAG: "배변봉투",
 };
@@ -120,6 +128,7 @@ export function PlaceForm({
 }: PlaceFormProps) {
   const [state, formAction] = useFormState(action, {});
   const tMap = useTranslations("admin.places.locationPicker");
+  const t = useTranslations("admin.places.form");
 
   const [lat, setLat] = useState<string>(String(initialValues?.lat ?? ""));
   const [lng, setLng] = useState<string>(String(initialValues?.lng ?? ""));
@@ -153,6 +162,27 @@ export function PlaceForm({
     if (newLngStr !== lng) setLng(newLngStr);
   }
 
+  // Label maps built from i18n — value attrs remain raw enum strings
+  const CATEGORY_LABELS: Record<string, string> = {
+    CAFE: t("category.CAFE"),
+    RESTAURANT: t("category.RESTAURANT"),
+    TRAVEL: t("category.TRAVEL"),
+    ETC: t("category.ETC"),
+  };
+
+  const VERIFICATION_METHOD_LABELS: Record<string, string> = {
+    PHONE: t("verificationMethod.PHONE"),
+    DM: t("verificationMethod.DM"),
+    WEBSITE: t("verificationMethod.WEBSITE"),
+    ON_SITE: t("verificationMethod.ON_SITE"),
+  };
+
+  const VISIBILITY_LABELS: Record<string, string> = {
+    VISIBLE: t("visibility.VISIBLE"),
+    DRAFT: t("visibility.DRAFT"),
+    HIDDEN: t("visibility.HIDDEN"),
+  };
+
   if (state.success) {
     return (
       successContent ?? (
@@ -176,7 +206,10 @@ export function PlaceForm({
 
       {/* 기본 정보 */}
       <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">기본 정보</h2>
+        <div>
+          <h2 className="text-lg font-semibold">{t("basicInfo.title")}</h2>
+          <p className="text-sm text-muted-foreground">{t("basicInfo.description")}</p>
+        </div>
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">장소명 (한국어) *</span>
@@ -209,7 +242,7 @@ export function PlaceForm({
           >
             {PLACE_CATEGORIES.map((c) => (
               <option key={c} value={c}>
-                {c}
+                {CATEGORY_LABELS[c] ?? c}
               </option>
             ))}
           </select>
@@ -226,11 +259,9 @@ export function PlaceForm({
           />
         </label>
 
+        {/* 지도 위치 선택 — description은 지도 내부 clickOrDrag 힌트로 대체 */}
         <div className="flex flex-col gap-2">
-          <div>
-            <p className="text-sm font-medium">{tMap("title")}</p>
-            <p className="text-xs text-muted-foreground">{tMap("description")}</p>
-          </div>
+          <p className="text-sm font-medium">{tMap("title")}</p>
           <LocationPickerMap lat={mapLat} lng={mapLng} onChange={handleMapChange} />
         </div>
 
@@ -277,7 +308,7 @@ export function PlaceForm({
           >
             {PLACE_VISIBILITY.map((v) => (
               <option key={v} value={v}>
-                {v}
+                {VISIBILITY_LABELS[v] ?? v}
               </option>
             ))}
           </select>
@@ -286,17 +317,23 @@ export function PlaceForm({
 
       {/* 연락처 / 링크 */}
       <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">연락처 / 링크</h2>
+        <div>
+          <h2 className="text-lg font-semibold">{t("contact.title")}</h2>
+          <p className="text-sm text-muted-foreground">{t("contact.description")}</p>
+        </div>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">전화번호</span>
-          <input
-            name="phone"
-            maxLength={30}
-            defaultValue={iv?.phone ?? ""}
-            className="rounded border px-3 py-2"
-          />
-        </label>
+        <div className="flex flex-col gap-1">
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium">전화번호</span>
+            <input
+              name="phone"
+              maxLength={30}
+              defaultValue={iv?.phone ?? ""}
+              className="rounded border px-3 py-2"
+            />
+          </label>
+          <p className="text-xs text-muted-foreground">{t("phoneHelp")}</p>
+        </div>
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">웹사이트</span>
@@ -327,20 +364,14 @@ export function PlaceForm({
             className="rounded border px-3 py-2"
           />
         </label>
-
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">TourAPI ID</span>
-          <input
-            name="tourApiId"
-            defaultValue={iv?.tourApiId ?? ""}
-            className="rounded border px-3 py-2"
-          />
-        </label>
       </section>
 
       {/* 반려견 동반 조건 */}
       <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">반려견 동반 조건</h2>
+        <div>
+          <h2 className="text-lg font-semibold">{t("condition.title")}</h2>
+          <p className="text-sm text-muted-foreground">{t("condition.description")}</p>
+        </div>
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">실내 동반 여부 *</span>
@@ -423,6 +454,22 @@ export function PlaceForm({
         </label>
 
         <label className="flex flex-col gap-1">
+          <span className="text-sm font-medium">{t("vaccinationCertificate.label")} *</span>
+          <select
+            name="condition.vaccinationCertificatePolicy"
+            required
+            defaultValue={iv?.condition?.vaccinationCertificatePolicy ?? "UNKNOWN"}
+            className="rounded border px-3 py-2"
+          >
+            {VACCINATION_CERTIFICATE_POLICIES.map((p) => (
+              <option key={p} value={p}>
+                {VACCINATION_LABELS[p] ?? p}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">견종 제한</span>
           <input
             name="condition.breedRestrictions"
@@ -432,21 +479,24 @@ export function PlaceForm({
           />
         </label>
 
-        <fieldset className="flex flex-col gap-2 rounded border p-3">
-          <legend className="px-1 text-sm font-medium">필요 준비물</legend>
-          {REQUIRED_ITEMS.map((item) => (
-            <label key={item} className="flex items-center gap-2">
-              <input
-                name="condition.requiredItems"
-                type="checkbox"
-                value={item}
-                defaultChecked={iv?.condition?.requiredItems?.includes(item) ?? false}
-                className="h-4 w-4"
-              />
-              <span className="text-sm">{REQUIRED_ITEM_LABELS[item] ?? item}</span>
-            </label>
-          ))}
-        </fieldset>
+        <div className="flex flex-col gap-2">
+          <fieldset className="flex flex-col gap-2 rounded border p-3">
+            <legend className="px-1 text-sm font-medium">필요 준비물</legend>
+            {REQUIRED_ITEMS.map((item) => (
+              <label key={item} className="flex items-center gap-2">
+                <input
+                  name="condition.requiredItems"
+                  type="checkbox"
+                  value={item}
+                  defaultChecked={iv?.condition?.requiredItems?.includes(item) ?? false}
+                  className="h-4 w-4"
+                />
+                <span className="text-sm">{REQUIRED_ITEM_LABELS[item] ?? item}</span>
+              </label>
+            ))}
+          </fieldset>
+          <p className="text-xs text-muted-foreground">{t("requiredItemsHelp")}</p>
+        </div>
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">주의사항</span>
@@ -454,6 +504,7 @@ export function PlaceForm({
             name="condition.cautions"
             maxLength={1000}
             rows={3}
+            placeholder={t("cautionsPlaceholder")}
             defaultValue={iv?.condition?.cautions ?? ""}
             className="rounded border px-3 py-2"
           />
@@ -462,7 +513,10 @@ export function PlaceForm({
 
       {/* 검증 정보 */}
       <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">검증 정보</h2>
+        <div>
+          <h2 className="text-lg font-semibold">{t("verification.title")}</h2>
+          <p className="text-sm text-muted-foreground">{t("verification.description")}</p>
+        </div>
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">확인 방법 *</span>
@@ -474,7 +528,7 @@ export function PlaceForm({
           >
             {(["PHONE", "DM", "WEBSITE", "ON_SITE"] as const).map((m) => (
               <option key={m} value={m}>
-                {m}
+                {VERIFICATION_METHOD_LABELS[m] ?? m}
               </option>
             ))}
           </select>
@@ -496,10 +550,31 @@ export function PlaceForm({
           <input
             name="verification.note"
             maxLength={500}
+            placeholder={t("verificationNotePlaceholder")}
             defaultValue={iv?.verification?.note ?? ""}
             className="rounded border px-3 py-2"
           />
         </label>
+      </section>
+
+      {/* 외부 데이터 연동 정보 */}
+      <section className="flex flex-col gap-4">
+        <div>
+          <h2 className="text-lg font-semibold">{t("externalData.title")}</h2>
+          <p className="text-sm text-muted-foreground">{t("externalData.description")}</p>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium">TourAPI ID</span>
+            <input
+              name="tourApiId"
+              defaultValue={iv?.tourApiId ?? ""}
+              className="rounded border px-3 py-2"
+            />
+          </label>
+          <p className="text-xs text-muted-foreground">{t("tourApiIdHelp")}</p>
+        </div>
       </section>
 
       <SubmitButton label={submitLabel} />

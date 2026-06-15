@@ -41,6 +41,7 @@ export default async function AdminPlaceEditPage({ params }: Props) {
       maxDogSize: "UNKNOWN",
       leash: "UNKNOWN",
       muzzle: "UNKNOWN",
+      vaccinationCertificatePolicy: "UNKNOWN",
       breedRestrictions: undefined,
       requiredItems: [],
       cautions: undefined,

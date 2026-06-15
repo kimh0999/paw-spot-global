@@ -212,7 +212,12 @@
         "breedRestriction": "Breed restriction",
         "requiredItems": "Required items",
         "poopBag": "Poop bag",
-        "cautions": "Cautions"
+        "cautions": "Cautions",
+        "vaccination": {
+          "label": "Vaccination certificate",
+          "required": "Required",
+          "not_required": "Not required"
+        }
       },
       "info": {
         "title": "Place Info",
@@ -333,6 +338,56 @@
         "noKey": "Map unavailable. Please check Google Maps API key.",
         "clickOrDrag": "Click on the map or drag the pin to set location.",
         "invalidCoordinates": "Coordinates are out of the valid Korean range."
+      },
+      "form": {
+        "basicInfo": {
+          "title": "Basic Information",
+          "description": "Public information about the place displayed to users."
+        },
+        "contact": {
+          "title": "Contact & Links",
+          "description": "Public contact details and links that users can use to check or visit the place."
+        },
+        "condition": {
+          "title": "Pet Policy",
+          "description": "Pet-related rules and conditions visitors should check before their visit."
+        },
+        "verification": {
+          "title": "Verification",
+          "description": "Records when and how this information was confirmed."
+        },
+        "externalData": {
+          "title": "External Data",
+          "description": "Optional fields for tracking places imported from external APIs."
+        },
+        "phoneHelp": "This is the public business phone number that may be shown to users. Do not enter a private manager contact number.",
+        "tourApiIdHelp": "Enter this only for places imported from TourAPI. Leave it blank for manually added places.",
+        "requiredItemsHelp": "Check all items visitors must bring. For other requirements (e.g. muzzle, belly band), add details in Cautions.",
+        "cautionsPlaceholder": "e.g. vaccination proof required, barking may be restricted, restricted breeds not allowed, owner supervision required, extra fee 3,000 KRW per dog",
+        "verificationNotePlaceholder": "e.g. Checked Naver notice, confirmed by phone, confirmed via Instagram DM, confirmed by owner",
+        "category": {
+          "CAFE": "Cafe",
+          "RESTAURANT": "Restaurant",
+          "TRAVEL": "Travel / Park / Attraction",
+          "ETC": "Other"
+        },
+        "verificationMethod": {
+          "PHONE": "Phone call",
+          "DM": "SNS / Instagram DM",
+          "WEBSITE": "Website / Notice",
+          "ON_SITE": "On-site visit"
+        },
+        "vaccinationCertificate": {
+          "label": "Vaccination certificate",
+          "REQUIRED": "Required",
+          "NOT_REQUIRED": "Not required",
+          "UNKNOWN": "Check needed"
+        },
+        "visibility": {
+          "VISIBLE": "Visible",
+          "DRAFT": "Draft",
+          "HIDDEN": "Hidden"
+        }
       }
     }
   }

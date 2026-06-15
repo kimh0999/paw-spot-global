@@ -44,6 +44,7 @@ export async function createPlaceRecord(
         maxDogSize: condition.maxDogSize,
         leash: condition.leash,
         muzzle: condition.muzzle,
+        vaccinationCertificatePolicy: condition.vaccinationCertificatePolicy,
         breedRestrictions: condition.breedRestrictions ?? null,
         requiredItems: condition.requiredItems,
         cautions: condition.cautions ?? null,
