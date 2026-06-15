@@ -324,7 +324,16 @@
       "backToList": "목록으로",
       "saveChanges": "변경사항 저장",
       "saveSuccess": "변경사항이 저장되었습니다.",
-      "saveFailed": "저장에 실패했습니다."
+      "saveFailed": "저장에 실패했습니다.",
+      "locationPicker": {
+        "title": "지도에서 위치 선택",
+        "description": "지도에서 위치를 클릭하거나 핀을 드래그해 좌표를 설정하세요.",
+        "loading": "지도를 불러오는 중...",
+        "loadFailed": "지도를 불러오지 못했습니다.",
+        "noKey": "지도를 사용할 수 없습니다. Google Maps API 키를 확인하세요.",
+        "clickOrDrag": "지도에서 위치를 클릭하거나 핀을 드래그해 위치를 설정하세요.",
+        "invalidCoordinates": "좌표가 한국 범위를 벗어났습니다."
+      }
     }
   }
 }

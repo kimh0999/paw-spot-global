@@ -324,7 +324,16 @@
       "backToList": "Back to list",
       "saveChanges": "Save changes",
       "saveSuccess": "Changes saved successfully.",
-      "saveFailed": "Failed to save changes."
+      "saveFailed": "Failed to save changes.",
+      "locationPicker": {
+        "title": "Pick location on map",
+        "description": "Click or drag the pin to set coordinates.",
+        "loading": "Loading map...",
+        "loadFailed": "Map failed to load.",
+        "noKey": "Map unavailable. Please check Google Maps API key.",
+        "clickOrDrag": "Click on the map or drag the pin to set location.",
+        "invalidCoordinates": "Coordinates are out of the valid Korean range."
+      }
     }
   }
 }

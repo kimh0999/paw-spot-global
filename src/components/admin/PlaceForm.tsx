@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
+import { useTranslations } from "next-intl";
 
 import {
   CARRIER_STROLLER_POLICIES,
@@ -12,6 +14,8 @@ import {
   PLACE_VISIBILITY,
   REQUIRED_ITEMS,
 } from "@/lib/constants";
+
+import { LocationPickerMap } from "./LocationPickerMap";
 
 type ActionState = {
   success?: true;
@@ -115,6 +119,39 @@ export function PlaceForm({
   successContent,
 }: PlaceFormProps) {
   const [state, formAction] = useFormState(action, {});
+  const tMap = useTranslations("admin.places.locationPicker");
+
+  const [lat, setLat] = useState<string>(String(initialValues?.lat ?? ""));
+  const [lng, setLng] = useState<string>(String(initialValues?.lng ?? ""));
+
+  const parsedLat = parseFloat(lat);
+  const parsedLng = parseFloat(lng);
+  const isValidPos =
+    lat !== "" &&
+    lng !== "" &&
+    !Number.isNaN(parsedLat) &&
+    !Number.isNaN(parsedLng) &&
+    parsedLat >= 33 &&
+    parsedLat <= 43 &&
+    parsedLng >= 124 &&
+    parsedLng <= 132;
+
+  const mapLat = isValidPos ? parsedLat : null;
+  const mapLng = isValidPos ? parsedLng : null;
+
+  const showInvalidWarning =
+    lat !== "" &&
+    lng !== "" &&
+    !Number.isNaN(parsedLat) &&
+    !Number.isNaN(parsedLng) &&
+    !isValidPos;
+
+  function handleMapChange(newLat: number, newLng: number) {
+    const newLatStr = String(newLat);
+    const newLngStr = String(newLng);
+    if (newLatStr !== lat) setLat(newLatStr);
+    if (newLngStr !== lng) setLng(newLngStr);
+  }
 
   if (state.success) {
     return (
@@ -189,6 +226,14 @@ export function PlaceForm({
           />
         </label>
 
+        <div className="flex flex-col gap-2">
+          <div>
+            <p className="text-sm font-medium">{tMap("title")}</p>
+            <p className="text-xs text-muted-foreground">{tMap("description")}</p>
+          </div>
+          <LocationPickerMap lat={mapLat} lng={mapLng} onChange={handleMapChange} />
+        </div>
+
         <div className="flex gap-4">
           <label className="flex flex-1 flex-col gap-1">
             <span className="text-sm font-medium">위도 (lat) *</span>
@@ -199,7 +244,8 @@ export function PlaceForm({
               min={33}
               max={43}
               required
-              defaultValue={iv?.lat ?? ""}
+              value={lat}
+              onChange={(e) => setLat(e.target.value)}
               className="rounded border px-3 py-2"
             />
           </label>
@@ -212,11 +258,15 @@ export function PlaceForm({
               min={124}
               max={132}
               required
-              defaultValue={iv?.lng ?? ""}
+              value={lng}
+              onChange={(e) => setLng(e.target.value)}
               className="rounded border px-3 py-2"
             />
           </label>
         </div>
+        {showInvalidWarning && (
+          <p className="text-sm text-orange-600">{tMap("invalidCoordinates")}</p>
+        )}
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">노출 상태</span>
