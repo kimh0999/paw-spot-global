@@ -387,6 +387,16 @@
           "VISIBLE": "노출 중",
           "DRAFT": "초안",
           "HIDDEN": "숨김"
+        },
+        "validation": {
+          "required": "필수 입력 항목입니다.",
+          "invalidLatitude": "위도는 33 이상 43 이하여야 합니다 (한국 범위).",
+          "invalidLongitude": "경도는 124 이상 132 이하여야 합니다 (한국 범위).",
+          "invalidUrl": "올바른 URL 형식을 입력해주세요 (예: https://example.com).",
+          "invalidInstagram": "@계정명, 계정명 또는 인스타그램 URL 형식으로 입력해주세요.",
+          "futureVerifiedAt": "검증일은 미래 날짜로 입력할 수 없습니다.",
+          "submitFailed": "저장에 실패했습니다. 다시 시도해주세요.",
+          "fixFieldErrors": "아래 오류를 수정한 후 저장해주세요."
         }
       }
     }

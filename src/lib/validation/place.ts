@@ -12,6 +12,25 @@ import {
   VACCINATION_CERTIFICATE_POLICIES,
 } from "@/lib/constants";
 
+// @handle, handle, or instagram.com URL
+const INSTAGRAM_REGEX =
+  /^(@?[a-zA-Z0-9_.]{1,30}|https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?)$/;
+
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+function isNotFutureKST(date: Date): boolean {
+  const nowKST = new Date(Date.now() + KST_OFFSET_MS);
+  const todayKST = nowKST.toISOString().slice(0, 10);
+  const verifiedKST = new Date(date.getTime() + KST_OFFSET_MS).toISOString().slice(0, 10);
+  return verifiedKST <= todayKST;
+}
+
+const verificationSchema = z.object({
+  method: z.enum(["PHONE", "DM", "WEBSITE", "ON_SITE"]),
+  verifiedAt: z.coerce.date().refine(isNotFutureKST, { message: "futureVerifiedAt" }),
+  note: z.string().max(500).optional(),
+});
+
 export const placeInputSchema = z.object({
   nameKr: z.string().min(1).max(200),
   nameEn: z.string().max(200).nullish(),
@@ -23,7 +42,11 @@ export const placeInputSchema = z.object({
   }),
   phone: z.string().max(30).nullish(),
   website: z.string().url().nullish(),
-  instagram: z.string().max(100).nullish(),
+  instagram: z
+    .string()
+    .max(100)
+    .nullish()
+    .refine((val) => !val || INSTAGRAM_REGEX.test(val), { message: "invalidInstagram" }),
   thumbnailUrl: z.string().url().nullish(),
   tourApiId: z.string().nullish(),
   visibility: z.enum(PLACE_VISIBILITY).default("DRAFT"),
@@ -40,23 +63,13 @@ export const placeInputSchema = z.object({
     cautions: z.string().max(1000).nullish(),
   }),
 
-  verification: z.object({
-    method: z.enum(["PHONE", "DM", "WEBSITE", "ON_SITE"]),
-    verifiedAt: z.coerce.date(),
-    note: z.string().max(500).optional(),
-  }),
+  verification: verificationSchema,
 });
 
 export type PlaceInput = z.infer<typeof placeInputSchema>;
 
 export const placeUpdateSchema = placeInputSchema.extend({
-  verification: z
-    .object({
-      method: z.enum(["PHONE", "DM", "WEBSITE", "ON_SITE"]),
-      verifiedAt: z.coerce.date(),
-      note: z.string().max(500).optional(),
-    })
-    .optional(),
+  verification: verificationSchema.optional(),
 });
 
 export type PlaceUpdate = z.infer<typeof placeUpdateSchema>;

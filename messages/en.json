@@ -387,6 +387,16 @@
           "VISIBLE": "Visible",
           "DRAFT": "Draft",
           "HIDDEN": "Hidden"
+        },
+        "validation": {
+          "required": "This field is required.",
+          "invalidLatitude": "Latitude must be between 33 and 43 (South Korea range).",
+          "invalidLongitude": "Longitude must be between 124 and 132 (South Korea range).",
+          "invalidUrl": "Please enter a valid URL (e.g. https://example.com).",
+          "invalidInstagram": "Enter a handle (@username or username) or a valid Instagram URL.",
+          "futureVerifiedAt": "Verification date cannot be in the future.",
+          "submitFailed": "Save failed. Please try again.",
+          "fixFieldErrors": "Please fix the errors below before saving."
         }
       }
     }

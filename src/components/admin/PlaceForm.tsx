@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
+import type { $ZodIssue } from "zod/v4/core";
 
 import {
   CARRIER_STROLLER_POLICIES,
@@ -15,6 +16,9 @@ import {
   REQUIRED_ITEMS,
   VACCINATION_CERTIFICATE_POLICIES,
 } from "@/lib/constants";
+import { cn } from "@/lib/utils";
+import { parsePlaceFormData } from "@/lib/places/form-data";
+import { placeInputSchema } from "@/lib/validation/place";
 
 import { LocationPickerMap } from "./LocationPickerMap";
 
@@ -120,6 +124,18 @@ function SubmitButton({ label }: { label: string }) {
   );
 }
 
+// Converts zod issue path to form field name (matching name attributes)
+function zodPathToField(path: PropertyKey[]): string {
+  const joined = path
+    .filter((p): p is string | number => typeof p !== "symbol")
+    .join(".");
+  if (joined === "location.lat") return "lat";
+  if (joined === "location.lng") return "lng";
+  return joined;
+}
+
+type FieldErrors = Record<string, string>;
+
 export function PlaceForm({
   action,
   initialValues,
@@ -129,9 +145,11 @@ export function PlaceForm({
   const [state, formAction] = useFormState(action, {});
   const tMap = useTranslations("admin.places.locationPicker");
   const t = useTranslations("admin.places.form");
+  const tV = useTranslations("admin.places.form.validation");
 
   const [lat, setLat] = useState<string>(String(initialValues?.lat ?? ""));
   const [lng, setLng] = useState<string>(String(initialValues?.lng ?? ""));
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const parsedLat = parseFloat(lat);
   const parsedLng = parseFloat(lng);
@@ -160,6 +178,55 @@ export function PlaceForm({
     const newLngStr = String(newLng);
     if (newLatStr !== lat) setLat(newLatStr);
     if (newLngStr !== lng) setLng(newLngStr);
+  }
+
+  function clearError(field: string) {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  }
+
+  function getErrorMessage(issue: $ZodIssue): string {
+    const pathStr = issue.path
+      .filter((p): p is string | number => typeof p !== "symbol")
+      .join(".");
+
+    if (issue.code === "custom") {
+      if (issue.message === "invalidInstagram") return tV("invalidInstagram");
+      if (issue.message === "futureVerifiedAt") return tV("futureVerifiedAt");
+    }
+
+    if (pathStr === "location.lat") return tV("invalidLatitude");
+    if (pathStr === "location.lng") return tV("invalidLongitude");
+
+    if (issue.code === "invalid_format" && "format" in issue && issue.format === "url") {
+      return tV("invalidUrl");
+    }
+
+    return tV("required");
+  }
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    const formData = new FormData(e.currentTarget);
+    const raw = parsePlaceFormData(formData);
+    const result = placeInputSchema.safeParse(raw);
+
+    if (!result.success) {
+      e.preventDefault();
+      const errors: FieldErrors = {};
+      for (const issue of result.error.issues as $ZodIssue[]) {
+        const field = zodPathToField(issue.path);
+        if (!errors[field]) {
+          errors[field] = getErrorMessage(issue);
+        }
+      }
+      setFieldErrors(errors);
+    } else {
+      setFieldErrors({});
+    }
   }
 
   // Label maps built from i18n — value attrs remain raw enum strings
@@ -195,12 +262,28 @@ export function PlaceForm({
   }
 
   const iv = initialValues;
+  const hasFieldErrors = Object.keys(fieldErrors).length > 0;
 
   return (
-    <form action={formAction} className="flex flex-col gap-8">
+    <form action={formAction} onSubmit={handleSubmit} className="flex flex-col gap-8" noValidate>
+      {/* 서버 에러 */}
       {state.error && (
-        <p className="rounded border border-destructive p-3 text-sm text-destructive">
+        <p
+          role="alert"
+          className="rounded border border-destructive p-3 text-sm text-destructive"
+        >
           {state.error}
+        </p>
+      )}
+
+      {/* 클라이언트 필드 에러 요약 */}
+      {hasFieldErrors && (
+        <p
+          role="alert"
+          aria-live="polite"
+          className="rounded border border-destructive p-3 text-sm text-destructive"
+        >
+          {tV("fixFieldErrors")}
         </p>
       )}
 
@@ -211,16 +294,29 @@ export function PlaceForm({
           <p className="text-sm text-muted-foreground">{t("basicInfo.description")}</p>
         </div>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">장소명 (한국어) *</span>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="nameKr" className="text-sm font-medium">
+            장소명 (한국어) *
+          </label>
           <input
+            id="nameKr"
             name="nameKr"
-            required
             maxLength={200}
             defaultValue={iv?.nameKr ?? ""}
-            className="rounded border px-3 py-2"
+            className={cn(
+              "rounded border px-3 py-2",
+              fieldErrors.nameKr && "border-destructive",
+            )}
+            aria-invalid={!!fieldErrors.nameKr}
+            aria-describedby={fieldErrors.nameKr ? "nameKr-error" : undefined}
+            onChange={() => clearError("nameKr")}
           />
-        </label>
+          {fieldErrors.nameKr && (
+            <p id="nameKr-error" className="text-sm text-destructive">
+              {fieldErrors.nameKr}
+            </p>
+          )}
+        </div>
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">장소명 (영어)</span>
@@ -232,13 +328,21 @@ export function PlaceForm({
           />
         </label>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">카테고리 *</span>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="category" className="text-sm font-medium">
+            카테고리 *
+          </label>
           <select
+            id="category"
             name="category"
-            required
             defaultValue={iv?.category ?? "RESTAURANT"}
-            className="rounded border px-3 py-2"
+            className={cn(
+              "rounded border px-3 py-2",
+              fieldErrors.category && "border-destructive",
+            )}
+            aria-invalid={!!fieldErrors.category}
+            aria-describedby={fieldErrors.category ? "category-error" : undefined}
+            onChange={() => clearError("category")}
           >
             {PLACE_CATEGORIES.map((c) => (
               <option key={c} value={c}>
@@ -246,65 +350,122 @@ export function PlaceForm({
               </option>
             ))}
           </select>
-        </label>
+          {fieldErrors.category && (
+            <p id="category-error" className="text-sm text-destructive">
+              {fieldErrors.category}
+            </p>
+          )}
+        </div>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">주소 *</span>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="address" className="text-sm font-medium">
+            주소 *
+          </label>
           <input
+            id="address"
             name="address"
-            required
             maxLength={500}
             defaultValue={iv?.address ?? ""}
-            className="rounded border px-3 py-2"
+            className={cn(
+              "rounded border px-3 py-2",
+              fieldErrors.address && "border-destructive",
+            )}
+            aria-invalid={!!fieldErrors.address}
+            aria-describedby={fieldErrors.address ? "address-error" : undefined}
+            onChange={() => clearError("address")}
           />
-        </label>
+          {fieldErrors.address && (
+            <p id="address-error" className="text-sm text-destructive">
+              {fieldErrors.address}
+            </p>
+          )}
+        </div>
 
-        {/* 지도 위치 선택 — description은 지도 내부 clickOrDrag 힌트로 대체 */}
+        {/* 지도 위치 선택 */}
         <div className="flex flex-col gap-2">
           <p className="text-sm font-medium">{tMap("title")}</p>
           <LocationPickerMap lat={mapLat} lng={mapLng} onChange={handleMapChange} />
         </div>
 
         <div className="flex gap-4">
-          <label className="flex flex-1 flex-col gap-1">
-            <span className="text-sm font-medium">위도 (lat) *</span>
+          <div className="flex flex-1 flex-col gap-1">
+            <label htmlFor="lat" className="text-sm font-medium">
+              위도 (lat) *
+            </label>
             <input
+              id="lat"
               name="lat"
               type="number"
               step="any"
               min={33}
               max={43}
-              required
               value={lat}
-              onChange={(e) => setLat(e.target.value)}
-              className="rounded border px-3 py-2"
+              onChange={(e) => {
+                setLat(e.target.value);
+                clearError("lat");
+              }}
+              className={cn(
+                "rounded border px-3 py-2",
+                fieldErrors.lat && "border-destructive",
+              )}
+              aria-invalid={!!fieldErrors.lat}
+              aria-describedby={fieldErrors.lat ? "lat-error" : undefined}
             />
-          </label>
-          <label className="flex flex-1 flex-col gap-1">
-            <span className="text-sm font-medium">경도 (lng) *</span>
+            {fieldErrors.lat && (
+              <p id="lat-error" className="text-sm text-destructive">
+                {fieldErrors.lat}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-1 flex-col gap-1">
+            <label htmlFor="lng" className="text-sm font-medium">
+              경도 (lng) *
+            </label>
             <input
+              id="lng"
               name="lng"
               type="number"
               step="any"
               min={124}
               max={132}
-              required
               value={lng}
-              onChange={(e) => setLng(e.target.value)}
-              className="rounded border px-3 py-2"
+              onChange={(e) => {
+                setLng(e.target.value);
+                clearError("lng");
+              }}
+              className={cn(
+                "rounded border px-3 py-2",
+                fieldErrors.lng && "border-destructive",
+              )}
+              aria-invalid={!!fieldErrors.lng}
+              aria-describedby={fieldErrors.lng ? "lng-error" : undefined}
             />
-          </label>
+            {fieldErrors.lng && (
+              <p id="lng-error" className="text-sm text-destructive">
+                {fieldErrors.lng}
+              </p>
+            )}
+          </div>
         </div>
-        {showInvalidWarning && (
+        {showInvalidWarning && !fieldErrors.lat && !fieldErrors.lng && (
           <p className="text-sm text-orange-600">{tMap("invalidCoordinates")}</p>
         )}
 
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">노출 상태</span>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="visibility" className="text-sm font-medium">
+            노출 상태
+          </label>
           <select
+            id="visibility"
             name="visibility"
             defaultValue={iv?.visibility ?? "DRAFT"}
-            className="rounded border px-3 py-2"
+            className={cn(
+              "rounded border px-3 py-2",
+              fieldErrors.visibility && "border-destructive",
+            )}
+            aria-invalid={!!fieldErrors.visibility}
+            aria-describedby={fieldErrors.visibility ? "visibility-error" : undefined}
+            onChange={() => clearError("visibility")}
           >
             {PLACE_VISIBILITY.map((v) => (
               <option key={v} value={v}>
@@ -312,7 +473,12 @@ export function PlaceForm({
               </option>
             ))}
           </select>
-        </label>
+          {fieldErrors.visibility && (
+            <p id="visibility-error" className="text-sm text-destructive">
+              {fieldErrors.visibility}
+            </p>
+          )}
+        </div>
       </section>
 
       {/* 연락처 / 링크 */}
@@ -323,47 +489,90 @@ export function PlaceForm({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium">전화번호</span>
-            <input
-              name="phone"
-              maxLength={30}
-              defaultValue={iv?.phone ?? ""}
-              className="rounded border px-3 py-2"
-            />
+          <label htmlFor="phone" className="text-sm font-medium">
+            전화번호
           </label>
+          <input
+            id="phone"
+            name="phone"
+            maxLength={30}
+            defaultValue={iv?.phone ?? ""}
+            className="rounded border px-3 py-2"
+          />
           <p className="text-xs text-muted-foreground">{t("phoneHelp")}</p>
         </div>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">웹사이트</span>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="website" className="text-sm font-medium">
+            웹사이트
+          </label>
           <input
+            id="website"
             name="website"
             type="url"
             defaultValue={iv?.website ?? ""}
-            className="rounded border px-3 py-2"
+            className={cn(
+              "rounded border px-3 py-2",
+              fieldErrors.website && "border-destructive",
+            )}
+            aria-invalid={!!fieldErrors.website}
+            aria-describedby={fieldErrors.website ? "website-error" : undefined}
+            onChange={() => clearError("website")}
           />
-        </label>
+          {fieldErrors.website && (
+            <p id="website-error" className="text-sm text-destructive">
+              {fieldErrors.website}
+            </p>
+          )}
+        </div>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">인스타그램</span>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="instagram" className="text-sm font-medium">
+            인스타그램
+          </label>
           <input
+            id="instagram"
             name="instagram"
             maxLength={100}
             defaultValue={iv?.instagram ?? ""}
-            className="rounded border px-3 py-2"
+            className={cn(
+              "rounded border px-3 py-2",
+              fieldErrors.instagram && "border-destructive",
+            )}
+            aria-invalid={!!fieldErrors.instagram}
+            aria-describedby={fieldErrors.instagram ? "instagram-error" : undefined}
+            onChange={() => clearError("instagram")}
           />
-        </label>
+          {fieldErrors.instagram && (
+            <p id="instagram-error" className="text-sm text-destructive">
+              {fieldErrors.instagram}
+            </p>
+          )}
+        </div>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">대표 이미지 URL</span>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="thumbnailUrl" className="text-sm font-medium">
+            대표 이미지 URL
+          </label>
           <input
+            id="thumbnailUrl"
             name="thumbnailUrl"
             type="url"
             defaultValue={iv?.thumbnailUrl ?? ""}
-            className="rounded border px-3 py-2"
+            className={cn(
+              "rounded border px-3 py-2",
+              fieldErrors.thumbnailUrl && "border-destructive",
+            )}
+            aria-invalid={!!fieldErrors.thumbnailUrl}
+            aria-describedby={fieldErrors.thumbnailUrl ? "thumbnailUrl-error" : undefined}
+            onChange={() => clearError("thumbnailUrl")}
           />
-        </label>
+          {fieldErrors.thumbnailUrl && (
+            <p id="thumbnailUrl-error" className="text-sm text-destructive">
+              {fieldErrors.thumbnailUrl}
+            </p>
+          )}
+        </div>
       </section>
 
       {/* 반려견 동반 조건 */}
@@ -373,13 +582,23 @@ export function PlaceForm({
           <p className="text-sm text-muted-foreground">{t("condition.description")}</p>
         </div>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">실내 동반 여부 *</span>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="condition.indoor" className="text-sm font-medium">
+            실내 동반 여부 *
+          </label>
           <select
+            id="condition.indoor"
             name="condition.indoor"
-            required
             defaultValue={iv?.condition?.indoor ?? "UNKNOWN"}
-            className="rounded border px-3 py-2"
+            className={cn(
+              "rounded border px-3 py-2",
+              fieldErrors["condition.indoor"] && "border-destructive",
+            )}
+            aria-invalid={!!fieldErrors["condition.indoor"]}
+            aria-describedby={
+              fieldErrors["condition.indoor"] ? "condition.indoor-error" : undefined
+            }
+            onChange={() => clearError("condition.indoor")}
           >
             {INDOOR_POLICIES.map((p) => (
               <option key={p} value={p}>
@@ -387,15 +606,32 @@ export function PlaceForm({
               </option>
             ))}
           </select>
-        </label>
+          {fieldErrors["condition.indoor"] && (
+            <p id="condition.indoor-error" className="text-sm text-destructive">
+              {fieldErrors["condition.indoor"]}
+            </p>
+          )}
+        </div>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">이동장/유모차 여부 *</span>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="condition.carrierStrollerPolicy" className="text-sm font-medium">
+            이동장/유모차 여부 *
+          </label>
           <select
+            id="condition.carrierStrollerPolicy"
             name="condition.carrierStrollerPolicy"
-            required
             defaultValue={iv?.condition?.carrierStrollerPolicy ?? "UNKNOWN"}
-            className="rounded border px-3 py-2"
+            className={cn(
+              "rounded border px-3 py-2",
+              fieldErrors["condition.carrierStrollerPolicy"] && "border-destructive",
+            )}
+            aria-invalid={!!fieldErrors["condition.carrierStrollerPolicy"]}
+            aria-describedby={
+              fieldErrors["condition.carrierStrollerPolicy"]
+                ? "condition.carrierStrollerPolicy-error"
+                : undefined
+            }
+            onChange={() => clearError("condition.carrierStrollerPolicy")}
           >
             {CARRIER_STROLLER_POLICIES.map((p) => (
               <option key={p} value={p}>
@@ -403,15 +639,30 @@ export function PlaceForm({
               </option>
             ))}
           </select>
-        </label>
+          {fieldErrors["condition.carrierStrollerPolicy"] && (
+            <p id="condition.carrierStrollerPolicy-error" className="text-sm text-destructive">
+              {fieldErrors["condition.carrierStrollerPolicy"]}
+            </p>
+          )}
+        </div>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">반려견 최대 허용 크기 *</span>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="condition.maxDogSize" className="text-sm font-medium">
+            반려견 최대 허용 크기 *
+          </label>
           <select
+            id="condition.maxDogSize"
             name="condition.maxDogSize"
-            required
             defaultValue={iv?.condition?.maxDogSize ?? "UNKNOWN"}
-            className="rounded border px-3 py-2"
+            className={cn(
+              "rounded border px-3 py-2",
+              fieldErrors["condition.maxDogSize"] && "border-destructive",
+            )}
+            aria-invalid={!!fieldErrors["condition.maxDogSize"]}
+            aria-describedby={
+              fieldErrors["condition.maxDogSize"] ? "condition.maxDogSize-error" : undefined
+            }
+            onChange={() => clearError("condition.maxDogSize")}
           >
             {MAX_DOG_SIZES.map((s) => (
               <option key={s} value={s}>
@@ -419,15 +670,30 @@ export function PlaceForm({
               </option>
             ))}
           </select>
-        </label>
+          {fieldErrors["condition.maxDogSize"] && (
+            <p id="condition.maxDogSize-error" className="text-sm text-destructive">
+              {fieldErrors["condition.maxDogSize"]}
+            </p>
+          )}
+        </div>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">목줄 여부 *</span>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="condition.leash" className="text-sm font-medium">
+            목줄 여부 *
+          </label>
           <select
+            id="condition.leash"
             name="condition.leash"
-            required
             defaultValue={iv?.condition?.leash ?? "UNKNOWN"}
-            className="rounded border px-3 py-2"
+            className={cn(
+              "rounded border px-3 py-2",
+              fieldErrors["condition.leash"] && "border-destructive",
+            )}
+            aria-invalid={!!fieldErrors["condition.leash"]}
+            aria-describedby={
+              fieldErrors["condition.leash"] ? "condition.leash-error" : undefined
+            }
+            onChange={() => clearError("condition.leash")}
           >
             {LEASH_POLICIES.map((p) => (
               <option key={p} value={p}>
@@ -435,15 +701,30 @@ export function PlaceForm({
               </option>
             ))}
           </select>
-        </label>
+          {fieldErrors["condition.leash"] && (
+            <p id="condition.leash-error" className="text-sm text-destructive">
+              {fieldErrors["condition.leash"]}
+            </p>
+          )}
+        </div>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">입마개 여부 *</span>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="condition.muzzle" className="text-sm font-medium">
+            입마개 여부 *
+          </label>
           <select
+            id="condition.muzzle"
             name="condition.muzzle"
-            required
             defaultValue={iv?.condition?.muzzle ?? "UNKNOWN"}
-            className="rounded border px-3 py-2"
+            className={cn(
+              "rounded border px-3 py-2",
+              fieldErrors["condition.muzzle"] && "border-destructive",
+            )}
+            aria-invalid={!!fieldErrors["condition.muzzle"]}
+            aria-describedby={
+              fieldErrors["condition.muzzle"] ? "condition.muzzle-error" : undefined
+            }
+            onChange={() => clearError("condition.muzzle")}
           >
             {MUZZLE_POLICIES.map((p) => (
               <option key={p} value={p}>
@@ -451,15 +732,32 @@ export function PlaceForm({
               </option>
             ))}
           </select>
-        </label>
+          {fieldErrors["condition.muzzle"] && (
+            <p id="condition.muzzle-error" className="text-sm text-destructive">
+              {fieldErrors["condition.muzzle"]}
+            </p>
+          )}
+        </div>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">{t("vaccinationCertificate.label")} *</span>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="condition.vaccinationCertificatePolicy" className="text-sm font-medium">
+            {t("vaccinationCertificate.label")} *
+          </label>
           <select
+            id="condition.vaccinationCertificatePolicy"
             name="condition.vaccinationCertificatePolicy"
-            required
             defaultValue={iv?.condition?.vaccinationCertificatePolicy ?? "UNKNOWN"}
-            className="rounded border px-3 py-2"
+            className={cn(
+              "rounded border px-3 py-2",
+              fieldErrors["condition.vaccinationCertificatePolicy"] && "border-destructive",
+            )}
+            aria-invalid={!!fieldErrors["condition.vaccinationCertificatePolicy"]}
+            aria-describedby={
+              fieldErrors["condition.vaccinationCertificatePolicy"]
+                ? "condition.vaccinationCertificatePolicy-error"
+                : undefined
+            }
+            onChange={() => clearError("condition.vaccinationCertificatePolicy")}
           >
             {VACCINATION_CERTIFICATE_POLICIES.map((p) => (
               <option key={p} value={p}>
@@ -467,7 +765,15 @@ export function PlaceForm({
               </option>
             ))}
           </select>
-        </label>
+          {fieldErrors["condition.vaccinationCertificatePolicy"] && (
+            <p
+              id="condition.vaccinationCertificatePolicy-error"
+              className="text-sm text-destructive"
+            >
+              {fieldErrors["condition.vaccinationCertificatePolicy"]}
+            </p>
+          )}
+        </div>
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">견종 제한</span>
@@ -518,13 +824,23 @@ export function PlaceForm({
           <p className="text-sm text-muted-foreground">{t("verification.description")}</p>
         </div>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">확인 방법 *</span>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="verification.method" className="text-sm font-medium">
+            확인 방법 *
+          </label>
           <select
+            id="verification.method"
             name="verification.method"
-            required
             defaultValue={iv?.verification?.method ?? "PHONE"}
-            className="rounded border px-3 py-2"
+            className={cn(
+              "rounded border px-3 py-2",
+              fieldErrors["verification.method"] && "border-destructive",
+            )}
+            aria-invalid={!!fieldErrors["verification.method"]}
+            aria-describedby={
+              fieldErrors["verification.method"] ? "verification.method-error" : undefined
+            }
+            onChange={() => clearError("verification.method")}
           >
             {(["PHONE", "DM", "WEBSITE", "ON_SITE"] as const).map((m) => (
               <option key={m} value={m}>
@@ -532,18 +848,40 @@ export function PlaceForm({
               </option>
             ))}
           </select>
-        </label>
+          {fieldErrors["verification.method"] && (
+            <p id="verification.method-error" className="text-sm text-destructive">
+              {fieldErrors["verification.method"]}
+            </p>
+          )}
+        </div>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">확인일 *</span>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="verification.verifiedAt" className="text-sm font-medium">
+            확인일 *
+          </label>
           <input
+            id="verification.verifiedAt"
             name="verification.verifiedAt"
             type="date"
-            required
             defaultValue={iv?.verification?.verifiedAt ?? ""}
-            className="rounded border px-3 py-2"
+            className={cn(
+              "rounded border px-3 py-2",
+              fieldErrors["verification.verifiedAt"] && "border-destructive",
+            )}
+            aria-invalid={!!fieldErrors["verification.verifiedAt"]}
+            aria-describedby={
+              fieldErrors["verification.verifiedAt"]
+                ? "verification.verifiedAt-error"
+                : undefined
+            }
+            onChange={() => clearError("verification.verifiedAt")}
           />
-        </label>
+          {fieldErrors["verification.verifiedAt"] && (
+            <p id="verification.verifiedAt-error" className="text-sm text-destructive">
+              {fieldErrors["verification.verifiedAt"]}
+            </p>
+          )}
+        </div>
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">비고</span>
@@ -565,14 +903,15 @@ export function PlaceForm({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium">TourAPI ID</span>
-            <input
-              name="tourApiId"
-              defaultValue={iv?.tourApiId ?? ""}
-              className="rounded border px-3 py-2"
-            />
+          <label htmlFor="tourApiId" className="text-sm font-medium">
+            TourAPI ID
           </label>
+          <input
+            id="tourApiId"
+            name="tourApiId"
+            defaultValue={iv?.tourApiId ?? ""}
+            className="rounded border px-3 py-2"
+          />
           <p className="text-xs text-muted-foreground">{t("tourApiIdHelp")}</p>
         </div>
       </section>
