@@ -16,6 +16,9 @@ import {
 const INSTAGRAM_REGEX =
   /^(@?[a-zA-Z0-9_.]{1,30}|https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?)$/;
 
+// Digits, spaces, hyphens, plus sign, parentheses
+const PHONE_REGEX = /^[\d\s\-()+]+$/;
+
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 
 function isNotFutureKST(date: Date): boolean {
@@ -25,13 +28,7 @@ function isNotFutureKST(date: Date): boolean {
   return verifiedKST <= todayKST;
 }
 
-const verificationSchema = z.object({
-  method: z.enum(["PHONE", "DM", "WEBSITE", "ON_SITE"]),
-  verifiedAt: z.coerce.date().refine(isNotFutureKST, { message: "futureVerifiedAt" }),
-  note: z.string().max(500).optional(),
-});
-
-export const placeInputSchema = z.object({
+const placeBaseSchema = z.object({
   nameKr: z.string().min(1).max(200),
   nameEn: z.string().max(200).nullish(),
   category: z.enum(PLACE_CATEGORIES),
@@ -40,7 +37,11 @@ export const placeInputSchema = z.object({
     lat: z.number().min(33).max(43),
     lng: z.number().min(124).max(132),
   }),
-  phone: z.string().max(30).nullish(),
+  phone: z
+    .string()
+    .max(30)
+    .nullish()
+    .refine((val) => !val || PHONE_REGEX.test(val), { message: "invalidPhone" }),
   website: z.string().url().nullish(),
   instagram: z
     .string()
@@ -62,14 +63,76 @@ export const placeInputSchema = z.object({
     requiredItems: z.array(z.enum(REQUIRED_ITEMS)),
     cautions: z.string().max(1000).nullish(),
   }),
+});
 
+const verificationSchema = z.object({
+  method: z.enum(["PHONE", "DM", "WEBSITE", "ON_SITE"]),
+  verifiedAt: z.coerce.date().refine(isNotFutureKST, { message: "futureVerifiedAt" }),
+  note: z.string().max(500).optional(),
+});
+
+export const placeInputSchema = placeBaseSchema.extend({
   verification: verificationSchema,
 });
 
 export type PlaceInput = z.infer<typeof placeInputSchema>;
 
-export const placeUpdateSchema = placeInputSchema.extend({
-  verification: verificationSchema.optional(),
-});
+// For update: verification fields arrive as raw strings from the form.
+// superRefine validates cross-field consistency; transform converts to typed output.
+export const placeUpdateSchema = placeBaseSchema
+  .extend({
+    verification: z.object({
+      method: z.string(),
+      verifiedAt: z.string(),
+      note: z.string().optional(),
+    }),
+  })
+  .superRefine((data, ctx) => {
+    const { method, verifiedAt } = data.verification;
+    const hasMethod = method !== "";
+    const hasVerifiedAt = verifiedAt !== "";
+
+    if (hasMethod !== hasVerifiedAt) {
+      ctx.addIssue({
+        code: "custom" as const,
+        message: "verificationIncomplete",
+        path: ["verification"],
+      });
+      return;
+    }
+
+    if (hasMethod && hasVerifiedAt) {
+      const date = new Date(verifiedAt);
+      if (isNaN(date.getTime())) {
+        ctx.addIssue({
+          code: "custom" as const,
+          message: "required",
+          path: ["verification", "verifiedAt"],
+        });
+        return;
+      }
+      if (!isNotFutureKST(date)) {
+        ctx.addIssue({
+          code: "custom" as const,
+          message: "futureVerifiedAt",
+          path: ["verification", "verifiedAt"],
+        });
+      }
+    }
+  })
+  .transform((data) => {
+    const { verification: rawV, ...rest } = data;
+    const hasVerification = rawV.method !== "" && rawV.verifiedAt !== "";
+    return {
+      ...rest,
+      verification: hasVerification
+        ? {
+            method: rawV.method as "PHONE" | "DM" | "WEBSITE" | "ON_SITE",
+            verifiedAt: new Date(rawV.verifiedAt),
+            note: rawV.note,
+          }
+        : undefined,
+    };
+  });
 
 export type PlaceUpdate = z.infer<typeof placeUpdateSchema>;

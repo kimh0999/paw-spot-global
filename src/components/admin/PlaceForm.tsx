@@ -18,7 +18,7 @@ import {
 } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { parsePlaceFormData } from "@/lib/places/form-data";
-import { placeInputSchema } from "@/lib/validation/place";
+import { placeInputSchema, placeUpdateSchema } from "@/lib/validation/place";
 
 import { LocationPickerMap } from "./LocationPickerMap";
 
@@ -26,6 +26,7 @@ type ActionState = {
   success?: true;
   placeId?: string;
   error?: string;
+  fieldErrors?: Record<string, string>;
 };
 
 export type PlaceFormInitialValues = {
@@ -61,6 +62,7 @@ export type PlaceFormInitialValues = {
 
 type PlaceFormProps = {
   action: (prevState: ActionState, formData: FormData) => Promise<ActionState>;
+  mode: "create" | "edit";
   initialValues?: PlaceFormInitialValues;
   submitLabel?: string;
   successContent?: React.ReactNode;
@@ -138,6 +140,7 @@ type FieldErrors = Record<string, string>;
 
 export function PlaceForm({
   action,
+  mode,
   initialValues,
   submitLabel = "장소 등록",
   successContent,
@@ -150,6 +153,10 @@ export function PlaceForm({
   const [lat, setLat] = useState<string>(String(initialValues?.lat ?? ""));
   const [lng, setLng] = useState<string>(String(initialValues?.lng ?? ""));
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+
+  // Merge server-side field errors (state.fieldErrors) with client-side errors.
+  // Client-side errors take precedence for fields the user has corrected.
+  const allFieldErrors: FieldErrors = { ...(state.fieldErrors ?? {}), ...fieldErrors };
 
   const parsedLat = parseFloat(lat);
   const parsedLng = parseFloat(lng);
@@ -197,6 +204,8 @@ export function PlaceForm({
     if (issue.code === "custom") {
       if (issue.message === "invalidInstagram") return tV("invalidInstagram");
       if (issue.message === "futureVerifiedAt") return tV("futureVerifiedAt");
+      if (issue.message === "invalidPhone") return tV("invalidPhone");
+      if (issue.message === "verificationIncomplete") return tV("verificationIncomplete");
     }
 
     if (pathStr === "location.lat") return tV("invalidLatitude");
@@ -212,7 +221,8 @@ export function PlaceForm({
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     const formData = new FormData(e.currentTarget);
     const raw = parsePlaceFormData(formData);
-    const result = placeInputSchema.safeParse(raw);
+    const result =
+      mode === "create" ? placeInputSchema.safeParse(raw) : placeUpdateSchema.safeParse(raw);
 
     if (!result.success) {
       e.preventDefault();
@@ -262,7 +272,7 @@ export function PlaceForm({
   }
 
   const iv = initialValues;
-  const hasFieldErrors = Object.keys(fieldErrors).length > 0;
+  const hasFieldErrors = Object.keys(allFieldErrors).length > 0;
 
   return (
     <form action={formAction} onSubmit={handleSubmit} className="flex flex-col gap-8" noValidate>
@@ -276,7 +286,7 @@ export function PlaceForm({
         </p>
       )}
 
-      {/* 클라이언트 필드 에러 요약 */}
+      {/* 클라이언트 / 서버 필드 에러 요약 */}
       {hasFieldErrors && (
         <p
           role="alert"
@@ -305,15 +315,15 @@ export function PlaceForm({
             defaultValue={iv?.nameKr ?? ""}
             className={cn(
               "rounded border px-3 py-2",
-              fieldErrors.nameKr && "border-destructive",
+              allFieldErrors["nameKr"] && "border-destructive",
             )}
-            aria-invalid={!!fieldErrors.nameKr}
-            aria-describedby={fieldErrors.nameKr ? "nameKr-error" : undefined}
+            aria-invalid={!!allFieldErrors["nameKr"]}
+            aria-describedby={allFieldErrors["nameKr"] ? "nameKr-error" : undefined}
             onChange={() => clearError("nameKr")}
           />
-          {fieldErrors.nameKr && (
+          {allFieldErrors["nameKr"] && (
             <p id="nameKr-error" className="text-sm text-destructive">
-              {fieldErrors.nameKr}
+              {allFieldErrors["nameKr"]}
             </p>
           )}
         </div>
@@ -338,10 +348,10 @@ export function PlaceForm({
             defaultValue={iv?.category ?? "RESTAURANT"}
             className={cn(
               "rounded border px-3 py-2",
-              fieldErrors.category && "border-destructive",
+              allFieldErrors["category"] && "border-destructive",
             )}
-            aria-invalid={!!fieldErrors.category}
-            aria-describedby={fieldErrors.category ? "category-error" : undefined}
+            aria-invalid={!!allFieldErrors["category"]}
+            aria-describedby={allFieldErrors["category"] ? "category-error" : undefined}
             onChange={() => clearError("category")}
           >
             {PLACE_CATEGORIES.map((c) => (
@@ -350,9 +360,9 @@ export function PlaceForm({
               </option>
             ))}
           </select>
-          {fieldErrors.category && (
+          {allFieldErrors["category"] && (
             <p id="category-error" className="text-sm text-destructive">
-              {fieldErrors.category}
+              {allFieldErrors["category"]}
             </p>
           )}
         </div>
@@ -368,15 +378,15 @@ export function PlaceForm({
             defaultValue={iv?.address ?? ""}
             className={cn(
               "rounded border px-3 py-2",
-              fieldErrors.address && "border-destructive",
+              allFieldErrors["address"] && "border-destructive",
             )}
-            aria-invalid={!!fieldErrors.address}
-            aria-describedby={fieldErrors.address ? "address-error" : undefined}
+            aria-invalid={!!allFieldErrors["address"]}
+            aria-describedby={allFieldErrors["address"] ? "address-error" : undefined}
             onChange={() => clearError("address")}
           />
-          {fieldErrors.address && (
+          {allFieldErrors["address"] && (
             <p id="address-error" className="text-sm text-destructive">
-              {fieldErrors.address}
+              {allFieldErrors["address"]}
             </p>
           )}
         </div>
@@ -406,14 +416,14 @@ export function PlaceForm({
               }}
               className={cn(
                 "rounded border px-3 py-2",
-                fieldErrors.lat && "border-destructive",
+                allFieldErrors["lat"] && "border-destructive",
               )}
-              aria-invalid={!!fieldErrors.lat}
-              aria-describedby={fieldErrors.lat ? "lat-error" : undefined}
+              aria-invalid={!!allFieldErrors["lat"]}
+              aria-describedby={allFieldErrors["lat"] ? "lat-error" : undefined}
             />
-            {fieldErrors.lat && (
+            {allFieldErrors["lat"] && (
               <p id="lat-error" className="text-sm text-destructive">
-                {fieldErrors.lat}
+                {allFieldErrors["lat"]}
               </p>
             )}
           </div>
@@ -435,19 +445,19 @@ export function PlaceForm({
               }}
               className={cn(
                 "rounded border px-3 py-2",
-                fieldErrors.lng && "border-destructive",
+                allFieldErrors["lng"] && "border-destructive",
               )}
-              aria-invalid={!!fieldErrors.lng}
-              aria-describedby={fieldErrors.lng ? "lng-error" : undefined}
+              aria-invalid={!!allFieldErrors["lng"]}
+              aria-describedby={allFieldErrors["lng"] ? "lng-error" : undefined}
             />
-            {fieldErrors.lng && (
+            {allFieldErrors["lng"] && (
               <p id="lng-error" className="text-sm text-destructive">
-                {fieldErrors.lng}
+                {allFieldErrors["lng"]}
               </p>
             )}
           </div>
         </div>
-        {showInvalidWarning && !fieldErrors.lat && !fieldErrors.lng && (
+        {showInvalidWarning && !allFieldErrors["lat"] && !allFieldErrors["lng"] && (
           <p className="text-sm text-orange-600">{tMap("invalidCoordinates")}</p>
         )}
 
@@ -461,10 +471,10 @@ export function PlaceForm({
             defaultValue={iv?.visibility ?? "DRAFT"}
             className={cn(
               "rounded border px-3 py-2",
-              fieldErrors.visibility && "border-destructive",
+              allFieldErrors["visibility"] && "border-destructive",
             )}
-            aria-invalid={!!fieldErrors.visibility}
-            aria-describedby={fieldErrors.visibility ? "visibility-error" : undefined}
+            aria-invalid={!!allFieldErrors["visibility"]}
+            aria-describedby={allFieldErrors["visibility"] ? "visibility-error" : undefined}
             onChange={() => clearError("visibility")}
           >
             {PLACE_VISIBILITY.map((v) => (
@@ -473,9 +483,9 @@ export function PlaceForm({
               </option>
             ))}
           </select>
-          {fieldErrors.visibility && (
+          {allFieldErrors["visibility"] && (
             <p id="visibility-error" className="text-sm text-destructive">
-              {fieldErrors.visibility}
+              {allFieldErrors["visibility"]}
             </p>
           )}
         </div>
@@ -497,8 +507,19 @@ export function PlaceForm({
             name="phone"
             maxLength={30}
             defaultValue={iv?.phone ?? ""}
-            className="rounded border px-3 py-2"
+            className={cn(
+              "rounded border px-3 py-2",
+              allFieldErrors["phone"] && "border-destructive",
+            )}
+            aria-invalid={!!allFieldErrors["phone"]}
+            aria-describedby={allFieldErrors["phone"] ? "phone-error" : undefined}
+            onChange={() => clearError("phone")}
           />
+          {allFieldErrors["phone"] && (
+            <p id="phone-error" className="text-sm text-destructive">
+              {allFieldErrors["phone"]}
+            </p>
+          )}
           <p className="text-xs text-muted-foreground">{t("phoneHelp")}</p>
         </div>
 
@@ -513,15 +534,15 @@ export function PlaceForm({
             defaultValue={iv?.website ?? ""}
             className={cn(
               "rounded border px-3 py-2",
-              fieldErrors.website && "border-destructive",
+              allFieldErrors["website"] && "border-destructive",
             )}
-            aria-invalid={!!fieldErrors.website}
-            aria-describedby={fieldErrors.website ? "website-error" : undefined}
+            aria-invalid={!!allFieldErrors["website"]}
+            aria-describedby={allFieldErrors["website"] ? "website-error" : undefined}
             onChange={() => clearError("website")}
           />
-          {fieldErrors.website && (
+          {allFieldErrors["website"] && (
             <p id="website-error" className="text-sm text-destructive">
-              {fieldErrors.website}
+              {allFieldErrors["website"]}
             </p>
           )}
         </div>
@@ -537,15 +558,15 @@ export function PlaceForm({
             defaultValue={iv?.instagram ?? ""}
             className={cn(
               "rounded border px-3 py-2",
-              fieldErrors.instagram && "border-destructive",
+              allFieldErrors["instagram"] && "border-destructive",
             )}
-            aria-invalid={!!fieldErrors.instagram}
-            aria-describedby={fieldErrors.instagram ? "instagram-error" : undefined}
+            aria-invalid={!!allFieldErrors["instagram"]}
+            aria-describedby={allFieldErrors["instagram"] ? "instagram-error" : undefined}
             onChange={() => clearError("instagram")}
           />
-          {fieldErrors.instagram && (
+          {allFieldErrors["instagram"] && (
             <p id="instagram-error" className="text-sm text-destructive">
-              {fieldErrors.instagram}
+              {allFieldErrors["instagram"]}
             </p>
           )}
         </div>
@@ -561,15 +582,15 @@ export function PlaceForm({
             defaultValue={iv?.thumbnailUrl ?? ""}
             className={cn(
               "rounded border px-3 py-2",
-              fieldErrors.thumbnailUrl && "border-destructive",
+              allFieldErrors["thumbnailUrl"] && "border-destructive",
             )}
-            aria-invalid={!!fieldErrors.thumbnailUrl}
-            aria-describedby={fieldErrors.thumbnailUrl ? "thumbnailUrl-error" : undefined}
+            aria-invalid={!!allFieldErrors["thumbnailUrl"]}
+            aria-describedby={allFieldErrors["thumbnailUrl"] ? "thumbnailUrl-error" : undefined}
             onChange={() => clearError("thumbnailUrl")}
           />
-          {fieldErrors.thumbnailUrl && (
+          {allFieldErrors["thumbnailUrl"] && (
             <p id="thumbnailUrl-error" className="text-sm text-destructive">
-              {fieldErrors.thumbnailUrl}
+              {allFieldErrors["thumbnailUrl"]}
             </p>
           )}
         </div>
@@ -592,11 +613,11 @@ export function PlaceForm({
             defaultValue={iv?.condition?.indoor ?? "UNKNOWN"}
             className={cn(
               "rounded border px-3 py-2",
-              fieldErrors["condition.indoor"] && "border-destructive",
+              allFieldErrors["condition.indoor"] && "border-destructive",
             )}
-            aria-invalid={!!fieldErrors["condition.indoor"]}
+            aria-invalid={!!allFieldErrors["condition.indoor"]}
             aria-describedby={
-              fieldErrors["condition.indoor"] ? "condition.indoor-error" : undefined
+              allFieldErrors["condition.indoor"] ? "condition.indoor-error" : undefined
             }
             onChange={() => clearError("condition.indoor")}
           >
@@ -606,9 +627,9 @@ export function PlaceForm({
               </option>
             ))}
           </select>
-          {fieldErrors["condition.indoor"] && (
+          {allFieldErrors["condition.indoor"] && (
             <p id="condition.indoor-error" className="text-sm text-destructive">
-              {fieldErrors["condition.indoor"]}
+              {allFieldErrors["condition.indoor"]}
             </p>
           )}
         </div>
@@ -623,11 +644,11 @@ export function PlaceForm({
             defaultValue={iv?.condition?.carrierStrollerPolicy ?? "UNKNOWN"}
             className={cn(
               "rounded border px-3 py-2",
-              fieldErrors["condition.carrierStrollerPolicy"] && "border-destructive",
+              allFieldErrors["condition.carrierStrollerPolicy"] && "border-destructive",
             )}
-            aria-invalid={!!fieldErrors["condition.carrierStrollerPolicy"]}
+            aria-invalid={!!allFieldErrors["condition.carrierStrollerPolicy"]}
             aria-describedby={
-              fieldErrors["condition.carrierStrollerPolicy"]
+              allFieldErrors["condition.carrierStrollerPolicy"]
                 ? "condition.carrierStrollerPolicy-error"
                 : undefined
             }
@@ -639,9 +660,9 @@ export function PlaceForm({
               </option>
             ))}
           </select>
-          {fieldErrors["condition.carrierStrollerPolicy"] && (
+          {allFieldErrors["condition.carrierStrollerPolicy"] && (
             <p id="condition.carrierStrollerPolicy-error" className="text-sm text-destructive">
-              {fieldErrors["condition.carrierStrollerPolicy"]}
+              {allFieldErrors["condition.carrierStrollerPolicy"]}
             </p>
           )}
         </div>
@@ -656,11 +677,11 @@ export function PlaceForm({
             defaultValue={iv?.condition?.maxDogSize ?? "UNKNOWN"}
             className={cn(
               "rounded border px-3 py-2",
-              fieldErrors["condition.maxDogSize"] && "border-destructive",
+              allFieldErrors["condition.maxDogSize"] && "border-destructive",
             )}
-            aria-invalid={!!fieldErrors["condition.maxDogSize"]}
+            aria-invalid={!!allFieldErrors["condition.maxDogSize"]}
             aria-describedby={
-              fieldErrors["condition.maxDogSize"] ? "condition.maxDogSize-error" : undefined
+              allFieldErrors["condition.maxDogSize"] ? "condition.maxDogSize-error" : undefined
             }
             onChange={() => clearError("condition.maxDogSize")}
           >
@@ -670,9 +691,9 @@ export function PlaceForm({
               </option>
             ))}
           </select>
-          {fieldErrors["condition.maxDogSize"] && (
+          {allFieldErrors["condition.maxDogSize"] && (
             <p id="condition.maxDogSize-error" className="text-sm text-destructive">
-              {fieldErrors["condition.maxDogSize"]}
+              {allFieldErrors["condition.maxDogSize"]}
             </p>
           )}
         </div>
@@ -687,11 +708,11 @@ export function PlaceForm({
             defaultValue={iv?.condition?.leash ?? "UNKNOWN"}
             className={cn(
               "rounded border px-3 py-2",
-              fieldErrors["condition.leash"] && "border-destructive",
+              allFieldErrors["condition.leash"] && "border-destructive",
             )}
-            aria-invalid={!!fieldErrors["condition.leash"]}
+            aria-invalid={!!allFieldErrors["condition.leash"]}
             aria-describedby={
-              fieldErrors["condition.leash"] ? "condition.leash-error" : undefined
+              allFieldErrors["condition.leash"] ? "condition.leash-error" : undefined
             }
             onChange={() => clearError("condition.leash")}
           >
@@ -701,9 +722,9 @@ export function PlaceForm({
               </option>
             ))}
           </select>
-          {fieldErrors["condition.leash"] && (
+          {allFieldErrors["condition.leash"] && (
             <p id="condition.leash-error" className="text-sm text-destructive">
-              {fieldErrors["condition.leash"]}
+              {allFieldErrors["condition.leash"]}
             </p>
           )}
         </div>
@@ -718,11 +739,11 @@ export function PlaceForm({
             defaultValue={iv?.condition?.muzzle ?? "UNKNOWN"}
             className={cn(
               "rounded border px-3 py-2",
-              fieldErrors["condition.muzzle"] && "border-destructive",
+              allFieldErrors["condition.muzzle"] && "border-destructive",
             )}
-            aria-invalid={!!fieldErrors["condition.muzzle"]}
+            aria-invalid={!!allFieldErrors["condition.muzzle"]}
             aria-describedby={
-              fieldErrors["condition.muzzle"] ? "condition.muzzle-error" : undefined
+              allFieldErrors["condition.muzzle"] ? "condition.muzzle-error" : undefined
             }
             onChange={() => clearError("condition.muzzle")}
           >
@@ -732,9 +753,9 @@ export function PlaceForm({
               </option>
             ))}
           </select>
-          {fieldErrors["condition.muzzle"] && (
+          {allFieldErrors["condition.muzzle"] && (
             <p id="condition.muzzle-error" className="text-sm text-destructive">
-              {fieldErrors["condition.muzzle"]}
+              {allFieldErrors["condition.muzzle"]}
             </p>
           )}
         </div>
@@ -749,11 +770,11 @@ export function PlaceForm({
             defaultValue={iv?.condition?.vaccinationCertificatePolicy ?? "UNKNOWN"}
             className={cn(
               "rounded border px-3 py-2",
-              fieldErrors["condition.vaccinationCertificatePolicy"] && "border-destructive",
+              allFieldErrors["condition.vaccinationCertificatePolicy"] && "border-destructive",
             )}
-            aria-invalid={!!fieldErrors["condition.vaccinationCertificatePolicy"]}
+            aria-invalid={!!allFieldErrors["condition.vaccinationCertificatePolicy"]}
             aria-describedby={
-              fieldErrors["condition.vaccinationCertificatePolicy"]
+              allFieldErrors["condition.vaccinationCertificatePolicy"]
                 ? "condition.vaccinationCertificatePolicy-error"
                 : undefined
             }
@@ -765,12 +786,12 @@ export function PlaceForm({
               </option>
             ))}
           </select>
-          {fieldErrors["condition.vaccinationCertificatePolicy"] && (
+          {allFieldErrors["condition.vaccinationCertificatePolicy"] && (
             <p
               id="condition.vaccinationCertificatePolicy-error"
               className="text-sm text-destructive"
             >
-              {fieldErrors["condition.vaccinationCertificatePolicy"]}
+              {allFieldErrors["condition.vaccinationCertificatePolicy"]}
             </p>
           )}
         </div>
@@ -824,40 +845,51 @@ export function PlaceForm({
           <p className="text-sm text-muted-foreground">{t("verification.description")}</p>
         </div>
 
+        {/* Cross-field verification error (edit: one field filled without the other) */}
+        {allFieldErrors["verification"] && (
+          <p className="text-sm text-destructive">{allFieldErrors["verification"]}</p>
+        )}
+
         <div className="flex flex-col gap-1">
           <label htmlFor="verification.method" className="text-sm font-medium">
-            확인 방법 *
+            확인 방법 {mode === "create" ? "*" : ""}
           </label>
           <select
             id="verification.method"
             name="verification.method"
-            defaultValue={iv?.verification?.method ?? "PHONE"}
+            defaultValue={
+              mode === "edit"
+                ? (iv?.verification?.method ?? "")
+                : (iv?.verification?.method ?? "PHONE")
+            }
             className={cn(
               "rounded border px-3 py-2",
-              fieldErrors["verification.method"] && "border-destructive",
+              allFieldErrors["verification.method"] && "border-destructive",
             )}
-            aria-invalid={!!fieldErrors["verification.method"]}
+            aria-invalid={!!allFieldErrors["verification.method"]}
             aria-describedby={
-              fieldErrors["verification.method"] ? "verification.method-error" : undefined
+              allFieldErrors["verification.method"] ? "verification.method-error" : undefined
             }
             onChange={() => clearError("verification.method")}
           >
+            {/* Edit mode: allow leaving verification unchanged by selecting empty */}
+            {mode === "edit" && <option value="">—</option>}
             {(["PHONE", "DM", "WEBSITE", "ON_SITE"] as const).map((m) => (
               <option key={m} value={m}>
                 {VERIFICATION_METHOD_LABELS[m] ?? m}
               </option>
             ))}
           </select>
-          {fieldErrors["verification.method"] && (
+          {allFieldErrors["verification.method"] && (
             <p id="verification.method-error" className="text-sm text-destructive">
-              {fieldErrors["verification.method"]}
+              {allFieldErrors["verification.method"]}
             </p>
           )}
         </div>
 
         <div className="flex flex-col gap-1">
           <label htmlFor="verification.verifiedAt" className="text-sm font-medium">
-            확인일 *
+            확인일 {mode === "create" ? "*" : ""}
           </label>
           <input
             id="verification.verifiedAt"
@@ -866,19 +898,19 @@ export function PlaceForm({
             defaultValue={iv?.verification?.verifiedAt ?? ""}
             className={cn(
               "rounded border px-3 py-2",
-              fieldErrors["verification.verifiedAt"] && "border-destructive",
+              allFieldErrors["verification.verifiedAt"] && "border-destructive",
             )}
-            aria-invalid={!!fieldErrors["verification.verifiedAt"]}
+            aria-invalid={!!allFieldErrors["verification.verifiedAt"]}
             aria-describedby={
-              fieldErrors["verification.verifiedAt"]
+              allFieldErrors["verification.verifiedAt"]
                 ? "verification.verifiedAt-error"
                 : undefined
             }
             onChange={() => clearError("verification.verifiedAt")}
           />
-          {fieldErrors["verification.verifiedAt"] && (
+          {allFieldErrors["verification.verifiedAt"] && (
             <p id="verification.verifiedAt-error" className="text-sm text-destructive">
-              {fieldErrors["verification.verifiedAt"]}
+              {allFieldErrors["verification.verifiedAt"]}
             </p>
           )}
         </div>

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
+import type { ZodIssue } from "zod";
 
 import {
   AdminAuthorizationError,
@@ -16,7 +17,48 @@ export type CreatePlaceState = {
   success?: true;
   placeId?: string;
   error?: string;
+  fieldErrors?: Record<string, string>;
 };
+
+function mapZodIssuesToFieldErrors(
+  issues: ZodIssue[],
+  t: (key: string) => string,
+): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const issue of issues) {
+    const pathStr = issue.path.join(".");
+    const field = pathStr === "location.lat" ? "lat" : pathStr === "location.lng" ? "lng" : pathStr;
+    if (result[field]) continue;
+
+    if (issue.code === "custom" && issue.message) {
+      const knownKeys = [
+        "invalidPhone",
+        "invalidInstagram",
+        "futureVerifiedAt",
+        "verificationIncomplete",
+      ] as const;
+      if ((knownKeys as readonly string[]).includes(issue.message)) {
+        result[field] = t(issue.message as (typeof knownKeys)[number]);
+        continue;
+      }
+    }
+
+    if (pathStr === "location.lat" || pathStr === "location.lng") {
+      result[field] = pathStr === "location.lat" ? t("invalidLatitude") : t("invalidLongitude");
+    } else if (pathStr === "website" || pathStr === "thumbnailUrl") {
+      result[field] = t("invalidUrl");
+    } else if (
+      issue.code === "invalid_format" &&
+      "format" in issue &&
+      (issue as { format?: string }).format === "url"
+    ) {
+      result[field] = t("invalidUrl");
+    } else {
+      result[field] = t("required");
+    }
+  }
+  return result;
+}
 
 export async function createPlace(
   localeValue: string,
@@ -45,8 +87,9 @@ export async function createPlace(
 
   const parsed = placeInputSchema.safeParse(raw);
   if (!parsed.success) {
+    const tV = await getTranslations({ locale, namespace: "admin.places.form.validation" });
     return {
-      error: parsed.error.issues[0]?.message ?? "입력값을 확인해주세요.",
+      fieldErrors: mapZodIssuesToFieldErrors(parsed.error.issues, (key) => tV(key as Parameters<typeof tV>[0])),
     };
   }
 
@@ -57,7 +100,8 @@ export async function createPlace(
     placeId = result.placeId;
   } catch (err) {
     console.error("[createPlace]", err);
-    return { error: "저장 중 오류가 발생했습니다." };
+    const tV = await getTranslations({ locale, namespace: "admin.places.form.validation" });
+    return { error: tV("submitFailed") };
   }
 
   for (const targetLocale of ["en", "ko"]) {

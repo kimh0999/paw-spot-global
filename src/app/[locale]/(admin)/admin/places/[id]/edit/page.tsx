@@ -84,6 +84,7 @@ export default async function AdminPlaceEditPage({ params }: Props) {
 
       <PlaceForm
         action={boundAction}
+        mode="edit"
         initialValues={initialValues}
         submitLabel={t("saveChanges")}
         successContent={successContent}
