@@ -66,7 +66,9 @@ export default async function HomePlaceCard({ place }: HomePlaceCardProps) {
       label: tCard("carrierStroller.required"),
       status: "bad",
     });
-  } else if (place.maxDogSize === "small") {
+  }
+
+  if (place.maxDogSize === "small") {
     chips.push({ label: tCard("maxDogSize.small"), status: "warning" });
   } else if (place.maxDogSize === "medium") {
     chips.push({ label: tCard("maxDogSize.medium"), status: "warning" });

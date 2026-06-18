@@ -1,18 +1,14 @@
 {
   "home": {
     "hero": {
-      "titleLine1": "Find dog-friendly places",
-      "titleLine2": "on the map — instantly.",
-      "subtitleLine1": "Browse cafes, restaurants, travel spots, and vet clinics by category.",
+      "titleLine1": "Find pet-friendly places",
+      "titleLine2": "Check the rules before you go",
+      "subtitleLine1": "Browse cafes, restaurants, and travel spots by category.",
       "subtitleLine2": "Check indoor access, carrier policies, dog size limits,",
       "subtitleLine3": "and entry requirements before you visit.",
-      "searchPlaceholder": "Search cafes in Itaewon, restaurants in Gangnam...",
+      "searchPlaceholder": "Search cafes, restaurants, and travel spots",
       "searchButton": "Search",
       "illustrationCaption": "Dog + map illustration",
-      "quickCafe": "Find Cafes",
-      "quickRestaurant": "Find Restaurants",
-      "quickTravel": "Find Travel Spots",
-      "quickVet": "Find Vets",
       "myLocation": "Near me"
     },
     "categories": {
@@ -76,7 +72,7 @@
     "list": {
       "title": "Places",
       "description": "Find dog-friendly places near you on the map.",
-      "searchPlaceholder": "Search cafes, restaurants, parks near you...",
+      "searchPlaceholder": "Search cafes, restaurants, and travel spots",
       "searchButton": "Search",
       "filter": "Filters",
       "myLocation": "Near me",
@@ -243,11 +239,11 @@
     }
   },
   "header": {
-    "home": "Home",
     "places": "Places",
+    "nearMe": "Near Me",
+    "myDog": "My Dog",
     "vets": "Vets",
-    "guide": "How to Use",
-    "verifyStandards": "Verification Standards"
+    "comingSoon": "Soon"
   },
   "common": {
     "loading": "Loading...",

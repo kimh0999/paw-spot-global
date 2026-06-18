@@ -162,7 +162,11 @@ export default function PlacesClient({ initialPlaces, userLocation, initialCateg
               )}
             </button>
 
-            <SortDropdown value={sortOption} onChange={setSortOption} />
+            <SortDropdown
+              value={sortOption}
+              onChange={setSortOption}
+              hasLocation={userLocation != null || hasLocationInUrl}
+            />
           </div>
 
           {locationDenied && (

@@ -89,7 +89,7 @@ export default function PlaceCard({ place, onClick }: PlaceCardProps) {
       </div>
 
       <div className="p-4">
-        <p className="text-xs text-gray-400 mb-1">
+        <p className="text-xs text-gray-600 mb-1">
           {categoryLabel}
         </p>
         <h3 className="font-bold text-gray-900 text-base leading-snug">{placeName}</h3>

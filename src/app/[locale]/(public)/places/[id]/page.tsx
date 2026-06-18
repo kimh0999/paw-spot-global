@@ -129,10 +129,6 @@ export default async function PlaceDetailPage({ params }: Props) {
             <h2 className="text-sm font-semibold text-gray-700">{t("info.title")}</h2>
           </div>
           <div className="px-5 py-4 space-y-3">
-            <div className="flex items-start gap-2">
-              <span className="shrink-0 text-base" aria-hidden="true">📍</span>
-              <p className="text-sm text-gray-600">{place.address}</p>
-            </div>
             {place.phone && (
               <div className="flex items-center gap-2">
                 <span className="shrink-0 text-base" aria-hidden="true">📞</span>

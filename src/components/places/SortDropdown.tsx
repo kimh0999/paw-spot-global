@@ -8,21 +8,22 @@ import type { SortOption } from "@/types/place";
 interface SortDropdownProps {
   value: SortOption;
   onChange: (value: SortOption) => void;
+  hasLocation?: boolean;
 }
 
-export default function SortDropdown({ value, onChange }: SortDropdownProps) {
+export default function SortDropdown({ value, onChange, hasLocation = false }: SortDropdownProps) {
   const t = useTranslations("places");
   const [isOpen, setIsOpen] = useState(false);
 
-  const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  const SORT_OPTIONS: { value: SortOption; label: string; disabled?: boolean }[] = [
+    { value: "distance", label: t("sort.distance"), disabled: !hasLocation },
     { value: "recent", label: t("sort.recent") },
     { value: "indoor-first", label: t("sort.indoorFirst") },
     { value: "no-carrier-first", label: t("sort.noCarrierFirst") },
   ];
 
   const selectedLabel =
-    SORT_OPTIONS.find((o) => o.value === value)?.label ??
-    (value === "distance" ? t("sort.distance") : "");
+    SORT_OPTIONS.find((o) => o.value === value)?.label ?? t("sort.recent");
 
   return (
     <div className="relative">
@@ -39,18 +40,22 @@ export default function SortDropdown({ value, onChange }: SortDropdownProps) {
         <>
           <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
           <div className="absolute left-0 top-full mt-1 w-52 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
-            {SORT_OPTIONS.map(({ value: optValue, label }) => (
+            {SORT_OPTIONS.map(({ value: optValue, label, disabled }) => (
               <button
                 key={optValue}
                 type="button"
+                disabled={disabled}
                 onClick={() => {
+                  if (disabled) return;
                   onChange(optValue);
                   setIsOpen(false);
                 }}
                 className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
-                  value === optValue
-                    ? "bg-orange-50 text-orange-600 font-semibold"
-                    : "text-gray-700 hover:bg-gray-50"
+                  disabled
+                    ? "text-gray-300 cursor-not-allowed"
+                    : value === optValue
+                      ? "bg-orange-50 text-orange-600 font-semibold"
+                      : "text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 {label}

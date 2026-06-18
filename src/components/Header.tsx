@@ -1,19 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import LocaleSwitcher from "@/components/i18n/LocaleSwitcher";
+import { navigateToNearbyPlaces } from "@/lib/location/navigation";
 
 export default function Header() {
   const t = useTranslations("header");
+  const router = useRouter();
+  const [isLocating, setIsLocating] = useState(false);
 
-  const navLinks = [
-    { label: t("home"), href: "/" },
-    { label: t("places"), href: "/places" },
-    { label: t("vets"), href: "/vets" },
-    { label: t("guide"), href: "/guide" },
-    { label: t("verifyStandards"), href: "/verify-standards" },
-  ];
+  function handleNearMe() {
+    navigateToNearbyPlaces(
+      router,
+      () => setIsLocating(true),
+      () => setIsLocating(false),
+    );
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
@@ -21,21 +25,45 @@ export default function Header() {
         <div className="flex items-center justify-between h-16 gap-8">
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <span className="text-2xl">🐾</span>
-            <span className="font-bold text-gray-900 text-base">
-              Paw Spot Global
-            </span>
+            <span className="font-bold text-gray-900 text-base">Paw Spot Global</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-6">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors first:text-orange-500"
-              >
-                {link.label}
-              </Link>
-            ))}
+            <Link
+              href="/places"
+              className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              {t("places")}
+            </Link>
+
+            <button
+              type="button"
+              onClick={handleNearMe}
+              disabled={isLocating}
+              className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isLocating ? "⏳" : "📍"} {t("nearMe")}
+            </button>
+
+            <span
+              className="flex items-center gap-1.5 text-sm font-medium text-gray-400 cursor-not-allowed select-none"
+              aria-disabled="true"
+            >
+              {t("myDog")}
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">
+                {t("comingSoon")}
+              </span>
+            </span>
+
+            <span
+              className="flex items-center gap-1.5 text-sm font-medium text-gray-400 cursor-not-allowed select-none"
+              aria-disabled="true"
+            >
+              {t("vets")}
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">
+                {t("comingSoon")}
+              </span>
+            </span>
           </nav>
 
           <LocaleSwitcher />
