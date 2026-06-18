@@ -121,6 +121,14 @@ export function sortPlaces(
 ): PlaceListItem[] {
   return [...places].sort((a, b) => {
     switch (sortOption) {
+      case "distance": {
+        const aDist = a.distanceMeters;
+        const bDist = b.distanceMeters;
+        if (aDist != null && bDist != null) return aDist - bDist;
+        if (aDist != null) return -1;
+        if (bDist != null) return 1;
+        return 0;
+      }
       case "recent":
         return (b.latestVerifiedAt ?? "").localeCompare(a.latestVerifiedAt ?? "");
       case "indoor-first": {

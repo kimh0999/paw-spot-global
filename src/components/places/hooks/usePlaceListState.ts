@@ -23,17 +23,21 @@ const DEFAULT_FILTERS: PlaceFilters = {
 type UsePlaceListStateOptions = {
   initialPlaces: PlaceListItem[];
   initialSortOption: SortOption;
+  initialCategory?: CategoryFilterValue;
+  initialSearchQuery?: string;
   referenceDate: Date;
 };
 
 export function usePlaceListState({
   initialPlaces,
   initialSortOption,
+  initialCategory = "all",
+  initialSearchQuery = "",
   referenceDate,
 }: UsePlaceListStateOptions) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [selectedCategory, setSelectedCategory] =
-    useState<CategoryFilterValue>("all");
+    useState<CategoryFilterValue>(initialCategory);
   const [filters, setFilters] = useState<PlaceFilters>(DEFAULT_FILTERS);
   const [sortOption, setSortOption] = useState<SortOption>(initialSortOption);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);

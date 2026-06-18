@@ -12,7 +12,8 @@
       "quickCafe": "Find Cafes",
       "quickRestaurant": "Find Restaurants",
       "quickTravel": "Find Travel Spots",
-      "quickVet": "Find Vets"
+      "quickVet": "Find Vets",
+      "myLocation": "Near me"
     },
     "categories": {
       "title": "Browse places by category",
@@ -35,7 +36,8 @@
         "title": "Vet Clinic",
         "description": "Find nearby vet clinics and contact info",
         "label": "Browse vets"
-      }
+      },
+      "comingSoon": "Coming soon"
     },
     "info": {
       "title": "What to check before you visit",

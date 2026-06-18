@@ -17,9 +17,11 @@ import type { CategoryFilterValue, PlaceListItem } from "@/types/place";
 interface PlacesClientProps {
   initialPlaces: PlaceListItem[];
   userLocation: { lat: number; lng: number } | null;
+  initialCategory?: CategoryFilterValue;
+  initialSearchQuery?: string;
 }
 
-export default function PlacesClient({ initialPlaces, userLocation }: PlacesClientProps) {
+export default function PlacesClient({ initialPlaces, userLocation, initialCategory, initialSearchQuery }: PlacesClientProps) {
   const t = useTranslations("places");
   const searchParams = useSearchParams();
 
@@ -52,6 +54,8 @@ export default function PlacesClient({ initialPlaces, userLocation }: PlacesClie
   } = usePlaceListState({
     initialPlaces,
     initialSortOption,
+    initialCategory,
+    initialSearchQuery,
     referenceDate,
   });
   const [isFilterOpen, setIsFilterOpen] = useState(false);

@@ -1,10 +1,14 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 
+type CategoryItem =
+  | { icon: string; title: string; description: string; href: string; label: string; comingSoon?: false }
+  | { icon: string; title: string; description: string; comingSoon: true };
+
 export default async function CategorySection() {
   const t = await getTranslations("home.categories");
 
-  const categories = [
+  const categories: CategoryItem[] = [
     {
       icon: "☕",
       title: t("cafe.title"),
@@ -30,8 +34,7 @@ export default async function CategorySection() {
       icon: "🏥",
       title: t("vet.title"),
       description: t("vet.description"),
-      href: "/vets",
-      label: t("vet.label"),
+      comingSoon: true,
     },
   ];
 
@@ -42,26 +45,44 @@ export default async function CategorySection() {
           {t("title")}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {categories.map((cat) => (
-            <div
-              key={cat.title}
-              className="bg-gray-50 rounded-2xl p-6 hover:bg-orange-50 transition-colors group"
-            >
-              <div className="text-3xl mb-3">{cat.icon}</div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">
-                {cat.title}
-              </h3>
-              <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                {cat.description}
-              </p>
-              <Link
-                href={cat.href}
-                className="text-sm font-semibold text-orange-600 group-hover:text-orange-700 transition-colors"
+          {categories.map((cat) =>
+            cat.comingSoon ? (
+              <div
+                key={cat.title}
+                className="bg-gray-50 rounded-2xl p-6 opacity-50 cursor-not-allowed"
               >
-                {cat.label} →
-              </Link>
-            </div>
-          ))}
+                <div className="text-3xl mb-3">{cat.icon}</div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                  {cat.title}
+                </h3>
+                <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+                  {cat.description}
+                </p>
+                <span className="text-sm font-semibold text-gray-400">
+                  {t("comingSoon")}
+                </span>
+              </div>
+            ) : (
+              <div
+                key={cat.title}
+                className="bg-gray-50 rounded-2xl p-6 hover:bg-orange-50 transition-colors group"
+              >
+                <div className="text-3xl mb-3">{cat.icon}</div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                  {cat.title}
+                </h3>
+                <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+                  {cat.description}
+                </p>
+                <Link
+                  href={cat.href}
+                  className="text-sm font-semibold text-orange-600 group-hover:text-orange-700 transition-colors"
+                >
+                  {cat.label} →
+                </Link>
+              </div>
+            )
+          )}
         </div>
       </div>
     </section>
