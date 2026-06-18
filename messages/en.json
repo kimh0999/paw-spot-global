@@ -122,14 +122,14 @@
       }
     },
     "sort": {
-      "distance": "Nearest first",
+      "distance": "Nearest",
       "recent": "Recently verified",
       "indoorFirst": "Indoor priority",
       "noCarrierFirst": "No carrier priority"
     },
     "card": {
-      "verifiedAt": "Verified:",
-      "caution": "Note:",
+      "verifiedAt": "Checked ·",
+      "caution": "Check before you go",
       "detail": "Details",
       "conditions": "Conditions",
       "indoor": {

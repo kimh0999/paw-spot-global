@@ -122,14 +122,14 @@
       }
     },
     "sort": {
-      "distance": "거리순 추천",
+      "distance": "거리순",
       "recent": "최근 확인순",
       "indoorFirst": "실내 가능 우선",
       "noCarrierFirst": "이동장 불필요 우선"
     },
     "card": {
       "verifiedAt": "확인일:",
-      "caution": "유의:",
+      "caution": "방문 전 확인 필요",
       "detail": "자세히",
       "conditions": "동반 조건",
       "indoor": {

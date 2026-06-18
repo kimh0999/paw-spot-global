@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
 
 import type { PlaceListItem, ConditionStatus } from "@/types/place";
@@ -12,18 +13,18 @@ interface PlaceCardProps {
   onClick?: () => void;
 }
 
-const categoryIcon: Record<PlaceListItem["category"], string> = {
-  cafe: "☕",
-  restaurant: "🍽️",
-  travel: "🌿",
-  etc: "📍",
-};
-
 const cardBg: Record<PlaceListItem["category"], string> = {
   cafe: "from-amber-100 to-orange-50",
   restaurant: "from-orange-100 to-red-50",
   travel: "from-green-100 to-emerald-50",
   etc: "from-gray-100 to-slate-50",
+};
+
+const cardInitialColor: Record<PlaceListItem["category"], string> = {
+  cafe: "text-amber-600",
+  restaurant: "text-orange-600",
+  travel: "text-green-700",
+  etc: "text-gray-500",
 };
 
 export default function PlaceCard({ place, onClick }: PlaceCardProps) {
@@ -71,27 +72,39 @@ export default function PlaceCard({ place, onClick }: PlaceCardProps) {
     chips.push({ label: t("card.carrierStroller.required"), status: "bad" });
   }
 
-  // Max dog size chip (skip unknown/null)
+  // Max dog size chip (skip unknown/null) — neutral: size restriction is informational, not good/bad
   if (place.maxDogSize === "small") {
-    chips.push({ label: t("card.maxDogSize.small"), status: "warning" });
+    chips.push({ label: t("card.maxDogSize.small"), status: "neutral" });
   } else if (place.maxDogSize === "medium") {
-    chips.push({ label: t("card.maxDogSize.medium"), status: "warning" });
+    chips.push({ label: t("card.maxDogSize.medium"), status: "neutral" });
   } else if (place.maxDogSize === "large") {
-    chips.push({ label: t("card.maxDogSize.large"), status: "good" });
+    chips.push({ label: t("card.maxDogSize.large"), status: "neutral" });
   }
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-md hover:border-orange-200 transition-all">
-      <div
-        className={`w-full h-36 bg-gradient-to-br ${cardBg[place.category]} flex items-center justify-center`}
-      >
-        <span className="text-5xl">{categoryIcon[place.category]}</span>
-      </div>
+      {place.thumbnailUrl ? (
+        <div className="relative w-full h-24 bg-gray-100">
+          <Image
+            src={place.thumbnailUrl}
+            alt={placeName}
+            fill
+            unoptimized
+            className="object-cover"
+          />
+        </div>
+      ) : (
+        <div
+          className={`w-full h-24 bg-gradient-to-br ${cardBg[place.category]} flex items-center justify-center`}
+        >
+          <span className={`text-3xl font-bold ${cardInitialColor[place.category]}`}>
+            {placeName.charAt(0)}
+          </span>
+        </div>
+      )}
 
       <div className="p-4">
-        <p className="text-xs text-gray-600 mb-1">
-          {categoryLabel}
-        </p>
+        <p className="text-xs text-gray-600 mb-1">{categoryLabel}</p>
         <h3 className="font-bold text-gray-900 text-base leading-snug">{placeName}</h3>
         <div className="mb-3">
           <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{place.address}</p>
@@ -108,7 +121,7 @@ export default function PlaceCard({ place, onClick }: PlaceCardProps) {
 
         {place.caution && (
           <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-2.5 py-1.5 mb-3">
-            {t("card.caution")} {place.caution}
+            ⚠ {t("card.caution")}
           </p>
         )}
 
