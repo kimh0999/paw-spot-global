@@ -1,33 +1,38 @@
 "use client";
 
-import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
+import { Coffee, Utensils, Compass, MapPin, Footprints, History } from "lucide-react";
 
 import type { PlaceListItem, ConditionStatus } from "@/types/place";
 import { displayPlaceName, isSupportedLocale } from "@/lib/i18n/locale";
-import { formatDistance } from "@/lib/geo/distance";
+import { formatDistance, formatWalkingTime } from "@/lib/geo/distance";
+import { STALE_VERIFICATION_WEEKS, weeksSinceVerified } from "@/lib/places/display";
 import ConditionBadge from "./ConditionBadge";
 
 interface PlaceCardProps {
   place: PlaceListItem;
+  referenceDate: Date;
   onClick?: () => void;
 }
 
-const cardBg: Record<PlaceListItem["category"], string> = {
-  cafe: "from-amber-100 to-orange-50",
-  restaurant: "from-orange-100 to-red-50",
-  travel: "from-green-100 to-emerald-50",
-  etc: "from-gray-100 to-slate-50",
+const categoryIconStyle: Record<PlaceListItem["category"], string> = {
+  cafe: "bg-orange-50 text-orange-500",
+  restaurant: "bg-orange-50 text-orange-500",
+  travel: "bg-orange-50 text-orange-500",
+  etc: "bg-stone-100 text-stone-500",
 };
 
-const cardInitialColor: Record<PlaceListItem["category"], string> = {
-  cafe: "text-amber-600",
-  restaurant: "text-orange-600",
-  travel: "text-green-700",
-  etc: "text-gray-500",
-};
+function CategoryIcon({ category }: { category: PlaceListItem["category"] }) {
+  const props = { size: 18, "aria-hidden": true as const };
+  switch (category) {
+    case "cafe": return <Coffee {...props} />;
+    case "restaurant": return <Utensils {...props} />;
+    case "travel": return <Compass {...props} />;
+    default: return <MapPin {...props} />;
+  }
+}
 
-export default function PlaceCard({ place, onClick }: PlaceCardProps) {
+export default function PlaceCard({ place, referenceDate, onClick }: PlaceCardProps) {
   const t = useTranslations("places");
   const rawLocale = useLocale();
   const locale = isSupportedLocale(rawLocale) ? rawLocale : "en";
@@ -44,10 +49,13 @@ export default function PlaceCard({ place, onClick }: PlaceCardProps) {
     place.distanceMeters != null
       ? formatDistance(place.distanceMeters, locale)
       : null;
+  const walkText = formatWalkingTime(place.distanceMeters, locale);
+
+  const weeksStale = weeksSinceVerified(place.latestVerifiedAt, referenceDate);
+  const isStale = weeksStale != null && weeksStale >= STALE_VERIFICATION_WEEKS;
 
   const chips: Array<{ label: string; status: ConditionStatus }> = [];
 
-  // Indoor chip
   switch (place.indoor) {
     case "allowed":
       chips.push({ label: t("card.indoor.allowed"), status: "good" });
@@ -65,14 +73,12 @@ export default function PlaceCard({ place, onClick }: PlaceCardProps) {
       chips.push({ label: t("card.indoor.unknown"), status: "warning" });
   }
 
-  // Carrier/stroller chip (skip unknown)
   if (place.carrierStrollerPolicy === "not_required") {
     chips.push({ label: t("card.carrierStroller.notRequired"), status: "good" });
   } else if (place.carrierStrollerPolicy === "required") {
     chips.push({ label: t("card.carrierStroller.required"), status: "bad" });
   }
 
-  // Max dog size chip (skip unknown/null) — neutral: size restriction is informational, not good/bad
   if (place.maxDogSize === "small") {
     chips.push({ label: t("card.maxDogSize.small"), status: "neutral" });
   } else if (place.maxDogSize === "medium") {
@@ -82,60 +88,63 @@ export default function PlaceCard({ place, onClick }: PlaceCardProps) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-md hover:border-orange-200 transition-all">
-      {place.thumbnailUrl ? (
-        <div className="relative w-full h-24 bg-gray-100">
-          <Image
-            src={place.thumbnailUrl}
-            alt={placeName}
-            fill
-            unoptimized
-            className="object-cover"
-          />
-        </div>
-      ) : (
-        <div
-          className={`w-full h-24 bg-gradient-to-br ${cardBg[place.category]} flex items-center justify-center`}
-        >
-          <span className={`text-3xl font-bold ${cardInitialColor[place.category]}`}>
-            {placeName.charAt(0)}
-          </span>
-        </div>
-      )}
-
-      <div className="p-4">
-        <p className="text-xs text-gray-600 mb-1">{categoryLabel}</p>
-        <h3 className="font-bold text-gray-900 text-base leading-snug">{placeName}</h3>
-        <div className="mb-3">
-          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{place.address}</p>
-          {distanceText && (
-            <p className="text-xs text-orange-600 font-medium mt-0.5">{distanceText}</p>
-          )}
-        </div>
-
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {chips.map((chip) => (
-            <ConditionBadge key={chip.label} label={chip.label} status={chip.status} />
-          ))}
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:border-orange-200 hover:bg-orange-50/30 transition-colors">
+      <div className="p-3">
+        {/* Header: icon + name + distance */}
+        <div className="flex items-start gap-2.5 mb-2">
+          <div
+            className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center ${categoryIconStyle[place.category]}`}
+          >
+            <CategoryIcon category={place.category} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-1">
+              <h3 className="font-semibold text-gray-900 text-[15px] leading-snug truncate">
+                {placeName}
+              </h3>
+              {distanceText && (
+                <span className="shrink-0 text-[11px] font-semibold text-gray-500 mt-0.5">
+                  {distanceText}
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-gray-400 mt-0.5 truncate">
+              {categoryLabel} · {place.address}
+            </p>
+            {walkText && (
+              <p className="flex items-center gap-1 text-[11px] text-gray-500 mt-0.5">
+                <Footprints size={11} className="shrink-0" aria-hidden="true" />
+                {walkText}
+              </p>
+            )}
+          </div>
         </div>
 
-        {place.caution && (
-          <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-2.5 py-1.5 mb-3">
-            ⚠ {t("card.caution")}
-          </p>
+        {/* Condition chips */}
+        {chips.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-2">
+            {chips.map((chip) => (
+              <ConditionBadge key={chip.label} label={chip.label} status={chip.status} />
+            ))}
+          </div>
         )}
 
-        <div className="flex items-center justify-between mt-1">
-          <p className="text-xs text-gray-400">
-            {t("card.verifiedAt")} {place.latestVerifiedAt ?? "-"}
-            {place.verificationMethod ? ` · ${place.verificationMethod}` : ""}
-          </p>
+        {/* Footer */}
+        <div className="border-t border-gray-100 pt-2 flex items-center justify-between gap-2">
+          {isStale ? (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100">
+              <History size={10} aria-hidden="true" />
+              {t("card.staleBadge", { weeks: weeksStale })}
+            </span>
+          ) : (
+            <span aria-hidden="true" />
+          )}
           <button
             type="button"
             onClick={onClick}
-            className="text-xs font-semibold text-orange-600 hover:text-orange-700 transition-colors"
+            className="shrink-0 text-[11px] font-semibold text-orange-500 hover:text-orange-600 transition-colors"
           >
-            {t("card.detail")}
+            {t("card.detail")} →
           </button>
         </div>
       </div>

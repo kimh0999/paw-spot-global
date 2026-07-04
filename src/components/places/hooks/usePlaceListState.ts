@@ -41,6 +41,7 @@ export function usePlaceListState({
   const [filters, setFilters] = useState<PlaceFilters>(DEFAULT_FILTERS);
   const [sortOption, setSortOption] = useState<SortOption>(initialSortOption);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+  const [hoveredPlaceId, setHoveredPlaceId] = useState<string | null>(null);
 
   const filteredAndSorted = useMemo(
     () =>
@@ -76,8 +77,13 @@ export function usePlaceListState({
     setFilters(DEFAULT_FILTERS);
   }, []);
 
+  // Selecting always opens the detail view; the back button clears it.
   const handlePlaceSelect = useCallback((placeId: string) => {
-    setSelectedPlaceId((prev) => (prev === placeId ? null : placeId));
+    setSelectedPlaceId(placeId);
+  }, []);
+
+  const clearSelectedPlace = useCallback(() => {
+    setSelectedPlaceId(null);
   }, []);
 
   return {
@@ -91,10 +97,13 @@ export function usePlaceListState({
     setSortOption,
     selectedPlaceId,
     setSelectedPlaceId,
+    hoveredPlaceId,
+    setHoveredPlaceId,
     filteredAndSorted,
     selectedPlace,
     activeFilterCount,
     resetFilters,
     handlePlaceSelect,
+    clearSelectedPlace,
   };
 }

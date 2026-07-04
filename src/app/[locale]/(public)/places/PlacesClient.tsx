@@ -45,12 +45,14 @@ export default function PlacesClient({ initialPlaces, userLocation, initialCateg
     sortOption,
     setSortOption,
     selectedPlaceId,
-    setSelectedPlaceId,
+    hoveredPlaceId,
+    setHoveredPlaceId,
     filteredAndSorted,
     selectedPlace,
     activeFilterCount,
     resetFilters,
     handlePlaceSelect,
+    clearSelectedPlace,
   } = usePlaceListState({
     initialPlaces,
     initialSortOption,
@@ -76,12 +78,17 @@ export default function PlacesClient({ initialPlaces, userLocation, initialCateg
   const mapPlaceholder = t("list.mapPlaceholder");
 
   return (
-    <div className="flex flex-col bg-white md:h-screen md:overflow-hidden">
+    <div className="flex flex-col bg-white lg:h-screen lg:overflow-hidden">
       <Header />
 
-      <div className="flex-1 flex flex-col md:flex-row md:min-h-0 md:overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row lg:min-h-0 lg:overflow-hidden">
 
-        <aside className="flex flex-col bg-white md:w-[400px] md:shrink-0 md:border-r md:border-gray-100 md:overflow-hidden">
+        {/* Column 1 — list panel (~340px). Hidden at 1024–1279 while detail is open. */}
+        <aside
+          className={`flex flex-col bg-white lg:w-[340px] lg:min-w-0 lg:shrink-0 lg:border-r lg:border-gray-100 lg:overflow-hidden ${
+            selectedPlace ? "lg:hidden xl:flex" : ""
+          }`}
+        >
 
           <div className="shrink-0 px-4 pt-4 pb-3 border-b border-gray-100">
             <div className="flex gap-2 mb-3">
@@ -118,10 +125,11 @@ export default function PlacesClient({ initialPlaces, userLocation, initialCateg
             </div>
           </div>
 
-          <div className="md:hidden h-60 shrink-0 border-b border-gray-100">
+          <div className="lg:hidden h-60 shrink-0 border-b border-gray-100">
             <MapPanel
               places={filteredAndSorted}
               selectedPlaceId={selectedPlaceId}
+              hoveredPlaceId={hoveredPlaceId}
               onSelectPlace={handlePlaceSelect}
               placeholder={mapPlaceholder}
               userLocation={userLocation}
@@ -189,18 +197,21 @@ export default function PlacesClient({ initialPlaces, userLocation, initialCateg
           <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4">
             {filteredAndSorted.length > 0 ? (
               <>
-                <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   {filteredAndSorted.map((place) => (
                     <div
                       key={place.id}
+                      onMouseEnter={() => setHoveredPlaceId(place.id)}
+                      onMouseLeave={() => setHoveredPlaceId(null)}
                       className={
                         selectedPlaceId === place.id
-                          ? "rounded-2xl ring-2 ring-orange-400"
+                          ? "rounded-2xl ring-2 ring-blue-500"
                           : undefined
                       }
                     >
                       <PlaceCard
                         place={place}
+                        referenceDate={referenceDate}
                         onClick={() => handlePlaceSelect(place.id)}
                       />
                     </div>
@@ -223,29 +234,29 @@ export default function PlacesClient({ initialPlaces, userLocation, initialCateg
             )}
           </div>
 
-          {selectedPlace && (
-            <div className="md:hidden border-t border-gray-100 max-h-80 overflow-y-auto">
-              <SelectedPlacePanel
-                place={selectedPlace}
-                onClose={() => setSelectedPlaceId(null)}
-              />
-            </div>
-          )}
         </aside>
 
-        {selectedPlace && (
-          <div className="hidden md:block md:w-[440px] md:shrink-0 md:border-r md:border-gray-100 md:overflow-y-auto">
+        {/* Column 2 — detail panel. Slides open (width) without remounting the map. */}
+        <div
+          className={`hidden lg:block shrink-0 overflow-hidden transition-[width] duration-300 ease-out ${
+            selectedPlace ? "w-[380px] border-r border-gray-100" : "w-0"
+          }`}
+        >
+          {selectedPlace && (
             <SelectedPlacePanel
               place={selectedPlace}
-              onClose={() => setSelectedPlaceId(null)}
+              onClose={clearSelectedPlace}
+              userLocation={userLocation}
             />
-          </div>
-        )}
+          )}
+        </div>
 
-        <div className="hidden md:block flex-1">
+        {/* Column 3 — map (fills remaining space; never remounts) */}
+        <div className="hidden lg:block flex-1 relative">
           <MapPanel
             places={filteredAndSorted}
             selectedPlaceId={selectedPlaceId}
+            hoveredPlaceId={hoveredPlaceId}
             onSelectPlace={handlePlaceSelect}
             placeholder={mapPlaceholder}
             userLocation={userLocation}
@@ -253,6 +264,24 @@ export default function PlacesClient({ initialPlaces, userLocation, initialCateg
             isLocating={isLocating}
           />
         </div>
+      </div>
+
+      {/* Mobile detail — bottom sheet (list stays visible behind it) */}
+      <div
+        className={`fixed bottom-0 left-0 right-0 z-50 lg:hidden transform transition-transform duration-300 ease-out ${
+          selectedPlace ? "translate-y-0" : "translate-y-full"
+        }`}
+        style={{ pointerEvents: selectedPlace ? "auto" : "none" }}
+      >
+        {selectedPlace && (
+          <div className="bg-white rounded-t-2xl shadow-2xl h-[70vh] overflow-hidden">
+            <SelectedPlacePanel
+              place={selectedPlace}
+              onClose={clearSelectedPlace}
+              userLocation={userLocation}
+            />
+          </div>
+        )}
       </div>
 
       <FilterModal

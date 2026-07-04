@@ -8,6 +8,7 @@ import type { PlaceListItem } from "@/types/place";
 interface MapPanelProps {
   places: PlaceListItem[];
   selectedPlaceId: string | null;
+  hoveredPlaceId?: string | null;
   onSelectPlace: (id: string) => void;
   placeholder?: string;
   userLocation?: { lat: number; lng: number } | null;
@@ -17,6 +18,31 @@ interface MapPanelProps {
 
 const SEOUL_CITY_HALL = { lat: 37.5665, lng: 126.978 };
 const DEFAULT_ZOOM = 14;
+
+// Map pin drawn as an SVG path so we can recolour per state without recreating markers.
+// Selection = blue, hover = emphasised orange, default = brand orange.
+const PIN_PATH =
+  "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z";
+
+function pinIcon(color: string, scale: number): google.maps.Symbol {
+  return {
+    path: PIN_PATH,
+    fillColor: color,
+    fillOpacity: 1,
+    strokeColor: "#ffffff",
+    strokeWeight: 1.5,
+    scale,
+    anchor: new google.maps.Point(12, 22),
+  };
+}
+
+type MarkerVisual = { icon: google.maps.Symbol; zIndex: number };
+
+function markerVisual(isSelected: boolean, isHovered: boolean): MarkerVisual {
+  if (isSelected) return { icon: pinIcon("#2563eb", 1.9), zIndex: 1000 };
+  if (isHovered) return { icon: pinIcon("#ea580c", 1.7), zIndex: 500 };
+  return { icon: pinIcon("#fb923c", 1.4), zIndex: 1 };
+}
 
 function getInitialCenter(
   places: PlaceListItem[],
@@ -37,6 +63,7 @@ function getInitialCenter(
 export default function MapPanel({
   places,
   selectedPlaceId,
+  hoveredPlaceId = null,
   onSelectPlace,
   userLocation,
   onRequestUserLocation,
@@ -44,17 +71,19 @@ export default function MapPanel({
 }: MapPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.Marker[]>([]);
+  const markersRef = useRef<Map<string, google.maps.Marker>>(new Map());
   const userMarkerRef = useRef<google.maps.Marker | null>(null);
 
   // Stable refs so effects don't re-run just because callbacks/values were recreated
   const placesRef = useRef(places);
   const selectedPlaceIdRef = useRef(selectedPlaceId);
+  const hoveredPlaceIdRef = useRef(hoveredPlaceId);
   const onSelectPlaceRef = useRef(onSelectPlace);
   const userLocationRef = useRef(userLocation);
 
   placesRef.current = places;
   selectedPlaceIdRef.current = selectedPlaceId;
+  hoveredPlaceIdRef.current = hoveredPlaceId;
   onSelectPlaceRef.current = onSelectPlace;
   userLocationRef.current = userLocation;
 
@@ -106,27 +135,41 @@ export default function MapPanel({
     if (mapState !== "ready" || !mapRef.current) return;
 
     markersRef.current.forEach((m) => m.setMap(null));
-    markersRef.current = [];
+    markersRef.current = new Map();
 
     const map = mapRef.current;
 
     places.forEach((place) => {
       if (!place.location) return;
+      const visual = markerVisual(
+        place.id === selectedPlaceIdRef.current,
+        place.id === hoveredPlaceIdRef.current,
+      );
       const marker = new google.maps.Marker({
         position: place.location,
         map,
+        icon: visual.icon,
+        zIndex: visual.zIndex,
       });
       marker.addListener("click", () => onSelectPlaceRef.current(place.id));
-      markersRef.current.push(marker);
+      markersRef.current.set(place.id, marker);
     });
-
-    // TODO(map-integration): add selected marker styling
 
     return () => {
       markersRef.current.forEach((m) => m.setMap(null));
-      markersRef.current = [];
+      markersRef.current = new Map();
     };
   }, [places, mapState]);
+
+  // Restyle only the affected markers when selection/hover changes — no marker rebuild
+  useEffect(() => {
+    if (mapState !== "ready") return;
+    markersRef.current.forEach((marker, id) => {
+      const visual = markerVisual(id === selectedPlaceId, id === hoveredPlaceId);
+      marker.setIcon(visual.icon);
+      marker.setZIndex(visual.zIndex);
+    });
+  }, [selectedPlaceId, hoveredPlaceId, mapState, places]);
 
   // Sync user location marker — managed separately from place markers
   useEffect(() => {

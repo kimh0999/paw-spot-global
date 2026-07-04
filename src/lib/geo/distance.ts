@@ -28,3 +28,15 @@ export function formatDistance(
   const km = (meters / 1000).toFixed(1);
   return locale === "ko" ? `${km}km` : `${km} km`;
 }
+
+// Rough walking-time estimate at ~80 m/min. No extra API — for at-a-glance context only.
+const WALKING_SPEED_M_PER_MIN = 80;
+
+export function formatWalkingTime(
+  meters: number | null | undefined,
+  locale: "en" | "ko",
+): string | null {
+  if (meters == null) return null;
+  const minutes = Math.max(1, Math.round(meters / WALKING_SPEED_M_PER_MIN));
+  return locale === "ko" ? `도보 약 ${minutes}분` : `~${minutes} min walk`;
+}

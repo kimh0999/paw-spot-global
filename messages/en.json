@@ -163,6 +163,63 @@
         "restaurant": "Restaurant",
         "travel": "Travel Spot",
         "etc": "Other"
+      },
+      "verificationPath": {
+        "phone": "Confirmed by phone",
+        "dm": "Confirmed by message",
+        "website": "Confirmed via official info",
+        "onSite": "Confirmed on-site",
+        "userReport": "User report"
+      },
+      "walkFallback": "Set your location",
+      "staleBadge": "{weeks} wk old"
+    },
+    "selectedPlacePanel": {
+      "visitConditionsTitle": "Before you go",
+      "back": "Back to list",
+      "close": "Close details",
+      "lastChecked": "Last checked",
+      "noVerification": "No verification info",
+      "groups": {
+        "allowed": "Allowed",
+        "prepare": "Bring",
+        "check": "Check before you go"
+      },
+      "actions": {
+        "directions": "Directions",
+        "call": "Call"
+      },
+      "conditions": {
+        "indoor": {
+          "allowed": "Indoor seating allowed",
+          "outdoorOnly": "Outdoor seating only",
+          "partialArea": "Only certain areas allow dogs",
+          "notAllowed": "Indoor seating not allowed",
+          "unknown": "Indoor policy needs checking"
+        },
+        "carrier": {
+          "notRequired": "Carrier not required",
+          "required": "Carrier or stroller required",
+          "unknown": "Carrier policy needs checking"
+        },
+        "dogSize": {
+          "small": "Small dogs allowed",
+          "medium": "Medium dogs allowed",
+          "large": "Large dogs allowed",
+          "unknown": "Dog size limit needs checking"
+        },
+        "leash": {
+          "notRequired": "No leash requirement listed",
+          "required": "Leash required",
+          "partialArea": "Leash may be required in some areas",
+          "unknown": "Leash policy needs checking"
+        },
+        "muzzle": {
+          "notRequired": "Muzzle not required",
+          "required": "Muzzle required",
+          "conditional": "Muzzle may be requested on-site",
+          "unknown": "Muzzle policy needs checking"
+        }
       }
     },
     "detail": {
