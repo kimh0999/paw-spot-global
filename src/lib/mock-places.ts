@@ -33,7 +33,7 @@ export const MOCK_PLACES: PlaceListItem[] = [
     distanceMeters: 800,
     thumbnailUrl: null,
     indoor: "unknown",
-    carrierStrollerPolicy: "required",
+    carrierStrollerPolicy: "required_indoor",
     maxDogSize: "small",
     leash: "unknown",
     muzzle: "unknown",

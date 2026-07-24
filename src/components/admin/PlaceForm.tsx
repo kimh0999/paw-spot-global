@@ -77,8 +77,9 @@ const INDOOR_LABELS: Record<string, string> = {
 };
 
 const CARRIER_STROLLER_LABELS: Record<string, string> = {
-  REQUIRED: "이동장/유모차 필수",
-  NOT_REQUIRED: "필수 아님",
+  NOT_REQUIRED: "이동장 불필요",
+  REQUIRED_INDOOR: "실내 안기·유모차",
+  REQUIRED_ALWAYS: "이동장/유모차 필수",
   UNKNOWN: "확인 필요",
 };
 

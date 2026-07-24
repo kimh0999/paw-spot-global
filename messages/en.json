@@ -105,8 +105,9 @@
       },
       "carrier": {
         "title": "Carrier / stroller",
+        "all": "All",
         "notRequired": "No carrier needed",
-        "required": "Carrier / stroller required"
+        "canBring": "I can bring a carrier/stroller"
       },
       "dogSize": {
         "title": "My dog's size",
@@ -140,8 +141,10 @@
         "unknown": "Indoor unconfirmed"
       },
       "carrierStroller": {
-        "required": "Carrier required",
-        "notRequired": "No carrier needed"
+        "notRequired": "No carrier needed",
+        "requiredIndoor": "Hold or stroller indoors",
+        "requiredAlways": "Carrier/stroller required",
+        "unknown": "Needs confirmation"
       },
       "maxDogSize": {
         "small": "Small dogs only",
@@ -199,7 +202,8 @@
         },
         "carrier": {
           "notRequired": "Carrier not required",
-          "required": "Carrier or stroller required",
+          "requiredIndoor": "Hold or stroller indoors",
+          "requiredAlways": "Carrier or stroller required",
           "unknown": "Carrier policy needs checking"
         },
         "dogSize": {
@@ -239,9 +243,9 @@
         },
         "carrier": {
           "label": "Carrier / Stroller",
-          "required": "Carrier or stroller required",
           "not_required": "No carrier needed",
-          "unknown": "Check with store"
+          "required_indoor": "Hold or stroller indoors",
+          "required_always": "Carrier or stroller required"
         },
         "dogSize": {
           "label": "Dog size limit",
@@ -363,8 +367,9 @@
       },
       "carrier": {
         "label": "Carrier / Stroller",
-        "REQUIRED": "Required",
         "NOT_REQUIRED": "Not required",
+        "REQUIRED_INDOOR": "Hold/stroller indoors",
+        "REQUIRED_ALWAYS": "Required",
         "UNKNOWN": "Check required"
       },
       "dogSize": {

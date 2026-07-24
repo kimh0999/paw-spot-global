@@ -43,8 +43,9 @@ export default function FilterModal({
   ];
 
   const CARRIER_OPTIONS: { value: CarrierFilter; label: string }[] = [
+    { value: "all", label: t("filters.carrier.all") },
     { value: "not-required", label: t("filters.carrier.notRequired") },
-    { value: "required", label: t("filters.carrier.required") },
+    { value: "can-bring", label: t("filters.carrier.canBring") },
   ];
 
   const DOG_SIZE_OPTIONS: { value: DogSizeFilter; label: string }[] = [
@@ -58,10 +59,6 @@ export default function FilterModal({
     { value: "30days", label: t("filters.reliability.30days") },
     { value: "90days", label: t("filters.reliability.90days") },
   ];
-
-  const toggleCarrier = (value: CarrierFilter) => {
-    onChange({ ...filters, carrier: filters.carrier === value ? "all" : value });
-  };
 
   const toggleRecent = (value: RecentFilter) => {
     onChange({ ...filters, recent: filters.recent === value ? "all" : value });
@@ -116,7 +113,7 @@ export default function FilterModal({
                 <button
                   key={value}
                   type="button"
-                  onClick={() => toggleCarrier(value)}
+                  onClick={() => onChange({ ...filters, carrier: value })}
                   className={`${chipBase} ${filters.carrier === value ? chipActive : chipInactive}`}
                 >
                   {label}

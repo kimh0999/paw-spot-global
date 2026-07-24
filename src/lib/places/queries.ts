@@ -25,8 +25,9 @@ export function mapIndoorPolicy(indoor: string): PlaceListItem["indoor"] {
 
 export function mapCarrierStrollerPolicy(policy: string): PlaceListItem["carrierStrollerPolicy"] {
   switch (policy) {
-    case "REQUIRED": return "required";
     case "NOT_REQUIRED": return "not_required";
+    case "REQUIRED_INDOOR": return "required_indoor";
+    case "REQUIRED_ALWAYS": return "required_always";
     default: return "unknown";
   }
 }

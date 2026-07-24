@@ -8,7 +8,7 @@ export type MaxDogSize = (typeof MAX_DOG_SIZES)[number];
 export const INDOOR_POLICIES = ["ALLOWED", "OUTDOOR_ONLY", "PARTIAL_AREA", "NOT_ALLOWED", "UNKNOWN"] as const;
 export type IndoorPolicy = (typeof INDOOR_POLICIES)[number];
 
-export const CARRIER_STROLLER_POLICIES = ["REQUIRED", "NOT_REQUIRED", "UNKNOWN"] as const;
+export const CARRIER_STROLLER_POLICIES = ["NOT_REQUIRED", "REQUIRED_INDOOR", "REQUIRED_ALWAYS", "UNKNOWN"] as const;
 export type CarrierStrollerPolicy = (typeof CARRIER_STROLLER_POLICIES)[number];
 
 export const LEASH_POLICIES = ["REQUIRED", "NOT_REQUIRED", "PARTIAL_AREA", "UNKNOWN"] as const;

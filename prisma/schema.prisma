@@ -49,8 +49,9 @@ enum CarrierPolicy {
 }
 
 enum CarrierStrollerPolicy {
-  REQUIRED
   NOT_REQUIRED
+  REQUIRED_INDOOR
+  REQUIRED_ALWAYS
   UNKNOWN
 }
 

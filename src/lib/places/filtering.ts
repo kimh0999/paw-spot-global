@@ -73,20 +73,15 @@ export function filterPlaces({
       if (place.indoor === "unknown" || place.indoor === null) return false;
     }
 
+    // UNKNOWN and null are excluded from both non-"all" carrier filters.
     if (filters.carrier === "not-required") {
+      if (place.carrierStrollerPolicy !== "not_required") return false;
+    }
+    if (filters.carrier === "can-bring") {
       if (
         place.carrierStrollerPolicy !== "not_required" &&
-        place.carrierStrollerPolicy !== "unknown" &&
-        place.carrierStrollerPolicy !== null
-      ) {
-        return false;
-      }
-    }
-    if (filters.carrier === "required") {
-      if (
-        place.carrierStrollerPolicy !== "required" &&
-        place.carrierStrollerPolicy !== "unknown" &&
-        place.carrierStrollerPolicy !== null
+        place.carrierStrollerPolicy !== "required_indoor" &&
+        place.carrierStrollerPolicy !== "required_always"
       ) {
         return false;
       }

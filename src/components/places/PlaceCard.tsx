@@ -73,10 +73,18 @@ export default function PlaceCard({ place, referenceDate, onClick }: PlaceCardPr
       chips.push({ label: t("card.indoor.unknown"), status: "warning" });
   }
 
-  if (place.carrierStrollerPolicy === "not_required") {
-    chips.push({ label: t("card.carrierStroller.notRequired"), status: "good" });
-  } else if (place.carrierStrollerPolicy === "required") {
-    chips.push({ label: t("card.carrierStroller.required"), status: "bad" });
+  switch (place.carrierStrollerPolicy) {
+    case "not_required":
+      chips.push({ label: t("card.carrierStroller.notRequired"), status: "good" });
+      break;
+    case "required_indoor":
+      chips.push({ label: t("card.carrierStroller.requiredIndoor"), status: "warning" });
+      break;
+    case "required_always":
+      chips.push({ label: t("card.carrierStroller.requiredAlways"), status: "bad" });
+      break;
+    default:
+      chips.push({ label: t("card.carrierStroller.unknown"), status: "warning" });
   }
 
   if (place.maxDogSize === "small") {

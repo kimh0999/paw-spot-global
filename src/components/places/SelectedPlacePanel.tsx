@@ -92,8 +92,10 @@ export default function SelectedPlacePanel({ place, onClose, userLocation }: Sel
 
   if (place.carrierStrollerPolicy === "not_required") {
     allowedLabels.push(t("selectedPlacePanel.conditions.carrier.notRequired"));
-  } else if (place.carrierStrollerPolicy === "required") {
-    prepareLabels.push(t("selectedPlacePanel.conditions.carrier.required"));
+  } else if (place.carrierStrollerPolicy === "required_indoor") {
+    prepareLabels.push(t("selectedPlacePanel.conditions.carrier.requiredIndoor"));
+  } else if (place.carrierStrollerPolicy === "required_always") {
+    prepareLabels.push(t("selectedPlacePanel.conditions.carrier.requiredAlways"));
   } else if (place.carrierStrollerPolicy === "unknown") {
     checkLabels.push(t("selectedPlacePanel.conditions.carrier.unknown"));
   }

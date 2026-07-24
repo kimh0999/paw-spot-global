@@ -105,8 +105,9 @@
       },
       "carrier": {
         "title": "이동장/유모차",
+        "all": "전체",
         "notRequired": "이동장 불필요",
-        "required": "이동장/유모차 필수"
+        "canBring": "이동장/유모차 준비 가능"
       },
       "dogSize": {
         "title": "반려견 크기",
@@ -140,8 +141,10 @@
         "unknown": "실내 확인 필요"
       },
       "carrierStroller": {
-        "required": "이동장 필수",
-        "notRequired": "이동장 불필요"
+        "notRequired": "이동장 불필요",
+        "requiredIndoor": "실내 안기·유모차",
+        "requiredAlways": "이동장/유모차 필수",
+        "unknown": "확인 필요"
       },
       "maxDogSize": {
         "small": "소형견까지",
@@ -199,7 +202,8 @@
         },
         "carrier": {
           "notRequired": "이동장 없이 가능",
-          "required": "이동장/유모차 필수",
+          "requiredIndoor": "실내 안기·유모차",
+          "requiredAlways": "이동장/유모차 필수",
           "unknown": "이동장 필요 여부 확인 필요"
         },
         "dogSize": {
@@ -239,9 +243,9 @@
         },
         "carrier": {
           "label": "이동장/유모차",
-          "required": "이동장/유모차 필수",
           "not_required": "이동장 불필요",
-          "unknown": "매장 확인 필요"
+          "required_indoor": "실내 안기·유모차",
+          "required_always": "이동장/유모차 필수"
         },
         "dogSize": {
           "label": "강아지 크기 제한",
@@ -363,8 +367,9 @@
       },
       "carrier": {
         "label": "이동장/유모차",
-        "REQUIRED": "필수",
         "NOT_REQUIRED": "불필요",
+        "REQUIRED_INDOOR": "실내 안기·유모차",
+        "REQUIRED_ALWAYS": "필수",
         "UNKNOWN": "확인 필요"
       },
       "dogSize": {

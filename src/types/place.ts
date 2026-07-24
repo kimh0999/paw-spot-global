@@ -4,7 +4,7 @@ export type PlaceCategory = "cafe" | "restaurant" | "travel";
 export type CategoryFilterValue = "all" | PlaceCategory;
 
 export type IndoorFilter = "all" | "indoor" | "outdoor" | "partial-area" | "exclude-unknown";
-export type CarrierFilter = "all" | "required" | "not-required";
+export type CarrierFilter = "all" | "not-required" | "can-bring";
 export type DogSizeFilter = "all" | "small" | "medium" | "large";
 export type RecentFilter = "all" | "30days" | "90days";
 export type SortOption = "distance" | "recent" | "indoor-first" | "no-carrier-first";
@@ -27,7 +27,7 @@ export interface PlaceListItem {
   distanceMeters: number | null;
   thumbnailUrl: string | null;
   indoor: "allowed" | "outdoor_only" | "partial_area" | "not_allowed" | "unknown" | null;
-  carrierStrollerPolicy: "required" | "not_required" | "unknown" | null;
+  carrierStrollerPolicy: "not_required" | "required_indoor" | "required_always" | "unknown" | null;
   maxDogSize: "small" | "medium" | "large" | "unknown" | null;
   leash: "required" | "not_required" | "partial_area" | "unknown" | null;
   muzzle: "required" | "not_required" | "conditional" | "unknown" | null;

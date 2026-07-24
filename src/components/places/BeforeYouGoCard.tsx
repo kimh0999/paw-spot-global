@@ -34,8 +34,9 @@ export default async function BeforeYouGoCard({ condition, locale }: Props) {
     });
 
     const carrierMap: Record<string, { value: string; status: ConditionStatus }> = {
-      required: { value: t("carrier.required"), status: "bad" },
       not_required: { value: t("carrier.not_required"), status: "good" },
+      required_indoor: { value: t("carrier.required_indoor"), status: "warning" },
+      required_always: { value: t("carrier.required_always"), status: "bad" },
     };
     conditionRows.push({
       label: t("carrier.label"),

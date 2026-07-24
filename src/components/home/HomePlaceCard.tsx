@@ -56,16 +56,18 @@ export default async function HomePlaceCard({ place }: HomePlaceCardProps) {
       chips.push({ label: tCard("indoor.unknown"), status: "warning" });
   }
 
-  if (place.carrierStrollerPolicy === "not_required") {
-    chips.push({
-      label: tCard("carrierStroller.notRequired"),
-      status: "good",
-    });
-  } else if (place.carrierStrollerPolicy === "required") {
-    chips.push({
-      label: tCard("carrierStroller.required"),
-      status: "bad",
-    });
+  switch (place.carrierStrollerPolicy) {
+    case "not_required":
+      chips.push({ label: tCard("carrierStroller.notRequired"), status: "good" });
+      break;
+    case "required_indoor":
+      chips.push({ label: tCard("carrierStroller.requiredIndoor"), status: "warning" });
+      break;
+    case "required_always":
+      chips.push({ label: tCard("carrierStroller.requiredAlways"), status: "bad" });
+      break;
+    default:
+      chips.push({ label: tCard("carrierStroller.unknown"), status: "warning" });
   }
 
   if (place.maxDogSize === "small") {

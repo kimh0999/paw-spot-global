@@ -44,8 +44,9 @@ export default async function AdminPlacesPage({ params }: Props) {
     UNKNOWN: t("checkRequired"),
   };
   const carrierLabel: Record<string, string> = {
-    REQUIRED: t("carrier.REQUIRED"),
     NOT_REQUIRED: t("carrier.NOT_REQUIRED"),
+    REQUIRED_INDOOR: t("carrier.REQUIRED_INDOOR"),
+    REQUIRED_ALWAYS: t("carrier.REQUIRED_ALWAYS"),
     UNKNOWN: t("checkRequired"),
   };
   const dogSizeLabel: Record<string, string> = {
