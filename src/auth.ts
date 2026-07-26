@@ -23,8 +23,18 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         return false;
       }
 
-      const dbUser = await prisma.user.findUnique({
+      const dbUser = await prisma.user.upsert({
         where: { email: user.email },
+        update: {
+          name: user.name ?? undefined,
+          image: user.image ?? undefined,
+        },
+        create: {
+          email: user.email,
+          name: user.name,
+          image: user.image,
+          role: "USER",
+        },
         select: {
           id: true,
           email: true,
@@ -33,10 +43,6 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           role: true,
         },
       });
-
-      if (!dbUser || dbUser.role !== "ADMIN") {
-        return false;
-      }
 
       user.id = dbUser.id;
       user.email = dbUser.email;

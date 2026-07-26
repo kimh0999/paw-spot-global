@@ -1,3 +1,5 @@
+import { Prisma } from "@prisma/client";
+
 import { prisma } from "@/lib/db/prisma";
 import type {
   HomePlaceItem,
@@ -102,36 +104,39 @@ function toNumberOrNull(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+// Shared so favorites (and other list views) map places identically via toPlaceListItem.
+export const placeListSelect = {
+  id: true,
+  nameKr: true,
+  nameEn: true,
+  category: true,
+  address: true,
+  phone: true,
+  thumbnailUrl: true,
+  condition: {
+    select: {
+      indoor: true,
+      carrierStrollerPolicy: true,
+      maxDogSize: true,
+      leash: true,
+      muzzle: true,
+      cautions: true,
+    },
+  },
+  verifications: {
+    orderBy: { verifiedAt: "desc" },
+    take: 1,
+    select: {
+      verifiedAt: true,
+      method: true,
+    },
+  },
+} satisfies Prisma.PlaceSelect;
+
 async function findPlaces() {
   return prisma.place.findMany({
     where: { visibility: "VISIBLE" },
-    select: {
-      id: true,
-      nameKr: true,
-      nameEn: true,
-      category: true,
-      address: true,
-      phone: true,
-      thumbnailUrl: true,
-      condition: {
-        select: {
-          indoor: true,
-          carrierStrollerPolicy: true,
-          maxDogSize: true,
-          leash: true,
-          muzzle: true,
-          cautions: true,
-        },
-      },
-      verifications: {
-        orderBy: { verifiedAt: "desc" },
-        take: 1,
-        select: {
-          verifiedAt: true,
-          method: true,
-        },
-      },
-    },
+    select: placeListSelect,
     orderBy: { updatedAt: "desc" },
   });
 }

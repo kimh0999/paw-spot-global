@@ -1,5 +1,7 @@
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
+import { auth } from "@/auth";
+import SessionProvider from "@/components/providers/SessionProvider";
 import { SUPPORTED_LOCALES } from "@/lib/constants";
 
 export function generateStaticParams() {
@@ -14,10 +16,11 @@ export default async function LocaleLayout({
   params: { locale: string };
 }) {
   const messages = await getMessages();
+  const session = await auth();
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      {children}
+      <SessionProvider session={session}>{children}</SessionProvider>
     </NextIntlClientProvider>
   );
 }

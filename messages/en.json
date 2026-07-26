@@ -192,6 +192,10 @@
         "directions": "Directions",
         "call": "Call"
       },
+      "favorite": {
+        "add": "Add to favorites",
+        "remove": "Remove from favorites"
+      },
       "conditions": {
         "indoor": {
           "allowed": "Indoor seating allowed",
@@ -303,8 +307,36 @@
     "places": "Places",
     "nearMe": "Near Me",
     "myDog": "My Dog",
+    "favorites": "Favorites",
     "vets": "Vets",
-    "comingSoon": "Soon"
+    "comingSoon": "Soon",
+    "login": "Log in",
+    "logout": "Log out",
+    "account": "Account"
+  },
+  "favorites": {
+    "title": "Favorites",
+    "empty": "No saved places yet. Tap the heart on a place to save it here."
+  },
+  "myDog": {
+    "title": "My Dog",
+    "description": "Save your dog's size to filter places by what fits.",
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "e.g. Coco",
+      "size": "Size",
+      "breed": "Breed (optional)",
+      "breedPlaceholder": "e.g. Poodle",
+      "save": "Save",
+      "saving": "Saving...",
+      "success": "Saved.",
+      "invalid": "Please check this field.",
+      "sizeOptions": {
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large"
+      }
+    }
   },
   "common": {
     "loading": "Loading...",

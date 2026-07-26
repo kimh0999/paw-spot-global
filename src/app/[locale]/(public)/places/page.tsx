@@ -1,5 +1,8 @@
+import { getCurrentUser } from "@/lib/auth/current-user";
+import { getUserDog } from "@/lib/dogs/queries";
+import { getFavoritePlaceIds } from "@/lib/favorites/queries";
 import { getPlaces } from "@/lib/places/queries";
-import type { CategoryFilterValue } from "@/types/place";
+import type { CategoryFilterValue, DogSizeFilter } from "@/types/place";
 import PlacesClient from "./PlacesClient";
 
 interface PlacesPageProps {
@@ -22,6 +25,13 @@ function parseCategory(value: string | undefined): CategoryFilterValue {
   return "all";
 }
 
+function toDogSizeFilter(size: string): DogSizeFilter {
+  if (size === "SMALL") return "small";
+  if (size === "MEDIUM") return "medium";
+  if (size === "LARGE") return "large";
+  return "all";
+}
+
 export default async function PlacesPage({ searchParams }: PlacesPageProps) {
   const lat = parseCoord(searchParams.lat, -90, 90);
   const lng = parseCoord(searchParams.lng, -180, 180);
@@ -33,12 +43,20 @@ export default async function PlacesPage({ searchParams }: PlacesPageProps) {
   const initialCategory = parseCategory(searchParams.category);
   const initialSearchQuery = searchParams.q ?? "";
 
+  const user = await getCurrentUser();
+  const [favoritePlaceIds, dog] = user
+    ? await Promise.all([getFavoritePlaceIds(user.id), getUserDog(user.id)])
+    : [[], null];
+  const defaultDogSize = dog ? toDogSizeFilter(dog.size) : "all";
+
   return (
     <PlacesClient
       initialPlaces={places}
       userLocation={userLocation}
       initialCategory={initialCategory}
       initialSearchQuery={initialSearchQuery}
+      favoritePlaceIds={favoritePlaceIds}
+      defaultDogSize={defaultDogSize}
     />
   );
 }

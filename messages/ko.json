@@ -192,6 +192,10 @@
         "directions": "길찾기",
         "call": "전화"
       },
+      "favorite": {
+        "add": "즐겨찾기 추가",
+        "remove": "즐겨찾기 제거"
+      },
       "conditions": {
         "indoor": {
           "allowed": "실내 입장 가능",
@@ -303,8 +307,36 @@
     "places": "플레이스",
     "nearMe": "내 주변",
     "myDog": "내 반려견",
+    "favorites": "즐겨찾기",
     "vets": "동물병원",
-    "comingSoon": "준비 중"
+    "comingSoon": "준비 중",
+    "login": "로그인",
+    "logout": "로그아웃",
+    "account": "계정"
+  },
+  "favorites": {
+    "title": "즐겨찾기",
+    "empty": "아직 저장한 장소가 없습니다. 장소의 하트를 눌러 여기에 저장하세요."
+  },
+  "myDog": {
+    "title": "내 반려견",
+    "description": "반려견 크기를 저장하면 크기에 맞는 장소로 필터링됩니다.",
+    "form": {
+      "name": "이름",
+      "namePlaceholder": "예: 코코",
+      "size": "크기",
+      "breed": "견종 (선택)",
+      "breedPlaceholder": "예: 푸들",
+      "save": "저장",
+      "saving": "저장 중...",
+      "success": "저장되었습니다.",
+      "invalid": "이 항목을 확인해 주세요.",
+      "sizeOptions": {
+        "small": "소형견",
+        "medium": "중형견",
+        "large": "대형견"
+      }
+    }
   },
   "common": {
     "loading": "로딩 중...",

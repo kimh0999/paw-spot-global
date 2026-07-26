@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
@@ -12,16 +12,18 @@ import MapPanel from "@/components/places/MapPanel";
 import SelectedPlacePanel from "@/components/places/SelectedPlacePanel";
 import { usePlaceListState } from "@/components/places/hooks/usePlaceListState";
 import { useUserLocationQuery } from "@/components/places/hooks/useUserLocationQuery";
-import type { CategoryFilterValue, PlaceListItem } from "@/types/place";
+import type { CategoryFilterValue, DogSizeFilter, PlaceListItem } from "@/types/place";
 
 interface PlacesClientProps {
   initialPlaces: PlaceListItem[];
   userLocation: { lat: number; lng: number } | null;
   initialCategory?: CategoryFilterValue;
   initialSearchQuery?: string;
+  favoritePlaceIds?: string[];
+  defaultDogSize?: DogSizeFilter;
 }
 
-export default function PlacesClient({ initialPlaces, userLocation, initialCategory, initialSearchQuery }: PlacesClientProps) {
+export default function PlacesClient({ initialPlaces, userLocation, initialCategory, initialSearchQuery, favoritePlaceIds, defaultDogSize }: PlacesClientProps) {
   const t = useTranslations("places");
   const searchParams = useSearchParams();
 
@@ -58,6 +60,7 @@ export default function PlacesClient({ initialPlaces, userLocation, initialCateg
     initialSortOption,
     initialCategory,
     initialSearchQuery,
+    initialDogSize: defaultDogSize,
     referenceDate,
   });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -74,6 +77,14 @@ export default function PlacesClient({ initialPlaces, userLocation, initialCateg
       setSortOption("distance");
     }
   }, [searchParams, setSortOption]);
+
+  const favoriteIdSet = useMemo(
+    () => new Set(favoritePlaceIds ?? []),
+    [favoritePlaceIds],
+  );
+  const isSelectedFavorite = selectedPlace
+    ? favoriteIdSet.has(selectedPlace.id)
+    : false;
 
   const mapPlaceholder = t("list.mapPlaceholder");
 
@@ -247,6 +258,7 @@ export default function PlacesClient({ initialPlaces, userLocation, initialCateg
               place={selectedPlace}
               onClose={clearSelectedPlace}
               userLocation={userLocation}
+              isFavorite={isSelectedFavorite}
             />
           )}
         </div>
@@ -279,6 +291,7 @@ export default function PlacesClient({ initialPlaces, userLocation, initialCateg
               place={selectedPlace}
               onClose={clearSelectedPlace}
               userLocation={userLocation}
+              isFavorite={isSelectedFavorite}
             />
           </div>
         )}

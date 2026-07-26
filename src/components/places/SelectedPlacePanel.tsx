@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import FavoriteButton from "@/components/places/FavoriteButton";
 import { Link } from "@/i18n/navigation";
 import { formatDistance, formatWalkingTime } from "@/lib/geo/distance";
 import { verificationMethodKey } from "@/lib/places/display";
@@ -26,6 +27,7 @@ interface SelectedPlacePanelProps {
   place: PlaceListItem;
   onClose: () => void;
   userLocation?: { lat: number; lng: number } | null;
+  isFavorite?: boolean;
 }
 
 // Keeps the category glyph consistent with PlaceCard.
@@ -39,7 +41,7 @@ function CategoryIcon({ category }: { category: PlaceListItem["category"] }) {
   }
 }
 
-export default function SelectedPlacePanel({ place, onClose, userLocation }: SelectedPlacePanelProps) {
+export default function SelectedPlacePanel({ place, onClose, userLocation, isFavorite = false }: SelectedPlacePanelProps) {
   const t = useTranslations("places");
   const rawLocale = useLocale();
   const locale = isSupportedLocale(rawLocale) ? rawLocale : "en";
@@ -265,8 +267,14 @@ export default function SelectedPlacePanel({ place, onClose, userLocation }: Sel
         </p>
       </div>
 
-      {/* Sticky bottom action bar — Directions (primary) + Call. Save is TODO (no DB feature yet). */}
+      {/* Sticky bottom action bar — Directions (primary) + Call + Favorite. */}
       <div className="shrink-0 flex gap-2 px-4 py-3 border-t border-gray-100 bg-white">
+        <FavoriteButton
+          key={place.id}
+          placeId={place.id}
+          initialFavorite={isFavorite}
+          className="shrink-0 h-9 w-9"
+        />
         {directionsUrl && (
           <Button asChild size="sm" className="flex-1 bg-orange-500 text-white hover:bg-orange-600">
             <a href={directionsUrl} target="_blank" rel="noopener noreferrer">

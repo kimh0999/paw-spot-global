@@ -3,11 +3,7 @@ import { getTranslations } from "next-intl/server";
 
 import { auth, signIn } from "@/auth";
 import { Button } from "@/components/ui/button";
-import {
-  getDefaultAdminPath,
-  getSafeCallbackUrl,
-} from "@/lib/auth/safe-callback-url";
-import { getCurrentAdmin } from "@/lib/auth/require-admin";
+import { getSafeCallbackUrl } from "@/lib/auth/safe-callback-url";
 import { isSupportedLocale } from "@/lib/i18n/locale";
 
 interface LoginPageProps {
@@ -24,21 +20,16 @@ export default async function LoginPage({
 }: LoginPageProps) {
   const locale = isSupportedLocale(params.locale) ? params.locale : "en";
   const t = await getTranslations({ locale, namespace: "auth.login" });
-  const fallback = getDefaultAdminPath(locale);
+  const fallback = `/${locale}`;
   const callbackUrl = getSafeCallbackUrl(
     searchParams.callbackUrl,
     locale,
     fallback,
   );
   const session = await auth();
-  const admin = await getCurrentAdmin();
-
-  if (admin) {
-    redirect(callbackUrl);
-  }
 
   if (session?.user?.email) {
-    redirect(`/${locale}/forbidden`);
+    redirect(callbackUrl);
   }
 
   const error = Array.isArray(searchParams.error)
