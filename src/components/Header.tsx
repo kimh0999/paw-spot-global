@@ -1,31 +1,19 @@
 "use client";
 
-import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useSession, signOut } from "next-auth/react";
 
-import { Link, useRouter } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import LocaleSwitcher from "@/components/i18n/LocaleSwitcher";
-import { navigateToNearbyPlaces } from "@/lib/location/navigation";
 
 const navLinkClass =
   "text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors";
 
 export default function Header() {
   const t = useTranslations("header");
-  const router = useRouter();
   const { data: session, status } = useSession();
-  const [isLocating, setIsLocating] = useState(false);
 
   const isAuthenticated = status === "authenticated" && !!session?.user;
-
-  function handleNearMe() {
-    navigateToNearbyPlaces(
-      router,
-      () => setIsLocating(true),
-      () => setIsLocating(false),
-    );
-  }
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
@@ -41,14 +29,9 @@ export default function Header() {
               {t("places")}
             </Link>
 
-            <button
-              type="button"
-              onClick={handleNearMe}
-              disabled={isLocating}
-              className={`${navLinkClass} disabled:opacity-60 disabled:cursor-not-allowed`}
-            >
-              {isLocating ? "⏳" : "📍"} {t("nearMe")}
-            </button>
+            <Link href="/#categories" className={navLinkClass}>
+              {t("category")}
+            </Link>
 
             <Link href="/my-dog" className={navLinkClass}>
               {t("myDog")}

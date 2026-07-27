@@ -305,7 +305,7 @@
   },
   "header": {
     "places": "Places",
-    "nearMe": "Near Me",
+    "category": "Category",
     "myDog": "My Dog",
     "favorites": "Favorites",
     "vets": "Vets",
