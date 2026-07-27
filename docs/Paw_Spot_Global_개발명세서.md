@@ -1775,6 +1775,8 @@ Tailwind 기본 사용:
 
 ### 9-6. 디자인 토큰 (globals.css)
 
+> ⛔ **디자인 기준 아님 (Superseded).** 색상·폰트·radius 등 모든 디자인 결정의 유일한 기준은 루트 `DESIGN.md`다. 아래 토큰/폰트 값은 참고하지 말 것. 이 명세서는 라우팅·API·DB·SEO·보안 등 비(非)디자인 영역에서만 기준이 된다.
+
 ```css
 /* app/globals.css */
 @tailwind base;
