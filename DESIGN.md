@@ -1,1206 +1,564 @@
----
-title: Paw Spot Global Design System
-status: active
-updated: "2026-07-26"
-scope: "UI, UX, layout, responsive behavior, component states, accessibility"
----
+# Paw Spot Global — Design Guidelines (v1.2)
 
-# Paw Spot Global Design System
+> 이 문서는 Paw Spot Global의 UI를 구현·수정할 때 따르는 기준이다.  
+> 에어비앤비의 탐색 구조와 절제된 시각 언어, 당근의 정보 밀도와 지역 중심 UX를 참고하되 두 브랜드의 색상·로고·고유 컴포넌트를 복제하지 않는다.
 
-## 0. 문서 사용 원칙
+**v1.2 변경 사항** (기획서 v3 결정 반영): 정보 신선도 임계값을 8주에서 **90일 단일 기준**으로 통일(D-02), Korean Inquiry Box를 **MVP 제외 / P1 재도입 예정**으로 표기(D-01).
 
-이 문서는 Paw Spot Global의 UI/UX 구현 기준이다.
+**v1.1 변경 사항**: 다크 모드 정책, z-index 체계, 아이콘 규칙, 텍스트 색상 용도 구분, Place Card 밀도 검증 기준, 한국어 UI의 문의 박스 처리, 거리 표기 규칙 추가.
 
-기능 요구사항과 개발 범위는 기획서, 개발명세서, 현재 코드를 기준으로 판단한다.
+## 1. Product Direction
 
-- 이 문서에 컴포넌트가 명시되어 있어도 요청받지 않은 기능은 구현하지 않는다.
-- 기존 상태 관리, URL 구조, 데이터 모델, API, i18n 동작을 임의로 변경하지 않는다.
-- UI를 수정하기 전에 현재 컴포넌트와 `globals.css`의 디자인 토큰을 확인한다.
-- 현재 코드와 이 문서가 충돌하면 바로 수정하지 말고 차이를 먼저 보고한다.
-- 기존 기능을 유지하면서 점진적으로 적용한다.
-- `Included Components`는 디자인 대상 목록이며 전체 구현 범위를 의미하지 않는다.
+- 대상: 한국에 거주하거나 여행 중인 영어 사용 반려견 보호자
+- 핵심 가치: **지도와 필터로 내 주변에서 반려견 동반 조건이 맞는 장소를 찾고, 방문 전에 조건과 정보의 신뢰도를 판단하게 한다.**
+- 기본 언어: 영어
+- 보조 언어: 한국어
+- 핵심 탐색 정보:
+  1. 거리와 위치
+  2. 실내 동반 가능 여부
+  3. 이동장·유모차 조건
+  4. 허용 반려견 크기
+  5. 마지막 확인일과 확인 방법
 
----
+## 2. Reference Rules
 
-## 1. Product Definition
+### From Airbnb
 
-Paw Spot Global은 한국에 거주하거나 여행 중인 외국인 반려견 보호자가 반려견과 함께 갈 수 있는 음식점, 카페, 여행지를 지도와 필터로 찾고, 방문 전에 필요한 동반 조건을 영어로 확인하는 서비스다.
+- 흰색 중심의 차분한 화면
+- 장소 사진, 카드, 지도 사이의 자연스러운 연결
+- 둥근 필터와 간결한 탐색 컨트롤
+- 테두리와 여백 중심의 계층
+- 구체적이고 행동 중심적인 문구
 
-서비스의 핵심은 장소를 많이 보여주는 것이 아니라 다음 판단을 빠르고 신뢰할 수 있게 만드는 것이다.
+사용하지 않는다:
 
-1. 내 주변에 조건이 맞는 장소가 있는가?
-2. 실내 동반이 가능한가?
-3. 이동장이나 유모차가 필요한가?
-4. 내 반려견의 크기가 허용되는가?
-5. 이 정보는 언제, 어떤 방법으로 확인됐는가?
+- Airbnb Pink `#ff385c`
+- Airbnb Cereal
+- Guest, Host, Booking, Reserve 중심 구조
+- 사진이 조건 정보보다 우선하는 `photography-first` 구성
+- 과도하게 큰 검색 바와 모든 버튼의 pill 처리
 
-### 핵심 사용자 흐름
+### From Karrot
 
-```text
-지도와 필터로 장소 발견
-→ 여러 후보 비교
-→ 3대 동반 조건 확인
-→ 검증일과 정보 신선도 확인
-→ 길찾기·전화·한국어 문의
-```
+- 4px 기반 간격 체계
+- 한 화면에서 여러 장소를 비교할 수 있는 정보 밀도
+- 지역명과 거리의 상시 노출
+- 과한 장식과 그림자가 없는 평면적 UI
+- 따뜻하지만 과장하지 않는 문체
 
-### 디자인 참고 범위
+사용하지 않는다:
 
-여기어때(Yeogiotte)의 다음 요소만 참고한다.
+- Karrot Orange `#ff6f0f` 또는 `#ff6600`
+- 중고 거래 카드와 채팅 중심 구조
+- 당근 캐릭터·브랜드 서사
+- 모든 화면에 강한 브랜드 색을 반복하는 방식
 
-- 명확한 정보 위계
-- 사진 중심 장소 탐색
-- 간결한 검색 UI
-- Compact Filter Chip
-- 일관된 Spacing과 Radius
-- 명확한 Primary Action
+## 3. Core Principles
 
-다음 패턴은 Paw Spot에 적용하지 않는다.
+### 3.1 Visit eligibility leads
 
-- 가격 및 할인 강조
-- 숙박 상품
-- 객실 재고
-- 예약 가능 여부
-- 멤버십
-- 결제
-- 가격형 지도 마커
+사진보다 먼저 사용자가 자신의 반려견과 방문할 수 있는지 판단하게 한다. `Pet-friendly`라는 포괄적 배지 대신 구체적인 조건을 표시한다.
 
----
+### 3.2 Map, list, and preview behave as one
 
-## 2. Design Principles
+장소 카드, 미리보기 패널, 지도 마커는 동일한 선택 상태를 공유한다. 어느 영역에서 장소를 선택해도 나머지 영역이 즉시 동기화되어야 한다.
 
-### Find first
+### 3.3 Trust is explicit
 
-첫 화면에서는 서비스 소개보다 지도와 필터를 통한 장소 탐색을 우선한다.
+검증 여부만 단독 배지로 표시하지 않는다. 확인일과 확인 방법을 함께 보여주고, 모르는 정보는 `Confirmation needed`로 명확히 표시한다.
 
-### Conditions before decoration
+### 3.4 Proximity is always visible
 
-사진은 장소를 식별하게 하고, 동반 조건은 실제 방문 가능성을 판단하게 한다.
+장소 카드와 상세 요약에는 거리와 지역명을 숨기지 않는다. 위치가 확인되지 않았다면 임의의 거리를 표시하지 않는다.
 
-### Trust is visible
+### 3.5 One primary action per context
 
-`Verified`, `Last checked`, 확인 방법을 숨기거나 작은 부가 정보로 처리하지 않는다.
+한 영역에서 파란색 채움 버튼은 하나만 사용한다. 나머지 행동은 outline, ghost 또는 text action으로 낮춘다.
 
-### Unknown is a valid state
+### 3.6 Photos support the decision
 
-확인되지 않은 조건을 허용 또는 불가로 추정하지 않는다.
+사진은 장소 분위기와 식별을 돕는 정보다. 사진 때문에 동반 조건, 거리, 검증 정보가 첫 화면에서 밀려나면 안 된다.
 
-```text
-Needs confirmation
-```
+## 4. Design Tokens
 
-상태를 명확하게 표시한다.
-
-### Map and list stay synchronized
-
-목록 카드, 지도 마커, 선택 장소 프리뷰는 동일한 Hover·Selected 상태를 공유한다.
-
-### English first, Korean supported
-
-사용자용 기본 정보 구조는 영어 UI를 기준으로 설계하되, 한국어에서도 텍스트가 잘리거나 정보 위계가 달라지지 않아야 한다.
-
-### One clear next action
-
-각 화면에서는 현재 단계에 필요한 핵심 행동 하나를 우선한다.
-
-- 탐색 화면: 장소 선택
-- 선택 프리뷰: `View details`
-- 상세 화면: `Get directions`
-- 문의 영역: `Copy Korean message`
-
-### No color-only meaning
-
-상태는 색상만으로 구분하지 않는다. 아이콘, 텍스트, Border를 함께 사용한다.
-
----
-
-## 3. Visual Theme
-
-Paw Spot의 시각적 인상은 다음과 같다.
-
-```text
-Friendly · Clear · Trustworthy · Local
-```
-
-반려동물 서비스의 친근함은 부드러운 Radius, 자연스러운 장소 사진, 제한적인 Paw 모티프로 표현한다.
-
-신뢰성은 절제된 색상과 구조화된 조건 정보로 표현한다.
-
-### 기본 규칙
-
-- 기본 배경은 밝고 단순하게 유지한다.
-- Primary Color는 검색, 선택 상태, 핵심 CTA에 집중한다.
-- 반복 카드에 강한 그림자를 사용하지 않는다.
-- 귀여운 장식이 동반 조건이나 검증 상태보다 먼저 보이지 않게 한다.
-- 여행 광고처럼 지나치게 감성적으로 표현하지 않는다.
-- 숙박 예약 서비스처럼 가격과 거래 중심으로 보이지 않게 한다.
-
----
-
-## 4. Color System
-
-### 색상 기준
-
-현재 프로젝트의 `globals.css`에 선언된 디자인 토큰을 색상의 단일 기준으로 사용한다.
+### Colors
 
 ```css
---background
---foreground
---card
---card-foreground
---primary
---primary-foreground
---secondary
---secondary-foreground
---muted
---muted-foreground
---accent
---accent-foreground
---border
---input
---ring
---destructive
+:root {
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-soft: #eff6ff;
+  --color-on-primary: #ffffff;
+
+  --color-canvas: #ffffff;
+  --color-background: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f2f4f7;
+
+  --color-text: #171719;
+  --color-text-secondary: #5f6368;
+  --color-text-muted: #6b7280;
+  --color-border: #e5e7eb;
+  --color-border-strong: #cfd4dc;
+
+  --color-success: #15803d;
+  --color-success-soft: #f0fdf4;
+  --color-warning: #b45309;
+  --color-warning-soft: #fffbeb;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fef2f2;
+  --color-unknown: #667085;
+  --color-unknown-soft: #f2f4f7;
+
+  --color-focus: #2563eb;
+  --color-overlay: rgb(17 24 39 / 48%);
+}
 ```
 
-### 구현 규칙
+- Primary Blue: 주요 CTA, 선택 필터, 선택 마커, focus
+- Green: 조건 충족 또는 최근 확인
+- Amber: 조건부 허용, 오래된 정보, 주의 필요
+- Red: 동반 불가, 입력 오류, 위험한 작업
+- Gray: 확인 필요, 비활성, 보조 정보
+- 상태는 색상만으로 표현하지 않고 아이콘과 텍스트를 함께 사용한다.
 
-- `DESIGN.md`를 적용한다는 이유로 기존 Primary Color를 임의로 변경하지 않는다.
-- Tailwind 기본 색상인 `blue-600`, `slate-500` 등을 컴포넌트마다 직접 분산하지 않는다.
-- 가능한 경우 Semantic Token을 사용한다.
-- 새로운 색상 토큰이 필요하면 기존 `globals.css`와 사용 위치를 먼저 확인한다.
-- 지도 마커와 장소 카드의 Selected 상태에는 동일한 Primary Token을 사용한다.
+#### Text color usage
 
-### 상태별 의미
+- `--color-text`: 장소명, 조건 값, 본문 등 판단에 필요한 모든 1차 정보
+- `--color-text-secondary`: 카테고리, 지역명, 확인 방법 등 1차 정보를 보조하는 라인
+- `--color-text-muted`: placeholder, caption, 비활성 텍스트, 부가 디스클레이머
+- 같은 텍스트 블록 안에서 secondary와 muted를 혼용하지 않는다. 구분이 애매하면 secondary를 사용한다.
 
-| 상태 | 의미 | 표현 |
-|---|---|---|
-| Allowed | 확인된 허용 조건 | Success icon + label + soft surface |
-| Conditional | 조건부 허용 | Warning icon + 조건 문구 |
-| Not allowed | 확인된 불가 | Danger icon + 명확한 제한 문구 |
-| Unknown | 정보 미확인 | Question icon + `Needs confirmation` |
-| Selected | 현재 선택된 장소 | Primary border + soft surface |
-| Stale | 재확인 필요 | Warning icon + `Needs reconfirmation` |
+#### Dark mode
 
-### 주의사항
+- v1은 라이트 모드만 지원한다. 다크 모드 토큰과 스타일을 임의로 추가하지 않는다.
+- `prefers-color-scheme: dark`에 대응하는 자동 반전을 적용하지 않는다.
+- 다크 모드 도입 시 이 문서의 토큰 확장으로 진행하며, 컴포넌트별 하드코딩 색상을 만들지 않는다.
 
-- Red는 할인이나 단순 강조에 사용하지 않는다.
-- Warning 색상은 평점이 아니라 조건부 허용이나 정보 신선도 경고에 사용한다.
-- 확인되지 않은 조건을 Green으로 표시하지 않는다.
-- `Verified`는 반드시 확인일과 함께 표시한다.
-
----
-
-## 5. Typography
-
-국문·영문·숫자는 현재 프로젝트에서 설정된 Font Family를 유지한다.
-
-새로 설정해야 하는 경우 다음 순서를 권장한다.
+### Z-index
 
 ```css
-font-family:
-  Pretendard,
-  Inter,
-  system-ui,
-  -apple-system,
-  BlinkMacSystemFont,
-  sans-serif;
+:root {
+  --z-map-control: 10;
+  --z-dropdown: 50;
+  --z-header: 100;
+  --z-drawer: 200;
+  --z-bottom-sheet: 300;
+  --z-dialog: 400;
+  --z-snackbar: 500;
+  --z-tooltip: 600;
+}
 ```
 
-### Type scale
+- 위 토큰 외의 임의 z-index 값을 사용하지 않는다.
+- Dropdown은 페이지 콘텐츠 위, Header 아래에 위치한다.
+- overlay(`--color-overlay`)는 해당 레이어 바로 아래에 위치한다.
+- Snackbar는 Dialog 위에도 표시될 수 있다.
+- 지도 라이브러리 내부 z-index는 `--z-map-control` 이하로 제한한다.
 
-| Role | Size / Line height | Weight | 사용 위치 |
-|---|---:|---:|---|
-| Display | `32 / 40px` | 700 | 랜딩 페이지 최상위 메시지 |
-| Page title | `24 / 32px` | 700 | 페이지 제목, 장소 상세 제목 |
-| Section title | `20 / 28px` | 700 | `Before You Go` |
-| Card title | `18 / 26px` | 700 | 장소명, Dialog 제목 |
-| Body | `14 / 20px` | 400 | 설명, 조건 상세 |
-| Label | `13 / 18px` | 600 | Filter, Button, 상태 Label |
-| Caption | `12 / 16px` | 400 | 거리, 지역, 확인일 |
+### Icons
 
-### Typography rules
 
-- 장소명과 조건 정보 사이에 크기 또는 굵기 차이를 둔다.
-- 긴 영문 장소명은 최대 2줄까지 허용하고 이후 말줄임표를 적용한다.
-- 영문명이 없으면 원본 한국어 장소명을 표시한다.
-- 임의 번역한 장소명을 공식 영문명처럼 표시하지 않는다.
-- All Caps는 짧은 상태 Label에만 제한적으로 사용한다.
-- Underline은 Link에만 사용한다.
-- 조건은 아이콘만으로 축약하지 않고 Text Label을 함께 표시한다.
+- 아이콘 셋: lucide 단일 셋만 사용한다. 다른 셋과 혼용하지 않는다.
+- 크기: 16px(조건 행, 배지, 인라인), 20px(버튼, 필터, 목록 액션), 24px(헤더, 빈 상태)
+- stroke: 기본 1.5, 16px에서는 2를 허용한다.
+- 색상은 함께 있는 텍스트 색상을 따른다. 상태 아이콘은 상태 색상 토큰을 사용한다.
+- 의미 전달용 아이콘에는 텍스트 라벨을 병기한다. 장식용 아이콘은 `aria-hidden`으로 처리한다.
+- 같은 의미에는 항상 같은 아이콘을 사용한다. (예: 실내 동반, 이동장, 크기, 확인 상태)
 
----
+### Typography
 
-## 6. Spacing, Shape and Elevation
+현재 프로젝트의 `next/font` 기반 sans-serif를 유지한다. Airbnb Cereal이나 별도 브랜드 폰트를 추가하지 않는다.
+
+```text
+Display       40/48  700  홈 히어로 전용
+Page title    28/36  700
+Section title 20/28  700
+Card title    16/24  600
+Body          14/21  400
+Body strong   14/21  600
+Caption       12/18  400
+Button        14/20  600
+```
+
+- 영어와 한국어 모두 가독성을 우선한다.
+- 본문은 최소 14px, 주요 조건은 최소 14px로 표시한다.
+- 장소명은 최대 2줄, 버튼과 상태 문구는 가능한 한 자르지 않는다.
 
 ### Spacing
 
-4px 단위의 간격 체계를 사용한다.
+4px grid만 사용한다.
 
 ```text
-4, 8, 12, 16, 24, 32, 48, 64px
+4, 8, 12, 16, 20, 24, 32, 40, 48, 64
 ```
 
-권장 기준:
-
-- 모바일 화면 좌우 여백: 16px
-- 태블릿 화면 좌우 여백: 20px
-- 데스크톱 화면 좌우 여백: 24px
-- 카드 내부 Padding: 16px
-- 컴포넌트 그룹 간격: 12~16px
-- 주요 Section 간격: 32~48px
-- 조건 행 간격: 8~12px
+- 카드 내부: 12–16px
+- 패널 내부: 16–24px
+- 섹션 사이: 24–32px
+- 모바일 화면 좌우: 16px
 
 ### Radius
 
-- Button, Input: 8px
-- Filter Chip, Badge: Full Radius
-- Place Card, Preview Card: 12px
-- Dialog, Popover: 16px
-- Mobile Bottom Sheet: 상단 20px
+```text
+Control   8px
+Card     12px
+Panel    12px
+Dialog   16px
+Chip    999px
+Circle   50%
+```
 
-### Border and shadow
+- pill은 필터 칩, 상태 배지, 카테고리 탭에만 주로 사용한다.
+- 일반 버튼과 입력 필드를 무조건 pill로 만들지 않는다.
 
-- 반복되는 Place Card는 1px Border를 기본으로 한다.
-- Hover 상태는 Border 강조와 약한 Shadow를 사용한다.
-- Selected Card는 다음 중 두 가지 이상을 함께 사용한다.
+### Border and Elevation
+
+- 기본 계층은 `1px solid var(--color-border)`로 표현한다.
+- 일반 카드는 그림자를 사용하지 않는다.
+- 선택 카드, floating control, Bottom Sheet에만 약한 그림자를 허용한다.
+- 큰 blur, 색이 들어간 shadow, glassmorphism을 사용하지 않는다.
+
+## 5. Layout
+
+### Global Header
 
 ```text
-Primary border
-Primary soft surface
-Inner focus ring
-Selected label
+[Logo] [주요 탐색 링크] [보조 링크] [EN / KO]
 ```
 
-- Floating Preview와 Dialog에만 Raised Shadow를 사용한다.
-- Bottom Sheet에는 위쪽 방향의 Sheet Shadow를 사용한다.
+- 실제 메뉴 항목과 경로는 개발명세서(라우팅)에서 관리한다. 이 문서는 배치와 상태만 규정한다.
+- 데스크톱 높이: 64px
+- 모바일 높이: 56px
+- 로고는 홈 링크다.
+- 현재 페이지는 텍스트와 indicator로 구분한다.
+- 미구현 메뉴는 404로 연결하지 않고 `Coming soon` 또는 비활성 상태로 표시한다.
+- 긴급 기능은 위험을 뜻하는 빨간색 장식 대신 명확한 라벨과 아이콘으로 제공한다.
 
----
+### Places Desktop
 
-## 7. Information Architecture
-
-### Primary navigation
+`1280px` 이상에서는 다음 3분할 구조를 사용한다.
 
 ```text
-Logo | Places | Near Me | My Dogs | Animal Hospital | EN/KO
+[Place list 340px] [Place preview 380px] [Map minmax(0, 1fr)]
 ```
 
-- Logo는 Home Link다.
-- `Places`와 `Near Me`는 활성 기능이다.
-- `My Dogs`와 `Animal Hospital`이 미구현 상태라면 404로 연결하지 않는다.
-- 미구현 메뉴는 `Coming soon` 또는 Disabled 상태로 표시한다.
-- 현재 페이지의 Active Navigation 상태를 명확히 표시한다.
-- 언어 전환은 현재 페이지와 가능한 검색 상태를 유지한다.
+- 목록과 미리보기 패널은 독립적으로 스크롤한다.
+- 지도는 남은 영역을 사용하며 장소 선택 시 재마운트하지 않는다.
+- 미선택 시 미리보기 패널은 닫히고 지도가 자연스럽게 확장된다.
+- 패널 너비 변화는 `250ms ease-standard`로 처리한다.
+- 카드 hover → 마커 hover
+- 카드 선택 → 미리보기 패널 + 선택 마커
+- 마커 선택 → 해당 카드 scroll into view + 미리보기 패널
 
-### 장소 정보 우선순위
+`1024–1279px`에서는 목록과 지도를 유지하고 미리보기는 지도 위 overlay panel로 연다. 지도의 실사용 폭이 지나치게 좁아지는 3분할은 사용하지 않는다.
 
-목록과 선택 프리뷰는 다음 순서로 정보를 표시한다.
+### Places Mobile
+
+- 목록과 지도를 segmented control로 전환한다.
+- 장소 선택 시 미리보기는 Bottom Sheet로 표시한다.
+- Bottom Sheet는 요약 높이와 전체 높이 두 단계만 사용한다.
+- 필터는 Drawer 또는 Bottom Sheet에서 제공한다.
+- 지도와 목록의 필터·선택 상태를 전환 중에도 유지한다.
+
+## 6. Core Components
+
+### Filter Bar
+
+- 카테고리, 실내, 크기, 이동장, 정렬을 중요도 순으로 배치한다.
+- 높이: 40px, 모바일 touch target은 최소 44×44px
+- 비선택: 흰색 + 회색 테두리
+- 선택: `primary-soft` 배경 + primary 테두리 + primary 텍스트
+- 선택된 조건 수가 많아도 필터 바를 여러 줄로 무한 확장하지 않는다.
+- 전체 조건은 `All filters`에서 수정한다.
+
+### Place Card
+
+목록 패널에서는 세로형 대형 카드가 아니라 밀도 높은 가로형 카드를 사용한다.
 
 ```text
-Photo
-→ Place name
-→ Category · Distance · Area
-→ Indoor
-→ Carrier / Stroller
-→ Dog size
-→ Verification status · Last checked
+Place name                       620 m
+Cafe · Yuseong-gu
+[✓ Your dog can visit]
+Indoor available · No carrier needed · Up to medium
+Checked 12 days ago · Phone
 ```
 
-다음 정보는 기본 Place Card의 핵심 항목이 아니다.
+- 카드 전체가 선택 대상이며 내부 action의 click propagation을 분리한다.
+- 장소명, 거리, 지역, 핵심 조건 3개, 확인 정보가 첫 화면에 보여야 한다.
+- 허용 조건만 나열하지 말고 중요한 `Conditional`, `Not allowed`, `Unknown`도 표시한다.
+- 카테고리는 텍스트로만 표시한다. 같은 카테고리가 연속으로 나열되는 목록에서 아이콘 뱃지는 폭만 쓰고 구분에 기여하지 않는다.
+- hover는 배경색과 테두리로만 표현한다.
+- selected는 primary 테두리와 옅은 primary 배경으로 표현한다.
+- 조건 영역에 최소 높이를 두어 조건 줄 수가 달라도 카드 높이가 흔들리지 않게 한다. 목록의 목적은 비교다.
+- 대표 이미지는 카드에 넣지 않는다. 340px 목록에서 이미지는 조건 텍스트를 밀어내며, 조건이 판단의 근거다.
+- 홈과 즐겨찾기 grid에서는 4:3 이미지의 세로형 variant를 사용할 수 있다.
 
-- 가격
-- 할인
-- 예약 가능 여부
-- 평점
-- 긴 설명
-- 전체 운영시간
-- 리뷰 목록
+#### Visit eligibility banner
 
----
+반려견 프로필이 등록되어 있으면 조건을 나열하기 전에 방문 가능 여부를 한 문장으로 단언한다. 사용자가 조건 여러 개를 직접 종합하게 두지 않는다.
 
-## 8. Responsive Layout
+| 상태 | 조건 | 표현 |
+|---|---|---|
+| allowed | 허용 크기 ≥ 등록된 반려견 크기 | `success-soft` 배경 + check 아이콘 |
+| blocked | 동반 불가이거나 허용 크기 미만 | `danger-soft` 배경 + slash 아이콘 |
+| unknown | 허용 크기 미확인 | `unknown-soft` 배경 + alert 아이콘 |
 
-### Desktop: List + Map
+- 프로필이 없으면 배너를 표시하지 않는다. 추측으로 단언하지 않는다.
+- 배너는 판정만 담고, 근거가 되는 조건은 바로 아래 조건 목록에서 그대로 보여준다.
 
-`lg` 이상에서는 목록과 지도의 2분할 구조를 사용한다.
+#### Density verification
 
-고정된 목록·상세·지도 3분할은 사용하지 않는다.
+- 340px 목록 기준, 영문 장소명 2줄 + 조건 3개 + 확인 정보가 잘리지 않는지 가장 긴 실제 데이터로 검증한다.
+- 공간이 부족하면 조건 값을 축약형으로 표시한다. (예: `Carrier not required` → `No carrier needed`) 축약형도 의미를 생략하지 않는다.
+
+### Place Preview
+
+목록이나 지도에서 장소를 선택했을 때 여는 요약이다. 전체 정보를 담지 않는다. 갈 수 있는지 판단할 최소 정보와 다음 행동만 제공한다.
+
+구조는 header, body, footer 세 영역으로 고정한다. header와 footer는 고정하고 body만 스크롤한다.
 
 ```text
-┌──────────────────────┬────────────────────────────────────┐
-│ Search and filters   │                                    │
-│                      │                                    │
-│ Place list           │                Map                 │
-│ 400–460px            │                                    │
-│                      │   SelectedPlacePreview overlay     │
-└──────────────────────┴────────────────────────────────────┘
+header   카테고리 아이콘 · 장소명 · 카테고리 · 거리 · 주소 · 닫기
+body     동반 조건 전체 · 주의사항 · 확인일과 확인 방법
+footer   [상세 보기]
+         [즐겨찾기] [길찾기]
 ```
 
-### Desktop layout rules
-
-- 왼쪽 패널은 검색, 카테고리, 필터, 정렬, 결과 수, 장소 목록을 담당한다.
-- 1024~1279px에서는 왼쪽 패널을 약 400px로 사용한다.
-- 1280px 이상에서는 440~460px 범위를 사용한다.
-- 지도는 남은 Viewport 영역을 채운다.
-- 목록과 지도는 독립적으로 스크롤 또는 조작할 수 있어야 한다.
-- 장소 선택 전에는 상세 패널이 별도 공간을 차지하지 않는다.
-- 장소 선택 시 지도 위에 `SelectedPlacePreview`를 표시한다.
-- 전체 정보는 기존 `/places/[id]` 상세 페이지에서 제공한다.
-- 지도는 장소 선택 시 재마운트하지 않는다.
-
-### SelectedPlacePreview 위치
-
-- 지도 내부의 왼쪽 하단을 기본 위치로 사용한다.
-- Google Maps Control과 겹치지 않아야 한다.
-- 최대 너비는 360px로 제한한다.
-- 작은 화면에서는 다음 범위를 사용한다.
-
-```css
-width: min(360px, calc(100% - 32px));
-```
-
-- 지도 전체를 가리는 Side Panel로 확장하지 않는다.
-- `View details`를 Primary CTA로 사용한다.
-- `Directions`와 `Call`은 Secondary Action으로 사용한다.
-
-### Desktop selection flow
-
-장소 카드를 선택하면 다음 동작을 수행한다.
-
-1. 선택된 목록 카드를 강조한다.
-2. 대응하는 지도 마커를 강조한다.
-3. 지도의 중심을 선택 장소로 이동한다.
-4. 지도 위에 `SelectedPlacePreview`를 표시한다.
-5. `View details` 선택 시 `/places/[id]`로 이동한다.
-
-목록 카드와 지도 마커는 동일한 `selectedPlaceId`, `hoveredPlaceId` 상태를 기준으로 동기화한다.
-
-기존 상태 구조나 URL 정책은 별도 요청 없이 변경하지 않는다.
-
-### 상세 페이지 복귀
-
-상세 페이지에서 탐색 화면으로 돌아오면 가능한 범위에서 다음 상태를 복원한다.
-
-- 검색어
-- 필터
-- 정렬
-- 목록 Scroll 위치
-- 선택 장소
-- 지도 중심
-- 지도 Zoom
-
-복원 방식은 현재 구현과 Router 구조를 우선한다.
-
-### Mobile and tablet: Map + Bottom Sheet
-
-`lg` 미만에서는 지도를 기본 배경으로 사용하고, 검색 결과와 선택 장소를 Bottom Sheet로 제공한다.
-
-- 상단에는 Search와 핵심 Filter 진입점을 제공한다.
-- Bottom Sheet는 다음 세 상태를 가진다.
-
-```text
-peek
-results
-selected
-```
-
-#### Peek
-
-- 현재 지역
-- 검색 결과 수
-- Sheet 펼치기 Action
-
-지도를 넓게 탐색할 수 있도록 최소 높이로 표시한다.
-
-#### Results
-
-- 검색 결과 목록
-- Filter 결과
-- 정렬
-- 결과 수
-
-목록을 스크롤하며 후보를 비교할 수 있어야 한다.
-
-#### Selected
-
-- 선택 장소명
-- 카테고리와 거리
-- 3대 동반 조건
-- 검증 상태와 확인일
-- 핵심 Action
-
-전체 상세 정보는 Bottom Sheet에 넣지 않고 상세 페이지에서 제공한다.
-
-### Bottom Sheet rules
-
-- Drag Handle만으로 조작하게 하지 않는다.
-- 펼치기·접기 Button과 접근 가능한 이름을 제공한다.
-- 내부 목록 Scroll과 Sheet Drag Gesture가 충돌하지 않아야 한다.
-- 선택 장소를 닫으면 기존 Results 상태로 돌아간다.
-- Mobile Keyboard와 Safe Area를 고려한다.
-- Viewport 높이는 가능한 경우 `100dvh`를 사용한다.
-- Dialog를 Bottom Sheet 안에 중첩하지 않는다.
-
-### Detail page
-
-장소 상세는 지도 탐색 화면과 분리된 Full Page다.
-
-정보 순서:
-
-```text
-Place name and basic metadata
-→ Before You Go
-→ Verification information
-→ Directions and contact actions
-→ Operating hours and links
-→ Ask in Korean
-→ Reviews or additional information
-```
-
-- 대표 이미지는 장소 식별을 돕는 범위로 사용한다.
-- `Before You Go`를 운영시간이나 리뷰보다 먼저 확인할 수 있어야 한다.
-- 긴 영문 조건을 좁은 고정 패널 안에 넣지 않는다.
-
----
-
-## 9. Component Specifications
-
-### Button
-
-#### Primary
-
-- Background: `primary`
-- Text: `primary-foreground`
-- Radius: 8px
-- 최소 높이: 44px
-- 사용 위치: `View details`, 검색 실행, 저장·제출
-
-#### Secondary
-
-- Card 또는 Background Surface
-- 1px Border
-- Foreground Text
-- 사용 위치: `Call`, `Directions`, 보조 행동
-
-#### Ghost
-
-- Transparent Surface
-- 낮은 우선순위 행동에만 사용한다.
-
-#### Button states
-
-- Default
-- Hover
-- Pressed
-- Focus visible
-- Loading
-- Disabled
-
-Disabled 상태는 Opacity만 낮추지 않는다. Text, Background, Cursor를 함께 변경한다.
-
-Loading 상태에서도 버튼 너비가 변하지 않아야 한다.
-
----
-
-### SearchBar
-
-장소명, 지역, 주소를 검색하기 위한 입력이다.
-
-- Search Icon을 제공한다.
-- Visible Label 또는 `aria-label`을 제공한다.
-- 입력값이 있으면 Clear Button을 제공한다.
-- Focus 상태는 Ring으로 표시한다.
-- 현재 위치 탐색은 검색창 장식이 아니라 구분된 Action으로 제공한다.
-- 검색창 내부에 과도한 필터 기능을 넣지 않는다.
-
----
-
-### CategoryTabs
-
-기본 카테고리:
-
-```text
-Restaurants
-Cafes
-Attractions
-```
-
-- 동일한 정보 계층으로 제공한다.
-- 선택 상태는 Text, Border 또는 Soft Surface로 구분한다.
-- Tab 전환 시 목록과 지도를 함께 갱신한다.
-- 카테고리 Label은 현재 i18n 메시지를 사용한다.
-
----
-
-### FilterChip
-
-#### Default
-
-- Background Surface
-- Border
-- Foreground Text
-
-#### Hover
-
-- Muted Surface
-- 강조된 Border
-
-#### Selected
-
-- Primary Soft Surface
-- Primary Border
-- Primary Text
-- Check Icon
-
-현재 핵심 필터:
-
-```text
-Indoor
-No carrier required
-Dog size
-```
-
-`Open now`는 현재 확정된 MVP 필터가 아니다. 별도 요구사항이 확정되기 전에는 구현하지 않는다.
-
-- 영어 UI에서는 축약어보다 자연어 Label을 사용한다.
-- 모바일의 전체 Filter는 Drawer 또는 Bottom Sheet에서 제공할 수 있다.
-- 선택 여부를 색상만으로 표현하지 않는다.
-
----
-
-### PlaceCard
-
-- 1px Border와 12px Radius를 사용한다.
-- 사진은 왼쪽 또는 상단 Thumbnail로 제공할 수 있다.
-- 사진이 동반 조건을 밀어내지 않아야 한다.
-- 카드 전체를 선택 가능하게 할 수 있다.
-- 내부 Button과 카드 선택 Click Event가 충돌하지 않아야 한다.
-
-정보 순서:
-
-```text
-Place name
-→ Category · Distance · Area
-→ Indoor
-→ Carrier / Stroller
-→ Dog size
-→ Last checked
-```
-
-확인되지 않은 조건도 숨기지 않는다.
-
-```text
-Needs confirmation
-```
-
-으로 표시한다.
-
-#### PlaceCard states
-
-| 상태 | 표현 |
-|---|---|
-| Default | 기본 Border |
-| Hover | 강조 Border + 약한 Shadow |
-| Selected | Primary Border + Primary Soft Surface |
-| Keyboard focus | 명확한 Focus Ring |
-| Stale | `Needs reconfirmation` Warning 상태 |
-
----
-
-### ConditionRow
-
-조건은 아이콘, Label, Value 구조로 표시한다.
+- **미리보기는 카드보다 반드시 많은 정보를 보여준다.** 카드와 같은 내용만 반복하면 패널을 열 이유가 없다.
+- 카드는 핵심 조건 3개(실내 동반, 이동장·유모차, 허용 크기)만, 미리보기는 목줄과 입마개까지 포함한 전체 조건을 세로로 나열한다.
+- 카드는 주소를 한 줄로 자르고, 미리보기는 전체 주소를 보여준다.
+- 주의사항이 있으면 `warning-soft` 박스로 조건 아래에 둔다. 없으면 영역 자체를 생략한다.
+- 확인일에는 확인 방법을 함께 표시한다. 마지막 확인이 `90일` 이상 지났을 때만 `Recheck needed`를 경고색으로 알린다. 임계값을 낮게 잡아 모든 카드가 경고색이 되면 경고가 아무것도 강조하지 못한다. **임계값은 90일 하나만 사용한다.** 중간 단계 경고를 추가하지 않는다.
+- `상세 보기`가 primary action이다. 미리보기의 목적은 상세로 이어주는 것이다.
+- 대표 이미지, 운영시간, 연락처, 문의 문구 복사는 미리보기에 넣지 않는다.
+- 표면은 breakpoint에 따라 컬럼, overlay panel, Bottom Sheet로 바뀌지만 내용과 순서는 동일하게 유지한다.
+
+### Place Detail Page
+
+`/places/{id}`. 장소의 모든 정보를 담는 최종 화면이다. 여기서 더 들어갈 곳은 없다.
+
+표시 순서:
+
+1. 대표 이미지
+2. 장소명, 카테고리, 지역, 거리
+3. 길찾기·전화·공유 action
+4. `Before You Go`
+5. 확인일·확인 방법·디스클레이머
+6. 운영시간과 연락처
+7. `Ask the store in Korean` — 영어 UI만 *(MVP 제외 / P1 재도입 예정)*
+8. 신고
+
+- `Before You Go`를 이미지 바로 아래의 핵심 영역에 둔다.
+- 길찾기를 기본 primary action으로 사용하고, 전화와 문의 문구 복사는 secondary action으로 둔다.
+- 전화번호나 링크가 없으면 비활성 버튼을 노출하지 말고 해당 action을 생략한다.
+
+### Condition Row
 
 ```text
 [icon] Indoor access       Available
-[icon] Carrier / stroller  Required
-[icon] Dog size            Small · Medium
+[icon] Carrier             Required
+[icon] Large dogs          Confirmation needed
 ```
 
-- Label과 Value가 섞이지 않게 충분한 간격을 둔다.
-- 단순한 Yes/No보다 조건을 직접 설명한다.
-- 목록에서는 3대 조건만 표시한다.
-- 상세에서는 견종 제한, 준비물, 주의사항까지 확장한다.
+- label과 value를 분리해 빠르게 스캔할 수 있게 한다.
+- 값은 `Available`, `Outdoor only`, `Required`, `Not allowed`, `Confirmation needed`처럼 구체적으로 작성한다.
+- 모든 값을 초록색 badge로 만들지 않는다.
 
-권장 문구:
+### Verification Status
 
 ```text
-Indoor available
-Outdoor only
-Indoor not allowed
-Carrier required
-No carrier required
-Small dogs only
-Small and medium dogs
-All sizes allowed
-Needs confirmation
+Checked 12 days ago · Confirmed by phone
+Last checked 8 months ago · Information may have changed
+Confirmation needed
 ```
 
----
+- `Verified`라는 단어만 표시하지 않는다.
+- 확인일과 확인 방법을 함께 노출한다.
+- 오래된 정보는 Amber, 미확인 정보는 Gray를 사용한다.
+- 검증 정보가 없으면 날짜나 방법을 추정하지 않는다.
 
-### ConditionBadge
+### Korean Inquiry Box
 
-| 상태 | 예시 |
+> ⛔ **MVP 제외 (P1 재도입 예정).** 기획서 v3 §11 결정에 따라 MVP에서는 이 컴포넌트를 사용자 화면에 노출하지 않는다. 컴포넌트 코드와 메시지 키는 P1의 동적 문의 문구 기능을 위해 보존한다.
+> 아래 규칙은 **재도입 시점의 기준**으로 유지한다. 지금 이 규정을 근거로 화면에 박스를 추가하지 않는다.
+
+- 영어 UI에서만 노출한다. 한국어 UI에서는 박스 전체를 생략하고 전화 action만 유지한다. 빈 자리를 다른 콘텐츠로 채우지 않고 다음 섹션을 자연스럽게 올린다.
+- 한국어 원문을 수정 가능한 것처럼 보이게 하지 않는다.
+- 안내 문구, 한국어 메시지, `Copy Korean message` 버튼 순서로 구성한다.
+- 복사 성공은 `Copied to clipboard` Snackbar로 알린다.
+- 사용자가 직접 보내도록 하며 자동 전송처럼 표현하지 않는다.
+
+### Map and Markers
+
+- 기본 마커: 흰색 surface + 회색 border
+- hover 마커: primary ring
+- 선택 마커: primary 배경 + 흰색 아이콘
+- 카드와 마커의 hover·selected 상태를 시각적으로 구분한다.
+- 지도 위 컨트롤은 우측 또는 하단 한 영역에 모아 배치한다.
+- 검색 결과가 바뀌어도 지도를 불필요하게 초기화하지 않는다.
+- 선택 장소를 보여주기 위해 과도하게 zoom하지 않는다.
+
+### Buttons and Inputs
+
+- Primary: 현재 맥락의 대표 행동 하나
+- Secondary: outline
+- Tertiary: ghost 또는 text
+- Destructive: 삭제·신고 확정 등 실제 위험 행동에만 사용
+- 입력 높이: 44–48px
+- 아이콘 단독 버튼: 최소 44×44px, `aria-label` 필수
+- disabled 상태에서도 크기와 배치가 바뀌면 안 된다.
+
+### Admin
+
+- 사용자용 카드 스타일을 억지로 재사용하지 않는다.
+- 표, 폼, 상태 필터 중심의 높은 정보 밀도를 허용한다.
+- 장소 조건과 검증 항목은 섹션으로 구분하고 저장 오류는 해당 필드 근처에 표시한다.
+- 상태 색상 의미는 사용자 화면과 동일하게 유지한다.
+
+## 7. States
+
+| State | Treatment |
 |---|---|
-| Allowed | `Indoor available` |
-| Conditional | `Outdoor only` |
-| Not allowed | `Indoor not allowed` |
-| Unknown | `Needs confirmation` |
+| Initial loading | 최종 카드 구조와 같은 Skeleton |
+| Load more | 기존 목록을 유지하고 하단 spinner 표시 |
+| No results | `No places match your filters.` + `Reset filters` |
+| Location denied | `Showing places near Seoul City Hall.` + `Use my location` |
+| Map error | 목록은 유지하고 지도 영역에 재시도 안내 |
+| Stale verification (90일 초과) | Amber 아이콘 + `Recheck needed` + 마지막 확인일 + 정책 변경 가능 문구 |
+| Unknown condition | Gray 아이콘 + `Confirmation needed` |
+| Dog mismatch | 조건 불일치 항목을 명시하고 카드 전체를 error처럼 만들지 않음 |
+| Copy success | 짧은 Snackbar, 3초 이내 자동 종료 |
+| Network error | 원인 범위를 설명하는 한 문장 + `Try again` |
+| Unauthenticated favorite | 현재 맥락을 보존한 로그인 안내 |
 
-- Icon, Text, Surface를 함께 사용한다.
-- Badge를 과도하게 연속 나열하지 않는다.
-- 상세 화면에서는 Badge보다 ConditionRow를 우선한다.
+- 빈 상태에 장식용 일러스트를 기본으로 넣지 않는다.
+- 로딩 중 기존 지도와 장소 목록을 불필요하게 가리지 않는다.
+- 오류는 사용자 탓으로 표현하지 않는다.
 
----
-
-### VerificationBadge
-
-- 운영자 확인 근거와 확인일이 있을 때만 `Verified`를 표시한다.
-- `Verified` 옆이나 같은 정보 그룹에 확인일을 표시한다.
-- 확인일이 없다면 Blue 또는 Green Verified Badge를 사용하지 않는다.
-- 검증 정보와 사용자 리뷰를 같은 의미로 표현하지 않는다.
-
----
-
-### LastCheckedStatus
-
-표시 예시:
+## 8. Motion
 
 ```text
-Checked 3 days ago
-Checked on July 20, 2026
-Needs reconfirmation
-Not yet verified
+instant   0ms    checkbox, toggle
+fast    150ms    hover, focus, button press
+standard 250ms   panel, tab, Bottom Sheet
+slow    350ms    큰 상태 전환
 ```
 
-확인 방법은 상세 화면에서 표시한다.
-
-```text
-Phone
-Instagram DM
-Official website
-In person
+```css
+--ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+--ease-enter: cubic-bezier(0, 0, 0.2, 1);
+--ease-exit: cubic-bezier(0.4, 0, 1, 1);
 ```
 
-정보 신선도 기준은 제품 정책을 따른다.
-
-현재 90일 기준은 임시 운영 기준이며 확정 정책처럼 컴포넌트에 직접 Hard Coding하지 않는다.
-
-```text
-Temporary stale threshold: 90 days
-```
-
-가능하면 서버 또는 공통 설정에서 상태를 계산한다.
-
----
-
-### MapMarker
-
-| 상태 | 표현 |
-|---|---|
-| Default | 기본 Surface + Border + Place Icon |
-| Hover | Primary Soft + Primary Border |
-| Selected | Primary Background + White Icon + Outer Ring |
-| Stale | Neutral Marker + Warning Indicator |
-
-- 카드 Hover 시 대응 마커도 Hover 상태가 된다.
-- 마커 Hover 시 대응 카드를 강조한다.
-- 필요한 경우 해당 카드를 목록 Viewport 안으로 이동한다.
-- 마커 선택 시 지도 중심을 이동한다.
-- 위치 관계를 잃을 정도로 과도하게 Zoom하지 않는다.
-- 가격표 형태의 Marker를 사용하지 않는다.
-
----
-
-### SelectedPlacePreview
-
-표시할 정보:
-
-- 장소명
-- 카테고리
-- 거리
-- Indoor
-- Carrier / Stroller
-- Dog size
-- Verification 상태
-- Last checked
-- `View details`
-- `Directions`
-- `Call`
-
-표시하지 않을 정보:
-
-- 전체 운영시간
-- 전체 준비물
-- 전체 주의사항
-- 긴 장소 설명
-- 리뷰 목록
-- 한국어 문의 문장 전체
-
----
-
-### BeforeYouGo
-
-장소 상세 화면의 핵심 Section이다.
-
-첫 번째 그룹:
-
-```text
-Indoor
-Carrier / Stroller
-Dog size
-```
-
-두 번째 그룹:
-
-```text
-Breed restrictions
-Required items
-Warnings
-Additional conditions
-```
-
-세 번째 그룹:
-
-```text
-Last checked
-Verification method
-Policy change disclaimer
-```
-
-- 사진 Carousel이나 리뷰보다 아래로 밀리지 않게 한다.
-- Unknown 상태를 숨기지 않는다.
-- 제한 조건은 짧고 직접적으로 작성한다.
-
----
-
-### AskInKoreanCard
-
-영어 UI 사용자가 매장에 전화하거나 DM을 보낼 때 사용할 한국어 문장을 제공한다.
-
-- 실제 한국어 문장과 영어 설명을 구분한다.
-- `Copy Korean message` Button을 제공한다.
-- 복사 성공 시 `Copied` Feedback을 표시한다.
-- 자동으로 전화하거나 DM을 전송하지 않는다.
-- 한국어 UI에서는 기본적으로 표시하지 않는다.
-- 장소 선택 프리뷰가 아니라 상세 페이지에서 제공한다.
-
-예시:
-
-```text
-English:
-Ask whether your dog can enter without a carrier.
-
-Korean:
-안녕하세요. 반려견과 함께 방문하려고 하는데,
-이동장 없이 입장이 가능한가요?
-```
-
----
-
-### MobileBottomSheet
-
-- 상단 Radius: 20px
-- 지도와 결과의 현재 선택 상태를 유지한다.
-- 내부 목록 Scroll과 Drag Gesture가 충돌하지 않아야 한다.
-- 선택 장소를 닫으면 이전 결과 목록 상태로 돌아간다.
-- Drag Handle에 접근 가능한 보조 조작을 제공한다.
-- 상세 페이지 전체 내용을 Sheet에 넣지 않는다.
-
----
-
-### Input and Form
-
-- 모든 Input에 Visible Label을 사용한다.
-- 필수 여부는 Label에서 표시한다.
-- Placeholder만으로 입력 목적을 설명하지 않는다.
-- Validation Error는 Input 아래에 표시한다.
-- `aria-invalid`, `aria-describedby`를 연결한다.
-
-관리자 조건 입력은 다음 상태를 명확히 구분한다.
-
-```text
-Allowed
-Conditional
-Not allowed
-Unknown
-```
-
----
-
-### Tabs
-
-- 관련 정보 그룹을 전환할 때만 사용한다.
-- 핵심 `Before You Go` 정보를 Tab 안에 숨기지 않는다.
-- 모바일 공간 절약을 이유로 너무 많은 Tab을 만들지 않는다.
-
----
-
-### Dialog
-
-다음 경우에만 사용한다.
-
-- 삭제 확인
-- 저장하지 않은 변경
-- 짧은 확인 작업
-
-다음 용도로 사용하지 않는다.
-
-- 장소 전체 상세
-- 긴 Filter Form
-- 긴 운영 정책
-
-Focus Trap, Escape Close, 명확한 제목과 설명을 제공한다.
-
----
-
-### Table
-
-관리자 화면에서만 사용한다.
-
-표시 항목 예시:
-
-- 장소명
-- 공개 상태
-- 검증 상태
-- 마지막 확인일
-- 관리 Action
-
-사용자 탐색 화면에서 Place Card 대신 Table을 사용하지 않는다.
-
-좁은 화면에서는 중요 열을 우선하고 나머지는 Row Detail로 이동한다.
-
----
-
-## 10. Loading, Empty and Error States
-
-### Loading
-
-- 장소 목록은 실제 Place Card와 유사한 Skeleton을 사용한다.
-- 지도 영역의 크기를 유지한다.
-- Filter 변경 시 전체 화면을 지우지 않는다.
-- 기존 결과 위에 Pending 상태를 표시할 수 있다.
-
-### Empty
-
-기본 문구:
-
-```text
-No places match these filters.
-```
-
-Primary Action:
-
-```text
-Reset filters
-```
-
-Secondary Action:
-
-```text
-Search a wider area
-Move the map and search again
-```
-
-검증되지 않은 장소를 Empty State에 임의로 섞지 않는다.
-
-### Location denied
-
-위치 권한 거부를 치명적 오류로 처리하지 않는다.
-
-- 지역 직접 검색을 제공한다.
-- 기본 지역 탐색을 제공한다.
-- 권한을 요청하기 전에 사용 이유를 설명한다.
-
-### Error
-
-- 재시도 가능한 오류와 입력 오류를 구분한다.
-- 지도 오류가 발생해도 장소 목록은 유지한다.
-- 가능한 경우 상세 페이지 진입 경로도 유지한다.
-- 오류는 색상만으로 표시하지 않는다.
-- 오류 제목, 원인, 다음 행동을 함께 제공한다.
-
----
-
-## 11. Interaction and Motion
-
-- Hover·Focus·Pressed 전환: 120~160ms
-- Card·Marker 선택 전환: 160~200ms
-- Bottom Sheet는 Drag 위치에 직접 반응한다.
-- Drag 종료 시에만 짧게 Snap한다.
-- 지도 Pan과 Zoom은 선택 피드백에 필요한 최소 범위로 제한한다.
-- `prefers-reduced-motion`에서는 Scale과 큰 이동을 제거한다.
-- Loading이 끝난 후 Skeleton이나 Indicator가 계속 움직이지 않게 한다.
-
-Motion 값은 기존 프로젝트 설정이 있다면 기존 값을 우선한다.
-
----
-
-## 12. Imagery and Iconography
-
-### Imagery
-
-다음 정보를 판단할 수 있는 실제 장소 사진을 우선한다.
-
-- 장소 입구
-- 실내 공간
-- 야외 공간
-- 반려견이 머무를 수 있는 영역
-
-규칙:
-
-- 과도하게 보정된 광고 사진보다 방문 판단에 도움이 되는 사진을 사용한다.
-- 사진 위에 조건, 확인일, 핵심 CTA를 직접 올리지 않는다.
-- Placeholder는 Neutral Surface 또는 단순한 장소 유형 Illustration을 사용한다.
-- 사진이 없다고 해서 조건 정보를 숨기지 않는다.
-
-### Iconography
-
-- 기존 프로젝트의 Icon Library를 유지한다.
-- 서로 다른 Icon Library를 혼합하지 않는다.
-- Stroke와 크기를 일관되게 사용한다.
-- Paw Icon은 브랜드 식별과 지도 Marker에 제한적으로 사용한다.
-- 조건 Icon에는 Text Label 또는 접근 가능한 이름을 제공한다.
-
-주요 Icon 대상:
-
-- Indoor
-- Carrier
-- Stroller
-- Dog size
-- Verification
-- Directions
-- Call
-- Copy
-
----
-
-## 13. Content and Localization
-
-### English-first copy
-
-- 짧고 직접적인 문장을 사용한다.
-- 추상적인 `Pet-friendly`보다 실제 조건을 표시한다.
+- bounce와 overshoot를 사용하지 않는다.
+- 지도 마커와 카드 강조는 150ms 이내로 반응한다.
+- `prefers-reduced-motion: reduce`에서는 이동 애니메이션을 제거한다.
+
+## 9. Voice and Content
+
+- 영어 문장은 짧고 직접적으로 작성한다.
+- 감성적 여행 표현보다 조건의 정확성을 우선한다.
+- 지역명, 거리, 날짜, 확인 방법을 구체적으로 쓴다.
+- 확인하지 않은 내용을 긍정적으로 추정하지 않는다.
 
 권장:
 
 ```text
-Indoor access available
+Indoor access confirmed
+Outdoor seating only
 Carrier required
-Small dogs only
-Checked 3 days ago
+Large dogs: confirmation needed
+Checked by phone on July 20, 2026
+Store policies may change
 ```
 
-피해야 할 표현:
+금지:
 
 ```text
-Pet-friendly place
-Good for pets
-Probably allowed
+Perfect for every dog
+Completely pet-friendly
+Dogs are always welcome
+Guaranteed entry
+Amazing place
+Oops, something went wrong
 ```
 
-### CTA copy
+## 10. Internationalization
 
-CTA는 동사형으로 작성한다.
+- 영어 UI를 기본으로 설계하고 한국어 번역 후 레이아웃이 깨지지 않는지 확인한다.
+- 영어 UI: 영문 장소명을 primary, 한국어명을 secondary로 표시한다.
+- 한국어 UI: 한국어 장소명을 primary, 영문명을 secondary로 표시한다.
+- 번역되지 않은 정보를 번역된 사실처럼 보이게 하지 않는다.
+- 날짜, 거리, 시간은 locale에 맞게 표시한다.
+- 한국 매장에 전달할 문의 문구는 한국어 원문을 유지한다.
+- 버튼 텍스트가 길어지면 너비를 늘리거나 줄바꿈하고 의미를 생략하지 않는다.
+
+### Distance formatting
 
 ```text
-View details
-Get directions
-Call store
-Copy Korean message
-Reset filters
-Use my location
+0–999 m     10 m 단위 반올림       620 m
+1–9.9 km    소수 첫째 자리         1.2 km
+10 km 이상   정수                  12 km
 ```
 
-### Place name priority
+- 단위와 숫자 사이에 공백을 넣는다. (`620 m`, `1.2 km`)
+- 영어·한국어 UI 모두 m/km 표기를 사용하고 mi로 변환하지 않는다.
+- 위치 미확인 시 거리를 표시하지 않으며 `—`나 0 m로 대체하지 않는다.
+- 확인일 표기: 7일 이내는 상대 표기(`Checked 3 days ago`), 그 이후는 날짜 표기(`Checked on July 20, 2026`). 한국어 UI는 `7월 20일 확인` 형식을 사용한다.
 
-영어 UI에서 장소 이름은 다음 순서로 표시한다.
+## 11. Accessibility
 
-```text
-Verified English name
-→ Official romanized name
-→ Original Korean name
-```
+- WCAG 2.1 AA 대비 기준을 충족한다.
+- 모든 interaction에 keyboard focus와 `focus-visible`을 제공한다.
+- 색상 외에 아이콘, 텍스트, 형태로 상태를 구분한다.
+- 지도만으로 결과를 제공하지 않고 동일한 장소 목록을 함께 제공한다.
+- 카드 선택과 마커 선택 결과를 screen reader에 알린다.
+- Bottom Sheet와 Dialog는 focus trap과 Escape 닫기를 지원한다.
+- touch target은 최소 44×44px다.
 
-임의 생성한 번역명은 공식 영문명처럼 표시하지 않는다.
+## 12. Implementation Guardrails
 
-### Trust copy
-
-```text
-Verified on [date] via [method].
-
-Store policies may change. Confirm with the store before your visit
-if your dog has special requirements.
-```
-
-검증 문구를 읽기 어려운 작은 회색 면책 문구로만 처리하지 않는다.
-
-### i18n rules
-
-- 사용자에게 표시되는 문자열을 컴포넌트에 직접 Hard Coding하지 않는다.
-- 현재 `next-intl` 메시지 구조를 유지한다.
-- 영어와 한국어의 문장 길이 차이를 고려한다.
-- 언어 전환 시 현재 페이지의 맥락을 가능한 범위에서 유지한다.
-- 번역되지 않은 Key를 그대로 화면에 노출하지 않는다.
-
----
-
-## 14. Accessibility
-
-WCAG 2.1 AA를 최소 기준으로 한다.
-
-- 일반 텍스트 대비: 4.5:1 이상
-- 큰 텍스트 대비: 3:1 이상
-- 모든 Interactive Element에 Keyboard 접근 제공
-- 모든 Interactive Element에 `focus-visible` 제공
-- Icon Button에 `aria-label` 제공
-- Toggle과 Chip에 선택 상태 제공
-- Form Error에 `aria-invalid`, `aria-describedby` 연결
-- 비동기 결과 수에 `aria-live="polite"` 사용
-- 복사 성공 메시지에 `aria-live="polite"` 사용
-- Map Marker를 대신할 수 있는 Keyboard 접근 가능 목록 제공
-- 색상 외에 Text, Icon, Border로 상태 표시
-- Touch Target은 최소 44×44px
-- `<html lang>`을 현재 Locale과 일치시킨다.
-- Bottom Sheet와 Dialog의 Focus 이동과 복귀를 보장한다.
-- 의미 있는 장소 사진에는 구체적인 Alt Text를 제공한다.
-- 장식용 이미지는 빈 Alt Text를 사용한다.
-
----
-
-## 15. Do and Don't
-
-### Do
-
-- 지도와 필터를 첫 탐색 도구로 사용한다.
-- 카드마다 3대 조건과 확인일을 동일한 순서로 표시한다.
-- 선택 카드, 지도 마커, 프리뷰 상태를 동기화한다.
-- 정보가 없으면 `Needs confirmation`이라고 표시한다.
-- 상세 화면에서 `Before You Go`를 빠르게 찾을 수 있게 한다.
-- 모바일에서는 지도 맥락을 유지하는 Bottom Sheet를 사용한다.
-- 기존 디자인 토큰과 i18n 구조를 유지한다.
-- 미구현 메뉴는 `Coming soon` 또는 Disabled 상태로 표시한다.
-
-### Don't
-
-- 데스크톱에서 목록, 상세, 지도를 항상 고정한 3분할로 만들지 않는다.
-- 가격 Marker, 할인 Badge, 예약 CTA를 사용하지 않는다.
-- 사진이 핵심 조건과 확인일을 밀어내게 하지 않는다.
-- 확인되지 않은 조건을 Green으로 표시하지 않는다.
-- 상세 정보를 지도 Preview에 모두 넣지 않는다.
-- 상세 정보를 Mobile Bottom Sheet에 모두 넣지 않는다.
-- 반려동물 장식으로 오류나 제한의 의미를 약화하지 않는다.
-- 미구현 메뉴를 404 페이지로 연결하지 않는다.
-- 문서에 있다는 이유로 미구현 기능을 자동으로 추가하지 않는다.
-- 디자인 변경을 이유로 데이터 모델과 API를 임의로 변경하지 않는다.
-
----
-
-## 16. Implementation Checklist
-
-### Global
-
-- [ ] 현재 `globals.css`의 디자인 토큰을 유지했는가?
-- [ ] 임의의 Tailwind 색상이 여러 컴포넌트에 분산되지 않았는가?
-- [ ] 영어·한국어·숫자에 Font가 일관되게 적용되는가?
-- [ ] 사용자 문자열이 i18n 메시지로 관리되는가?
-
-### Layout
-
-- [ ] Desktop이 `400~460px 목록 + 유동 지도` 구조를 따르는가?
-- [ ] 고정된 세 번째 상세 Column이 제거되었는가?
-- [ ] 장소를 선택하기 전 상세 영역이 공간을 차지하지 않는가?
-- [ ] Mobile과 Tablet에서 Map + Bottom Sheet가 동작하는가?
-- [ ] 상세 페이지 이동 후 탐색 상태가 가능한 범위에서 복원되는가?
-
-### Selection
-
-- [ ] 목록 카드와 지도 마커의 Hover 상태가 동기화되는가?
-- [ ] 목록 카드와 지도 마커의 Selected 상태가 동기화되는가?
-- [ ] 선택 시 지도가 재마운트되지 않는가?
-- [ ] 지도 이동과 Zoom이 과도하지 않은가?
-- [ ] `SelectedPlacePreview`가 지도 Control과 겹치지 않는가?
-
-### Place information
-
-- [ ] `Indoor`가 표시되는가?
-- [ ] `Carrier / Stroller`가 표시되는가?
-- [ ] `Dog size`가 표시되는가?
-- [ ] 세 조건이 모든 Place Card에서 동일한 순서로 표시되는가?
-- [ ] Unknown 상태를 허용 또는 불가로 추정하지 않는가?
-- [ ] `Verified`와 `Last checked`가 모순되지 않는가?
-- [ ] 확인 방법이 상세 화면에 표시되는가?
-- [ ] 90일 기준이 확정 정책처럼 UI에 Hard Coding되지 않았는가?
-
-### Detail page
-
-- [ ] `Before You Go`가 상위 정보 계층에 있는가?
-- [ ] 검증일과 확인 방법을 쉽게 찾을 수 있는가?
-- [ ] 영어 UI에서 `Ask in Korean`을 제공하는가?
-- [ ] 한국어 UI에서 불필요한 문의 카드가 숨겨지는가?
-- [ ] 문의 문장 복사 후 Feedback을 제공하는가?
-
-### States
-
-- [ ] Loading 상태가 설계되어 있는가?
-- [ ] Empty 상태가 설계되어 있는가?
-- [ ] 위치 권한 거부 상태가 설계되어 있는가?
-- [ ] 지도 오류 상태가 설계되어 있는가?
-- [ ] 모든 상태를 Text, Icon, Border로도 구분하는가?
-
-### Accessibility
-
-- [ ] Keyboard로 모든 주요 기능을 사용할 수 있는가?
-- [ ] Focus 상태가 명확한가?
-- [ ] Touch Target이 44×44px 이상인가?
-- [ ] Icon Button에 접근 가능한 이름이 있는가?
-- [ ] Bottom Sheet와 Dialog의 Focus가 올바르게 복귀하는가?
-- [ ] 지도에 대응하는 접근 가능한 장소 목록이 있는가?
-
-### Scope protection
-
-- [ ] 요청받지 않은 기능을 새로 구현하지 않았는가?
-- [ ] 기존 URL 구조를 임의로 변경하지 않았는가?
-- [ ] 기존 상태 관리 구조를 임의로 교체하지 않았는가?
-- [ ] 가격, 할인, 예약, 숙박 패턴이 섞이지 않았는가?
-
----
+- Airbnb·Karrot 토큰을 프로젝트에 그대로 복사하지 않는다.
+- 예약, 호스트, 거래, 채팅 기능을 디자인에 추가하지 않는다.
+- `Pet-friendly` 배지 하나로 동반 조건을 대체하지 않는다.
+- 검증일이나 확인 방법이 없으면 임의로 생성하지 않는다.
+- 장소 선택 때마다 별도 페이지로 이동시키지 않는다. 탐색 화면에서는 미리보기 패널을 우선 사용한다.
+- 지도 컴포넌트를 카드 hover나 선택 때 재마운트하지 않는다.
+- 장식용 gradient, glassmorphism, 큰 shadow, 과도한 emoji를 사용하지 않는다.
+- 기존 shadcn/ui와 Tailwind 토큰을 우선 확장하고 동일 역할의 새 컴포넌트를 중복 생성하지 않는다.
+- 기존 URL filter, selected place, hover state의 동기화를 깨뜨리지 않는다.
+- 모바일을 데스크톱 3분할의 축소판으로 만들지 않는다.
+- 다크 모드 스타일을 임의로 추가하지 않는다.
+- z-index는 정의된 토큰만 사용한다.
+- lucide 외의 아이콘 셋을 추가하지 않는다.
 
 ## Included Components
 
-아래 목록은 디자인 적용 대상이며, 전체 기능 구현 요구사항이 아니다.
-
-### Consumer
-
-- Header / Navigation
-- SearchBar
-- CategoryTabs
+- Button
+- IconButton
+- Input
+- SearchField
 - FilterChip
+- CategoryTab
+- SortControl
 - PlaceCard
+- PlaceConditionSummary
+- EligibilityBanner
 - ConditionRow
 - ConditionBadge
-- VerificationBadge
-- LastCheckedStatus
+- VerificationStatus
+- PlacesMap
 - MapMarker
-- SelectedPlacePreview
-- BeforeYouGo
-- AskInKoreanCard
-- MobileBottomSheet
-- Button
-- Input
-- Badge
-- Tabs
-- Dialog
-- Skeleton
+- PlacePreviewCard
+- KoreanInquiryBox — *MVP 제외 / P1 재도입 예정*
+- CopyButton
+- LocationPermissionBanner
 - EmptyState
-- ErrorState
-- Toast
-
-### Admin
-
-- AdminSidebar
-- DataTable
+- Skeleton
+- Snackbar
+- Drawer
+- BottomSheet
+- Dialog
+- AdminTable
 - PlaceForm
-- ConditionField
-- VerificationForm
-- StatusBadge
-- ConfirmDialog
