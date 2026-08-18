@@ -3,7 +3,7 @@
 > **이 문서의 목적**: 기획이 아니라 **실제 개발 진행 상황 추적**이다.
 > 모든 상태는 코드 확인에 근거한다. 확인하지 못한 것은 `확인 필요`로 남기고 추측하지 않는다.
 >
-> **기준일**: 2026-08-13 (D-01~D-10 결정 반영) · **브랜치**: `chore/project-foundation`
+> **기준일**: 2026-08-18 (D-01~D-12 결정 반영 · 전 항목 코드 재확인) · **브랜치**: `chore/project-foundation`
 > **기획 기준**: `docs/Paw_Spot_Global_기획서_v3.md` · **구현 기준**: `docs/Paw_Spot_Global_개발명세서_v2.md` · **디자인 기준**: `DESIGN.md`
 
 **상태 값**: `완료` / `부분 완료` / `미구현` / `확인 필요`
@@ -12,20 +12,33 @@
 
 ## 요약
 
-아래 20개 절의 상태 행 **156건** 집계.
+아래 20개 절의 상태 행 **160건** 집계.
 
 | 상태 | 개수 |
 |---|---|
-| 완료 | 73 |
-| 부분 완료 | 16 |
-| 미구현 | 61 |
-| 확인 필요 | 6 |
+| 완료 | 77 |
+| 부분 완료 | 20 |
+| 미구현 | 59 |
+| 확인 필요 | 4 |
 
-**MVP 출시를 차단하는 P0 항목: 20개 — 전부 즉시 착수 가능** (§P0 목록 참조)
+**MVP 출시를 차단하는 P0 항목: 20개 — 전부 즉시 착수 가능. 8/13 이후 진행된 것 없음** (§P0 목록 참조)
 
-주의: "완료" 74건은 **세부 항목 단위** 집계다. 화면·기능 단위로 보면 탐색 화면의 레이아웃·동기화·판정 로직은 완성도가 높은 반면, 상세 페이지·데이터 파이프라인·라우트 상태 처리는 큰 폭으로 비어 있다. 절별 분포를 함께 볼 것.
+주의: "완료" 77건은 **세부 항목 단위** 집계다. 화면·기능 단위로 보면 탐색 화면의 레이아웃·동기화·판정 로직은 완성도가 높은 반면, 상세 페이지·데이터 파이프라인·라우트 상태 처리는 큰 폭으로 비어 있다. 절별 분포를 함께 볼 것.
 
 D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 비대칭"이 `미구현`(수정 대상)으로 확정되었고, 선행 결정 대기 상태였던 4개 항목(신선도 임계 · 운영시간 구조 · 후보 저장 방식 · Import 실행 형태)이 착수 가능해졌다.
+
+### 2026-08-13 → 08-18 변경분
+
+이 기간의 작업은 **P0 목록이 아니라 §13 반려견 영역과 §20 테스트에 집중됐다.** P0 20건은 하나도 진행되지 않았다.
+
+| 변경 | 절 |
+|---|---|
+| 반려견 여러 마리 CRUD 구현 (기획서 v3 기준 P2였던 항목) | §13 |
+| 견종을 자유 입력에서 canonical code로 전환 + 백필 마이그레이션 | §9, §13 |
+| 반려견 선택을 URL 파라미터로 전달, 다견 최악 판정 표시 | §13 |
+| vitest 도입 + 98건 (반려견 순수 로직 중심) | §20 |
+| `.dark{}` 블록 제거 — 단 `next-themes`는 `sonner.tsx`가 사용 중 | §17 |
+| 빌드·타입체크·린트·테스트 전부 통과 확인 | §20 |
 
 ---
 
@@ -161,7 +174,8 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 | 핵심 모델 | 완료 | `User` / `Place` / `PlaceCondition` / `Verification` / `Dog` / `Favorite` | — | — | `prisma/schema.prisma` |
 | 조건 필드 | 완료 | `indoor`(5) · `carrierStrollerPolicy`(4) · `maxDogSize`(4) · `leash`(4) · `muzzle`(4) · `vaccinationCertificatePolicy`(3) · `breedRestrictions` · `requiredItems` · `cautions` | — | — | `prisma/schema.prisma:133-149` |
 | PostGIS 좌표 | 완료 | `Unsupported("geography(Point, 4326)")` + raw SQL 처리 | — | — | `prisma/schema.prisma:113`, `lib/places/create-place.ts` |
-| 마이그레이션 | 완료 | init / condition_v2 / vaccination / carrier_stroller_3state / favorite (5건) | — | — | `prisma/migrations/` |
+| 마이그레이션 | 완료 | init / condition_v2 / vaccination / carrier_stroller_3state / favorite / dog_breed_code (6건) | — | — | `prisma/migrations/` |
+| `Dog` 견종 코드화 | 부분 완료 | `breedCode` · `breedCustom` · `updatedAt` 추가 + 기존 값 백필. 매핑 실패분은 `other` + 원문 보존 | 읽기·쓰기 전환 확인 후 별도 마이그레이션으로 `breed` 컬럼 제거 | P1 | `prisma/schema.prisma:170-176`, `prisma/migrations/20260816000000_dog_breed_code/` |
 | PostGIS extension 활성화 | 확인 필요 | 코드는 extension 존재를 전제. 실제 DB에서만 확인 가능 | 배포 환경 확인 | P0 | — |
 | `Place.hours` / `hoursNote` | 미구현 | 필드 없음 | **D-04 확정** 구조로 추가 (개발명세서 v2 §3-4) | P0 | `prisma/schema.prisma:105-131` |
 | `Report` 모델 | 미구현 | 없음 | 추가 | P1 | — |
@@ -214,11 +228,14 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 
 | 영역 | 상태 | 현재 구현 | 남은 작업 | 우선순위 | 근거 파일 |
 |---|---|---|---|---|---|
-| 대표 1마리 등록 | 완료 | `/my-dog` upsert. `getUserDog`은 `findFirst`(최초 1건) → 1마리 정책이 코드로 강제됨 | — | — | `src/app/[locale]/(public)/my-dog/page.tsx`, `lib/dogs/{actions,queries}.ts` |
-| 필터 기본값 연동 | 완료 | 서버에서 `toDogSizeFilter(dog.size)` → `usePlaceListState`의 `dogSize` 초기값 | — | — | `places/page.tsx:44`, `hooks/usePlaceListState.ts:44-47` |
-| 방문 가능 여부 단언 | 완료 | 카드·미리보기에 `EligibilityBanner`. 프로필 없으면 미표시 | — | — | `src/components/places/EligibilityBanner.tsx`, `lib/places/eligibility.ts:29-48` |
-| 폼 검증 | 완료 | zod + 필드별 오류 + `useFormStatus` | — | — | `src/components/dogs/DogProfileForm.tsx`, `lib/validation/dog.ts` |
-| 여러 마리 CRUD | 미구현 | 없음 | 기획서 v3에서 P2로 이동 (의도된 제외) | P2 | — |
+| 여러 마리 등록·수정·삭제 | 완료 | `/profile/dogs` 목록 + 다이얼로그 폼. `createDog`/`updateDog`/`deleteDog` 3개 Server Action, 사용자당 상한 10마리를 서버에서 재확인 | — | — | `src/components/dogs/DogsManager.tsx`, `lib/dogs/actions.ts:50-113`, `lib/dogs/constants.ts:2` |
+| 기존 `/my-dog` 경로 | 완료 | `/profile/dogs`로 리다이렉트. 외부 링크·북마크 보존 | — | — | `src/app/[locale]/(public)/my-dog/page.tsx` |
+| 견종 입력 | 완료 | 자유 입력 → canonical code 전환. `BreedCombobox` 검색 선택, `other`일 때만 원문을 `breedCustom`에 저장하고 나머지는 null로 정규화 | — | — | `src/components/dogs/BreedCombobox.tsx`, `lib/dogs/breeds.ts`, `lib/validation/dog.ts:18-50` |
+| 반려견 선택 → 목록 반영 | 완료 | `?dogId=` / `?dogIds=`로 선택 전달. 남의 id·삭제된 id는 결과에서 조용히 빼고 URL에서도 정리 | — | — | `lib/dogs/selection.ts`, `places/page.tsx:50-67`, `PlacesClient.tsx:113` |
+| 필터 기본값 연동 | 부분 완료 | **1마리 선택일 때만** `toDogSizeFilter`로 `dogSize` 초기값 지정. 2마리 이상이면 `all` | 다견 선택 시 크기 필터 규칙 미정 | P1 | `PlacesClient.tsx:57`, `lib/places/eligibility.ts:18` |
+| 방문 가능 여부 단언 | 완료 | 카드·미리보기에 `EligibilityBanner`·`DogMatchBadge`. 다견은 `resolveWorstMatch`로 최악 판정 표시 | — | — | `lib/dogs/matching.ts:135,154`, `src/components/places/DogMatchBadge.tsx` |
+| 맞춤 필터(불일치 장소 숨김) | 미구현 | `DOG_MATCH_FILTER_ENABLED=false`로 꺼 둠. 목록은 그대로 두고 배지만 표시 | 크기 정보 커버리지(전체 70%·주요 카테고리 60%) 확보 후 플래그 전환 | P1 | `lib/dogs/constants.ts:11`, `PlacesClient.tsx:139` |
+| 폼 검증 | 완료 | zod + 필드별 오류 + `useFormStatus`. 견종 code·직접 입력 교차 검증(`superRefine`) | — | — | `src/components/dogs/DogForm.tsx`, `lib/validation/dog.ts` |
 | 비회원 localStorage | 미구현 | 없음 | 기획서 v3에서 P2로 이동 (의도된 제외) | P2 | — |
 
 ---
@@ -255,7 +272,7 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 | 영역 | 상태 | 현재 구현 | 남은 작업 | 우선순위 | 근거 파일 |
 |---|---|---|---|---|---|
 | 로케일 라우팅 | 완료 | `next-intl` v4, `["en","ko"]`, default `en`, `localePrefix:"always"` | — | — | `src/i18n/routing.ts`, `src/middleware.ts` |
-| 메시지 키 정합성 | 완료 | **374키, en/ko 완전 일치. 누락 0건** | — | — | `messages/en.json`, `messages/ko.json` |
+| 메시지 키 정합성 | 완료 | **422키, en/ko 완전 일치. 누락 0건** (2026-08-18 재확인) | — | — | `messages/en.json`, `messages/ko.json` |
 | 장소명 표기 | 완료 | en: `nameEn ?? nameKr` primary / ko: `nameKr` primary | — | — | `src/lib/i18n/locale.ts:7-21` |
 | 카테고리 라벨 | 부분 완료 | 현재 영어 라벨은 `Travel Spots` | `Attractions`로 변경 (enum·내부값 유지) | P0 | `messages/en.json` `home.categories.tabs.travel` 등 |
 | 지도 문구 i18n | 미구현 | 영어 하드코딩 3건 | i18n화 | P0 | `MapPanel.tsx:240-267` |
@@ -273,8 +290,8 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 | 컬러 토큰 | 완료 | `DESIGN.md` §4 팔레트 전체를 `globals.css`에 반영 + shadcn 변수 alias + Tailwind 매핑 | — | — | `src/app/globals.css:12-94`, `tailwind.config.ts:11-91` |
 | z-index 토큰 | 완료 | 8단계 CSS 변수 + Tailwind zIndex 매핑. 임의 z-index 사용 없음 | — | — | `tailwind.config.ts:103-112` |
 | 모션 토큰 | 완료 | `--duration-standard`, `--ease-standard` + Tailwind 매핑 | — | — | `globals.css:42-44` |
-| `border-strong` 클래스 | 미구현 | 6곳에서 `border-strong` 사용 — Tailwind는 `border-border-strong`만 생성 → **무효 클래스** | `border-border-strong`으로 교체 | P0 | `FilterModal.tsx:25,165`, `SortDropdown.tsx:33`, `FavoriteButton.tsx:67`, `HeroActions.tsx:37`, `DogProfileForm.tsx:22` |
-| 다크모드 미사용 | 미구현 | `globals.css`에 shadcn 기본 `.dark{}` 블록 34줄 잔존 + `next-themes` 설치됨. `DESIGN.md` §4는 라이트 전용 | 블록·패키지 제거 | P0 | `globals.css:95-132`, `package.json:21` |
+| `border-strong` 클래스 | 미구현 | 4개 파일 6회 사용 — Tailwind는 `border-border-strong`만 생성 → **무효 클래스** | `border-border-strong`으로 교체 | P0 | `FilterModal.tsx:25`(2회)`,165`, `SortDropdown.tsx:33`, `FavoriteButton.tsx:67`, `HeroActions.tsx:37` |
+| 다크모드 미사용 | 부분 완료 | `.dark{}` 블록 제거 완료. `next-themes`는 **`ui/sonner.tsx`가 실제로 import 중**이라 패키지만 지우면 빌드가 깨진다 | `sonner.tsx`의 `useTheme` 의존 제거 → 패키지 제거 | P0 | `src/components/ui/sonner.tsx:3`, `package.json:23` |
 | radius 스케일 | 부분 완료 | `--radius: 0.625rem`(10px) + `rounded-xl`/`rounded-2xl` 혼용 — `DESIGN.md` §4 표(8/12/16px)와 불일치 | 문서·코드 정렬 | P1 | `globals.css:80`, `PlaceCard.tsx:54` |
 
 ---
@@ -316,11 +333,11 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 
 | 영역 | 상태 | 현재 구현 | 남은 작업 | 우선순위 | 근거 파일 |
 |---|---|---|---|---|---|
-| 테스트 | 미구현 | 러너·테스트 파일 전무 | 순수 함수 우선(`eligibility`/`filtering`/`display`) | P1 | `package.json` |
+| 테스트 | 부분 완료 | vitest + 8파일 98건. 반려견(견종·매칭·선택·검증·액션) · `getSafeCallbackUrl` · 조사 처리 · 매칭 메시지 키 계약 | 장소 쪽 순수 함수 미커버 — `eligibility`/`filtering`/`display` | P1 | `vitest.config.ts`, `src/**/*.test.ts` |
 | 오류 추적 | 미구현 | Sentry 미설치 | 도입 | P1 | `package.json` |
-| 빌드·타입체크 검증 | 확인 필요 | 이번 분석에서 `next build`/`tsc` 미실행 | 실행 확인 | P0 | — |
+| 빌드·타입체크 검증 | 완료 | **2026-08-18 실행: `tsc --noEmit` 통과 · `vitest run` 98/98 · `next build` 통과(21라우트) · `next lint` 0건** | — | — | — |
 | 미사용 코드 | 부분 완료 | `mock-places.ts`, `haversineDistance`, `formatWalkingTime`, `lib/result.ts` 참조 0건 | 정리 | P1 | grep 결과 |
-| 문서 버전 관리 | 확인 필요 | `docs/*.md`가 git 미추적(untracked), 원본 PDF는 삭제 상태 | 추적 여부 결정 | P1 | `git status` |
+| 문서 버전 관리 | 완료 | `docs/*.md`를 git 추적으로 전환하고 원본 PDF 2건 제거 (커밋 `df2ffb3`) | — | — | `git log` |
 | 서비스 지역 제한 (대전 단독) | 완료 | 코드에 지역 개념 없음. 공개는 "검증 이력 + `visibility=VISIBLE`"로만 통제됨 | **D-08 확정**: 코드 변경 없이 **운영 규칙으로 강제**한다 — 운영자가 대전 장소만 검증·공개. 지역 필드는 2단계 확장 시 도입 | — | `prisma/schema.prisma`(지역 필드 없음), 기획서 v3 §9-5 |
 
 ---
@@ -328,6 +345,8 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 ## P0 목록 (MVP 출시 차단)
 
 D-01~D-12 확정으로 **20건 전부 즉시 착수 가능**하다. 선행 결정 대기 항목은 없다.
+
+**2026-08-18 재확인: 20건 모두 미착수 상태 그대로다.** 각 행의 근거 파일을 다시 조회해 확인했다.
 
 | # | 항목 | 근거 절 | 착수 |
 |---|---|---|---|
@@ -347,8 +366,8 @@ D-01~D-12 확정으로 **20건 전부 즉시 착수 가능**하다. 선행 결�
 | 14 | 후보 Import **로컬 스크립트** (`Place`+`DRAFT`, 멱등 upsert) | §10 | ✅ 가능 |
 | 15 | `auth.ts`의 `/en/login` 하드코딩 제거 | §12 | ✅ 가능 |
 | 16 | 필터·정렬·카테고리 URL 반영 | §2 | ✅ 가능 |
-| 17 | `border-strong` 무효 클래스 6곳 수정 | §17 | ✅ 가능 |
-| 18 | 지도 문구 i18n + 재시도 / `.dark` 블록·`next-themes` 제거 | §3, §17 | ✅ 가능 |
+| 17 | `border-strong` 무효 클래스 수정 (4개 파일 6회) | §17 | ✅ 가능 |
+| 18 | 지도 문구 i18n + 재시도 / `next-themes` 제거 (`.dark` 블록은 완료, `sonner.tsx` 의존 해제 필요) | §3, §17 | ✅ 가능 |
 | **19** | 긍정 조건 필터에서 `UNKNOWN` 제외 + **`exclude-unknown` 옵션 제거** | §2 | ✅ 가능 |
 | **20** | 서비스 범위 안내: 기본 지도 중심 대전 · 범위 배너 · 범위 밖 안내 · **빈 상태 2종 분리** | §3, §18 | ✅ 가능 |
 
@@ -360,11 +379,11 @@ D-01~D-12 확정으로 **20건 전부 즉시 착수 가능**하다. 선행 결�
 |---|---|---|---|
 | 검증 이력 없는 공개 장소 수 | DB 읽기 전용 조회 | P0 #1 (D-07) | ✅ **2026-08-13 확인 — 0건.** 조회 조건 추가만으로 완결 |
 | PostGIS extension 활성화 여부 | 배포 DB 조회 | 전체 | ✅ 사실상 확인 — 좌표·거리 쿼리 정상 반환 |
-| `next build` / `tsc --noEmit` 통과 여부 | 로컬 실행 | 전체 | 미확인 |
+| `next build` / `tsc --noEmit` 통과 여부 | 로컬 실행 | 전체 | ✅ **2026-08-18 전부 통과** (lint·test 포함) |
 | Google Maps API 키 도메인 제한 설정 | Google Cloud Console | 보안 | 미확인 |
 | 색 대비비 4.5:1 충족 여부 | axe / Lighthouse 실측 | P1 접근성 | 미확인 |
 | `Accept-Language` 기반 로케일 협상 동작 | 런타임 확인 | P1 i18n | 미확인 |
-| `docs/*.md` git 추적 여부 결정 | 사용자 결정 | 문서 관리 | 미결 |
+| `docs/*.md` git 추적 여부 결정 | 사용자 결정 | 문서 관리 | ✅ **추적하기로 결정** — 커밋 `df2ffb3` |
 
 ### DB 실측 (2026-08-13, 읽기 전용)
 
