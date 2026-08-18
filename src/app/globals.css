@@ -10,24 +10,68 @@
     --font-sans: var(--font-sans)
   }
   :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
+    /* DESIGN.md §4 Colors — 디자인 토큰의 단일 출처 */
+    --color-primary: #2563eb;
+    --color-primary-hover: #1d4ed8;
+    --color-primary-soft: #eff6ff;
+    --color-on-primary: #ffffff;
+
+    --color-canvas: #ffffff;
+    --color-background: #f7f8fa;
+    --color-surface: #ffffff;
+    --color-surface-subtle: #f2f4f7;
+
+    --color-text: #171719;
+    --color-text-secondary: #5f6368;
+    --color-text-muted: #6b7280;
+    --color-border: #e5e7eb;
+    --color-border-strong: #cfd4dc;
+
+    --color-success: #15803d;
+    --color-success-soft: #f0fdf4;
+    --color-warning: #b45309;
+    --color-warning-soft: #fffbeb;
+    --color-danger: #dc2626;
+    --color-danger-soft: #fef2f2;
+    --color-unknown: #667085;
+    --color-unknown-soft: #f2f4f7;
+
+    --color-focus: #2563eb;
+    --color-overlay: rgb(17 24 39 / 48%);
+
+    /* DESIGN.md §8 Motion */
+    --duration-standard: 250ms;
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* DESIGN.md §4 Z-index */
+    --z-map-control: 10;
+    --z-dropdown: 50;
+    --z-header: 100;
+    --z-drawer: 200;
+    --z-bottom-sheet: 300;
+    --z-dialog: 400;
+    --z-snackbar: 500;
+    --z-tooltip: 600;
+
+    /* shadcn/ui 변수는 위 토큰의 alias로 유지한다 */
+    --background: var(--color-canvas);
+    --foreground: var(--color-text);
+    --card: var(--color-surface);
+    --card-foreground: var(--color-text);
+    --popover: var(--color-surface);
+    --popover-foreground: var(--color-text);
+    --primary: var(--color-primary);
+    --primary-foreground: var(--color-on-primary);
+    --secondary: var(--color-surface-subtle);
+    --secondary-foreground: var(--color-text);
+    --muted: var(--color-surface-subtle);
+    --muted-foreground: var(--color-text-muted);
+    --accent: var(--color-primary-soft);
+    --accent-foreground: var(--color-primary);
+    --destructive: var(--color-danger);
+    --border: var(--color-border);
+    --input: var(--color-border);
+    --ring: var(--color-focus);
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
@@ -42,11 +86,11 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
-    --destructive-foreground: oklch(0.985 0 0);
-    --success: oklch(0.627 0.194 149.214);
-    --success-foreground: oklch(0.985 0 0);
-    --warning: oklch(0.769 0.188 70.08);
-    --warning-foreground: oklch(0.145 0 0)
+    --destructive-foreground: var(--color-on-primary);
+    --success: var(--color-success);
+    --success-foreground: var(--color-on-primary);
+    --warning: var(--color-warning);
+    --warning-foreground: var(--color-on-primary)
   }
   .dark {
     --background: oklch(0.145 0 0);

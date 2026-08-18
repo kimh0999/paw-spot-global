@@ -9,14 +9,40 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        border: "var(--border)",
+        border: {
+          DEFAULT: "var(--border)",
+          strong: "var(--color-border-strong)",
+        },
         input: "var(--input)",
         ring: "var(--ring)",
         background: "var(--background)",
         foreground: "var(--foreground)",
+        canvas: "var(--color-canvas)",
+        surface: {
+          DEFAULT: "var(--color-surface)",
+          subtle: "var(--color-surface-subtle)",
+          page: "var(--color-background)",
+        },
+        content: {
+          DEFAULT: "var(--color-text)",
+          secondary: "var(--color-text-secondary)",
+          muted: "var(--color-text-muted)",
+        },
+        overlay: "var(--color-overlay)",
+        danger: {
+          DEFAULT: "var(--color-danger)",
+          soft: "var(--color-danger-soft)",
+          foreground: "var(--color-on-primary)",
+        },
+        unknown: {
+          DEFAULT: "var(--color-unknown)",
+          soft: "var(--color-unknown-soft)",
+        },
         primary: {
           DEFAULT: "var(--primary)",
           foreground: "var(--primary-foreground)",
+          hover: "var(--color-primary-hover)",
+          soft: "var(--color-primary-soft)",
         },
         secondary: {
           DEFAULT: "var(--secondary)",
@@ -45,10 +71,12 @@ const config: Config = {
         success: {
           DEFAULT: "var(--success)",
           foreground: "var(--success-foreground)",
+          soft: "var(--color-success-soft)",
         },
         warning: {
           DEFAULT: "var(--warning)",
           foreground: "var(--warning-foreground)",
+          soft: "var(--color-warning-soft)",
         },
         sidebar: {
           DEFAULT: "var(--sidebar)",
@@ -65,6 +93,22 @@ const config: Config = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      transitionDuration: {
+        standard: "var(--duration-standard)",
+      },
+      transitionTimingFunction: {
+        standard: "var(--ease-standard)",
+      },
+      zIndex: {
+        "map-control": "var(--z-map-control)",
+        dropdown: "var(--z-dropdown)",
+        header: "var(--z-header)",
+        drawer: "var(--z-drawer)",
+        "bottom-sheet": "var(--z-bottom-sheet)",
+        dialog: "var(--z-dialog)",
+        snackbar: "var(--z-snackbar)",
+        tooltip: "var(--z-tooltip)",
       },
     },
   },
