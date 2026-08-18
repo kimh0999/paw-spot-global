@@ -64,8 +64,8 @@ export default function FavoriteButton({
       aria-pressed={favorited}
       title={label}
       className={cn(
-        "inline-flex items-center justify-center rounded-md border border-gray-300 text-gray-500 transition-colors hover:border-gray-400 hover:text-gray-700 disabled:opacity-60",
-        favorited && "border-orange-300 text-orange-500 hover:border-orange-400 hover:text-orange-600",
+        "inline-flex items-center justify-center rounded-md border border-strong text-content-muted transition-colors hover:text-content disabled:opacity-60",
+        favorited && "border-primary text-primary hover:text-primary-hover",
         className,
       )}
     >

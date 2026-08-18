@@ -4,13 +4,14 @@ import { useState } from "react";
 
 import PlaceCard from "@/components/places/PlaceCard";
 import { useRouter } from "@/i18n/navigation";
-import type { PlaceListItem } from "@/types/place";
+import type { DogSizeFilter, PlaceListItem } from "@/types/place";
 
 interface FavoritesListProps {
   places: PlaceListItem[];
+  dogSize?: DogSizeFilter;
 }
 
-export default function FavoritesList({ places }: FavoritesListProps) {
+export default function FavoritesList({ places, dogSize }: FavoritesListProps) {
   const router = useRouter();
   const [referenceDate] = useState(() => new Date());
 
@@ -22,6 +23,8 @@ export default function FavoritesList({ places }: FavoritesListProps) {
           place={place}
           referenceDate={referenceDate}
           onClick={() => router.push(`/places/${place.id}`)}
+          action="openDetails"
+          dogSize={dogSize}
         />
       ))}
     </div>

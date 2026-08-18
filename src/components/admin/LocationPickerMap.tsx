@@ -171,16 +171,16 @@ export function LocationPickerMap({
 
   if (mapState === "no-key") {
     return (
-      <div className="flex h-64 w-full items-center justify-center rounded border bg-gray-100 p-4">
-        <p className="text-center text-sm text-gray-500">{t("noKey")}</p>
+      <div className="flex h-64 w-full items-center justify-center rounded border bg-surface-subtle p-4">
+        <p className="text-center text-sm text-content-secondary">{t("noKey")}</p>
       </div>
     );
   }
 
   if (mapState === "error") {
     return (
-      <div className="flex h-64 w-full items-center justify-center rounded border bg-gray-100 p-4">
-        <p className="text-center text-sm text-gray-500">{t("loadFailed")}</p>
+      <div className="flex h-64 w-full items-center justify-center rounded border bg-surface-subtle p-4">
+        <p className="text-center text-sm text-content-secondary">{t("loadFailed")}</p>
       </div>
     );
   }
@@ -189,8 +189,8 @@ export function LocationPickerMap({
     <div className="flex flex-col gap-1">
       <div className="relative h-64 w-full overflow-hidden rounded border">
         {mapState === "loading" && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-100">
-            <p className="text-sm text-gray-500">{t("loading")}</p>
+          <div className="absolute inset-0 z-map-control flex items-center justify-center bg-surface-subtle">
+            <p className="text-sm text-content-secondary">{t("loading")}</p>
           </div>
         )}
         <div ref={containerRef} className="h-full w-full" />

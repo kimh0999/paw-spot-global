@@ -264,8 +264,8 @@ export function PlaceForm({
   if (state.success) {
     return (
       successContent ?? (
-        <div className="rounded border border-green-500 p-4">
-          <p className="font-medium text-green-700">장소가 등록되었습니다.</p>
+        <div className="rounded border border-success p-4">
+          <p className="font-medium text-success">장소가 등록되었습니다.</p>
           <p className="mt-1 text-sm text-muted-foreground">ID: {state.placeId}</p>
         </div>
       )
@@ -459,7 +459,7 @@ export function PlaceForm({
           </div>
         </div>
         {showInvalidWarning && !allFieldErrors["lat"] && !allFieldErrors["lng"] && (
-          <p className="text-sm text-orange-600">{tMap("invalidCoordinates")}</p>
+          <p className="text-sm text-primary">{tMap("invalidCoordinates")}</p>
         )}
 
         <div className="flex flex-col gap-1">

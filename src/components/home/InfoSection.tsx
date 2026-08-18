@@ -1,34 +1,46 @@
 import { getTranslations } from "next-intl/server";
+import {
+  Home,
+  Luggage,
+  Ruler,
+  TriangleAlert,
+  CalendarCheck,
+  type LucideIcon,
+} from "lucide-react";
 
 export default async function InfoSection() {
   const t = await getTranslations("home.info");
 
-  const infoItems = [
-    { icon: "🏠", title: t("indoor.title"), description: t("indoor.description") },
-    { icon: "🧳", title: t("carrier.title"), description: t("carrier.description") },
-    { icon: "📏", title: t("size.title"), description: t("size.description") },
-    { icon: "⚠️", title: t("requirements.title"), description: t("requirements.description") },
-    { icon: "📅", title: t("lastVerified.title"), description: t("lastVerified.description") },
+  const infoItems: Array<{ icon: LucideIcon; title: string; description: string }> = [
+    { icon: Home, title: t("indoor.title"), description: t("indoor.description") },
+    { icon: Luggage, title: t("carrier.title"), description: t("carrier.description") },
+    { icon: Ruler, title: t("size.title"), description: t("size.description") },
+    { icon: TriangleAlert, title: t("requirements.title"), description: t("requirements.description") },
+    { icon: CalendarCheck, title: t("lastVerified.title"), description: t("lastVerified.description") },
   ];
 
   return (
-    <section className="py-16 bg-gray-50">
+    <section className="py-16 bg-surface-subtle">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-8">
+        <h2 className="text-2xl font-bold text-content mb-8">
           {t("title")}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {infoItems.map((item) => (
+          {infoItems.map(({ icon: Icon, title, description }) => (
             <div
-              key={item.title}
-              className="bg-white rounded-2xl p-6 border border-gray-100 hover:border-orange-200 transition-colors"
+              key={title}
+              className="bg-surface rounded-2xl p-6 border border-border hover:border-primary transition-colors"
             >
-              <div className="text-2xl mb-3">{item.icon}</div>
-              <h3 className="text-base font-semibold text-gray-900 mb-1">
-                {item.title}
+              <Icon
+                className="w-5 h-5 mb-3 text-primary"
+                strokeWidth={1.5}
+                aria-hidden="true"
+              />
+              <h3 className="text-base font-semibold text-content mb-1">
+                {title}
               </h3>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                {item.description}
+              <p className="text-sm text-content-secondary leading-relaxed">
+                {description}
               </p>
             </div>
           ))}

@@ -1,7 +1,8 @@
 import { parseVerifiedAt } from "./filtering";
 
 // Info is considered "stale" once the last check is at least this many weeks old.
-export const STALE_VERIFICATION_WEEKS = 4;
+// Keep this high enough that the warning stays rare — if every place is amber, nothing stands out.
+export const STALE_VERIFICATION_WEEKS = 8;
 
 const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
 

@@ -1,13 +1,23 @@
 import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
+import { HOME_CATEGORY_PLACE_LIMIT, MVP_PLACE_CATEGORIES } from "@/lib/places/constants";
 import type {
+  CategoryFilterValue,
+  CategoryPlacesResult,
   HomePlaceItem,
   PlaceDetail,
   PlaceListItem,
 } from "@/types/place";
 
 const HOME_PLACE_LIMIT = 6;
+
+// MVP 카테고리 탭은 음식점·카페·여행지만 다룬다. `전체` 범위는 MVP_PLACE_CATEGORIES가 정한다.
+const CATEGORY_FILTER_TO_ENUM = {
+  restaurant: "RESTAURANT",
+  cafe: "CAFE",
+  travel: "TRAVEL",
+} as const;
 
 export interface GetPlacesOptions {
   lat?: number;
@@ -120,6 +130,7 @@ export const placeListSelect = {
       maxDogSize: true,
       leash: true,
       muzzle: true,
+      breedRestrictions: true,
       cautions: true,
     },
   },
@@ -135,7 +146,8 @@ export const placeListSelect = {
 
 async function findPlaces() {
   return prisma.place.findMany({
-    where: { visibility: "VISIBLE" },
+    // 홈 `전체` 탭과 결과 범위를 맞춘다. ETC는 목록 카테고리 칩이 없으므로 여기서도 제외한다.
+    where: { visibility: "VISIBLE", category: { in: [...MVP_PLACE_CATEGORIES] } },
     select: placeListSelect,
     orderBy: { updatedAt: "desc" },
   });
@@ -211,6 +223,7 @@ export function toPlaceListItem(row: RawPlace, coord?: CoordQueryRow): PlaceList
     muzzle: row.condition
       ? mapMuzzlePolicy(String(row.condition.muzzle))
       : null,
+    breedRestrictions: row.condition?.breedRestrictions ?? null,
     caution: row.condition?.cautions ?? null,
     latestVerifiedAt: latestVerification
       ? formatVerifiedAt(latestVerification.verifiedAt)
@@ -270,6 +283,34 @@ export async function getHomePlaces(): Promise<HomePlaceItem[]> {
       ? formatVerifiedAt(row.verifications[0].verifiedAt)
       : null,
   }));
+}
+
+/**
+ * 홈 카테고리 탭용 조회.
+ * 선택한 카테고리를 DB에서 걸러 필요한 카드 수만 가져온다. 전체 장소를 내려받아 클라이언트에서 거르지 않는다.
+ */
+export async function getCategoryPlaces(
+  category: CategoryFilterValue,
+): Promise<CategoryPlacesResult> {
+  const where: Prisma.PlaceWhereInput = {
+    visibility: "VISIBLE",
+    category:
+      category === "all"
+        ? { in: [...MVP_PLACE_CATEGORIES] }
+        : CATEGORY_FILTER_TO_ENUM[category],
+  };
+
+  const [rows, totalCount] = await Promise.all([
+    prisma.place.findMany({
+      where,
+      select: placeListSelect,
+      orderBy: { updatedAt: "desc" },
+      take: HOME_CATEGORY_PLACE_LIMIT,
+    }),
+    prisma.place.count({ where }),
+  ]);
+
+  return { places: rows.map((row) => toPlaceListItem(row)), totalCount };
 }
 
 export async function getPlaceById(id: string): Promise<PlaceDetail | null> {

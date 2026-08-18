@@ -30,16 +30,16 @@ export default function SortDropdown({ value, onChange, hasLocation = false }: S
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex items-center gap-1.5 px-4 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:border-gray-400 bg-white transition-colors"
+        className="flex items-center gap-1.5 px-4 py-2 border border-strong rounded-full text-sm font-medium text-content hover:bg-surface-subtle bg-surface transition-colors"
       >
         {selectedLabel}
-        <span className="text-gray-400 text-xs">{isOpen ? "▲" : "▼"}</span>
+        <span className="text-content-muted text-xs">{isOpen ? "▲" : "▼"}</span>
       </button>
 
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-          <div className="absolute left-0 top-full mt-1 w-52 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
+          <div className="fixed inset-0 z-dropdown" onClick={() => setIsOpen(false)} />
+          <div className="absolute left-0 top-full mt-1 w-52 bg-surface border rounded-xl shadow-lg z-dropdown overflow-hidden">
             {SORT_OPTIONS.map(({ value: optValue, label, disabled }) => (
               <button
                 key={optValue}
@@ -52,10 +52,10 @@ export default function SortDropdown({ value, onChange, hasLocation = false }: S
                 }}
                 className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
                   disabled
-                    ? "text-gray-300 cursor-not-allowed"
+                    ? "text-content-muted cursor-not-allowed"
                     : value === optValue
-                      ? "bg-orange-50 text-orange-600 font-semibold"
-                      : "text-gray-700 hover:bg-gray-50"
+                      ? "bg-primary-soft text-primary font-semibold"
+                      : "text-content hover:bg-surface-subtle"
                 }`}
               >
                 {label}

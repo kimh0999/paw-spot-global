@@ -7,6 +7,7 @@ import { Link } from "@/i18n/navigation";
 import { displayPlaceName, isSupportedLocale } from "@/lib/i18n/locale";
 import { getAdminPlaces, mapCategory } from "@/lib/places/queries";
 import type { AdminPlaceRow } from "@/lib/places/queries";
+import { MapPin } from "lucide-react";
 
 interface Props {
   params: { locale: string };
@@ -90,8 +91,8 @@ export default async function AdminPlacesPage({ params }: Props) {
       {/* Page header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
-          <p className="mt-1 text-sm text-gray-500">{t("description")}</p>
+          <h1 className="text-2xl font-bold text-content">{t("title")}</h1>
+          <p className="mt-1 text-sm text-content-secondary">{t("description")}</p>
         </div>
         <Button asChild>
           <Link href="/admin/places/new">{t("addPlace")}</Link>
@@ -101,17 +102,17 @@ export default async function AdminPlacesPage({ params }: Props) {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {statItems.map((item) => (
-          <div key={item.label} className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
-            <p className="text-xs text-gray-500">{item.label}</p>
-            <p className="mt-1 text-2xl font-bold text-gray-900">{item.value}</p>
+          <div key={item.label} className="rounded-xl border border-border bg-surface px-4 py-3 shadow-sm">
+            <p className="text-xs text-content-secondary">{item.label}</p>
+            <p className="mt-1 text-2xl font-bold text-content">{item.value}</p>
           </div>
         ))}
       </div>
 
       {/* List */}
       {places.length === 0 ? (
-        <div className="rounded-xl border border-gray-100 bg-white px-6 py-16 text-center shadow-sm">
-          <p className="text-sm text-gray-400">{t("noPlaces")}</p>
+        <div className="rounded-xl border border-border bg-surface px-6 py-16 text-center shadow-sm">
+          <p className="text-sm text-content-muted">{t("noPlaces")}</p>
           <Button asChild className="mt-4">
             <Link href="/admin/places/new">{t("addPlace")}</Link>
           </Button>
@@ -119,45 +120,45 @@ export default async function AdminPlacesPage({ params }: Props) {
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden md:block overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+          <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
             <table className="w-full text-sm">
-              <thead className="border-b border-gray-100 bg-gray-50/60">
+              <thead className="border-b border-border bg-surface-subtle/60">
                 <tr>
                   <th className="w-16 px-4 py-3" />
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">{t("placeName")}</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">{t("category")}</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">{t("address")}</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">{t("status")}</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">{t("conditionSummary")}</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">{t("latestVerification")}</th>
+                  <th className="px-4 py-3 text-left font-medium text-content-secondary">{t("placeName")}</th>
+                  <th className="px-4 py-3 text-left font-medium text-content-secondary">{t("category")}</th>
+                  <th className="px-4 py-3 text-left font-medium text-content-secondary">{t("address")}</th>
+                  <th className="px-4 py-3 text-left font-medium text-content-secondary">{t("status")}</th>
+                  <th className="px-4 py-3 text-left font-medium text-content-secondary">{t("conditionSummary")}</th>
+                  <th className="px-4 py-3 text-left font-medium text-content-secondary">{t("latestVerification")}</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-border">
                 {places.map((place) => {
                   const { primary: name, secondary } = displayPlaceName(place, safeLocale);
                   const catKey = mapCategory(place.category);
                   const summary = conditionSummary(place.condition);
                   const badgeVariant = VISIBILITY_BADGE[place.visibility] ?? "outline";
                   return (
-                    <tr key={place.id} className="hover:bg-gray-50/50 transition-colors">
+                    <tr key={place.id} className="hover:bg-surface-subtle/50 transition-colors">
                       <td className="px-4 py-3">
                         {place.thumbnailUrl ? (
-                          <div className="relative h-12 w-12 overflow-hidden rounded-lg bg-gray-100">
+                          <div className="relative h-12 w-12 overflow-hidden rounded-lg bg-surface-subtle">
                             <Image src={place.thumbnailUrl} alt={name} fill unoptimized className="object-cover" />
                           </div>
                         ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-lg" aria-hidden="true">
-                            📍
+                          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-surface-subtle">
+                            <MapPin className="w-5 h-5 text-content-muted" strokeWidth={1.5} aria-hidden="true" />
                           </div>
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <p className="line-clamp-1 font-medium text-gray-900">{name}</p>
-                        {secondary && <p className="line-clamp-1 text-xs text-gray-400">{secondary}</p>}
+                        <p className="line-clamp-1 font-medium text-content">{name}</p>
+                        {secondary && <p className="line-clamp-1 text-xs text-content-muted">{secondary}</p>}
                       </td>
-                      <td className="px-4 py-3 text-gray-600">{categoryLabel[catKey] ?? catKey}</td>
-                      <td className="max-w-xs px-4 py-3 text-gray-600">
+                      <td className="px-4 py-3 text-content-secondary">{categoryLabel[catKey] ?? catKey}</td>
+                      <td className="max-w-xs px-4 py-3 text-content-secondary">
                         <span className="line-clamp-2">{place.address}</span>
                       </td>
                       <td className="px-4 py-3">
@@ -165,21 +166,21 @@ export default async function AdminPlacesPage({ params }: Props) {
                       </td>
                       <td className="px-4 py-3">
                         {summary ? (
-                          <div className="space-y-0.5 text-xs text-gray-600">
+                          <div className="space-y-0.5 text-xs text-content-secondary">
                             {summary.map((row) => (
                               <p key={row.key}>
-                                <span className="text-gray-400">{row.key}: </span>
+                                <span className="text-content-muted">{row.key}: </span>
                                 {row.val}
                               </p>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-xs text-gray-400">{t("conditionMissing")}</span>
+                          <span className="text-xs text-content-muted">{t("conditionMissing")}</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-600">
+                      <td className="px-4 py-3 text-xs text-content-secondary">
                         {place.latestVerification?.verifiedAt ?? (
-                          <span className="text-gray-400">{t("notVerified")}</span>
+                          <span className="text-content-muted">{t("notVerified")}</span>
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -207,15 +208,15 @@ export default async function AdminPlacesPage({ params }: Props) {
               const summary = conditionSummary(place.condition);
               const badgeVariant = VISIBILITY_BADGE[place.visibility] ?? "outline";
               return (
-                <div key={place.id} className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm space-y-3">
+                <div key={place.id} className="rounded-xl border border-border bg-surface p-4 shadow-sm space-y-3">
                   <div className="flex items-start gap-3">
                     {place.thumbnailUrl ? (
-                      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface-subtle">
                         <Image src={place.thumbnailUrl} alt={name} fill unoptimized className="object-cover" />
                       </div>
                     ) : (
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xl" aria-hidden="true">
-                        📍
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-surface-subtle">
+                        <MapPin className="w-5 h-5 text-content-muted" strokeWidth={1.5} aria-hidden="true" />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
@@ -223,24 +224,24 @@ export default async function AdminPlacesPage({ params }: Props) {
                         <Badge variant="secondary" className="text-xs">{categoryLabel[catKey] ?? catKey}</Badge>
                         <Badge variant={badgeVariant} className="text-xs">{visibilityLabel[place.visibility] ?? place.visibility}</Badge>
                       </div>
-                      <p className="mt-1 line-clamp-1 font-medium text-gray-900">{name}</p>
-                      <p className="mt-0.5 line-clamp-2 text-xs text-gray-500">{place.address}</p>
+                      <p className="mt-1 line-clamp-1 font-medium text-content">{name}</p>
+                      <p className="mt-0.5 line-clamp-2 text-xs text-content-secondary">{place.address}</p>
                     </div>
                   </div>
                   {summary ? (
-                    <div className="space-y-1 border-t border-gray-50 pt-3 text-xs text-gray-600">
+                    <div className="space-y-1 border-t border-border pt-3 text-xs text-content-secondary">
                       {summary.map((row) => (
                         <p key={row.key}>
-                          <span className="text-gray-400">{row.key}: </span>
+                          <span className="text-content-muted">{row.key}: </span>
                           {row.val}
                         </p>
                       ))}
                     </div>
                   ) : (
-                    <p className="border-t border-gray-50 pt-3 text-xs text-gray-400">{t("conditionMissing")}</p>
+                    <p className="border-t border-border pt-3 text-xs text-content-muted">{t("conditionMissing")}</p>
                   )}
-                  <div className="flex items-center justify-between border-t border-gray-50 pt-3">
-                    <p className="text-xs text-gray-400">
+                  <div className="flex items-center justify-between border-t border-border pt-3">
+                    <p className="text-xs text-content-muted">
                       {place.latestVerification
                         ? `${t("latestVerification")}: ${place.latestVerification.verifiedAt}`
                         : t("notVerified")}

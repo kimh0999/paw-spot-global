@@ -54,12 +54,12 @@ export default async function LoginPage({
 
   return (
     <main className="mx-auto flex min-h-[70vh] max-w-md items-center px-4 py-12">
-      <section className="w-full rounded-xl border border-gray-100 bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
-        <p className="mt-2 text-sm text-gray-600">{t("description")}</p>
+      <section className="w-full rounded-xl border border-border bg-surface p-8 shadow-sm">
+        <h1 className="text-2xl font-bold text-content">{t("title")}</h1>
+        <p className="mt-2 text-sm text-content-secondary">{t("description")}</p>
 
         {errorMessage && (
-          <p className="mt-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <p className="mt-6 rounded-lg border border-border bg-danger-soft p-3 text-sm text-danger">
             {errorMessage}
           </p>
         )}

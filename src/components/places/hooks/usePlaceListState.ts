@@ -8,7 +8,6 @@ import {
 } from "@/lib/places/filtering";
 import type {
   CategoryFilterValue,
-  DogSizeFilter,
   PlaceFilters,
   PlaceListItem,
   SortOption,
@@ -26,7 +25,6 @@ type UsePlaceListStateOptions = {
   initialSortOption: SortOption;
   initialCategory?: CategoryFilterValue;
   initialSearchQuery?: string;
-  initialDogSize?: DogSizeFilter;
   referenceDate: Date;
 };
 
@@ -35,16 +33,12 @@ export function usePlaceListState({
   initialSortOption,
   initialCategory = "all",
   initialSearchQuery = "",
-  initialDogSize = "all",
   referenceDate,
 }: UsePlaceListStateOptions) {
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryFilterValue>(initialCategory);
-  const [filters, setFilters] = useState<PlaceFilters>({
-    ...DEFAULT_FILTERS,
-    dogSize: initialDogSize,
-  });
+  const [filters, setFilters] = useState<PlaceFilters>(DEFAULT_FILTERS);
   const [sortOption, setSortOption] = useState<SortOption>(initialSortOption);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [hoveredPlaceId, setHoveredPlaceId] = useState<string | null>(null);

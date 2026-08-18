@@ -26,7 +26,7 @@ export default async function Home() {
         <InfoSection />
         <RecentPlacesSection places={homePlaces} />
       </main>
-      <footer className="bg-gray-900 text-gray-500 py-8 text-center text-sm">
+      <footer className="bg-content text-content-secondary py-8 text-center text-sm">
         <p>{t("footer")}</p>
       </footer>
     </>

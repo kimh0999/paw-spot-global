@@ -32,13 +32,13 @@ export default function KoreanInquiryBox() {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="px-5 py-3 border-b border-gray-50">
-        <h2 className="text-sm font-semibold text-gray-700">{t("title")}</h2>
-        <p className="text-xs text-gray-400 mt-0.5">{t("description")}</p>
+    <div className="bg-surface rounded-2xl border shadow-sm overflow-hidden">
+      <div className="px-5 py-3 border-b">
+        <h2 className="text-sm font-semibold text-content">{t("title")}</h2>
+        <p className="text-xs text-content-secondary mt-0.5">{t("description")}</p>
       </div>
       <div className="px-5 py-4 space-y-3">
-        <pre className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap font-sans bg-gray-50 rounded-xl p-4">
+        <pre className="text-sm text-content leading-relaxed whitespace-pre-wrap font-sans bg-surface-subtle rounded-xl p-4">
           {INQUIRY_TEMPLATE}
         </pre>
         <Button

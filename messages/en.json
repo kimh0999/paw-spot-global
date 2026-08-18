@@ -12,28 +12,18 @@
       "myLocation": "Near me"
     },
     "categories": {
-      "title": "Browse places by category",
-      "cafe": {
-        "title": "Cafe",
-        "description": "Find dog-friendly cafes near you on the map",
-        "label": "Browse cafes"
+      "title": "Where would you like to go with your dog?",
+      "tabs": {
+        "all": "All",
+        "restaurant": "Restaurants",
+        "cafe": "Cafes",
+        "travel": "Travel Spots"
       },
-      "restaurant": {
-        "title": "Restaurant",
-        "description": "Find places where you can dine with your dog",
-        "label": "Browse restaurants"
-      },
-      "travel": {
-        "title": "Travel Spot",
-        "description": "Discover dog-friendly parks, trails, and attractions",
-        "label": "Browse spots"
-      },
-      "vet": {
-        "title": "Vet Clinic",
-        "description": "Find nearby vet clinics and contact info",
-        "label": "Browse vets"
-      },
-      "comingSoon": "Coming soon"
+      "recommended": "{count} recommended places",
+      "viewAll": "View all",
+      "empty": "No places have been added to this category yet.",
+      "error": "We couldn't load places.",
+      "retry": "Try again"
     },
     "info": {
       "title": "What to check before you visit",
@@ -73,7 +63,6 @@
       "title": "Places",
       "description": "Find dog-friendly places near you on the map.",
       "searchPlaceholder": "Search cafes, restaurants, and travel spots",
-      "searchButton": "Search",
       "filter": "Filters",
       "myLocation": "Near me",
       "locationDefault": "Near Daejeon center",
@@ -81,9 +70,13 @@
       "locationDenied": "Location access denied. Showing results near Daejeon center.",
       "locationBlocked": "Location access is blocked. Please allow it in your browser settings.",
       "resultCount": "{count} places",
-      "loadMore": "Load more",
       "empty": "No places match your filters.",
-      "mapPlaceholder": "Map area (Google Maps integration coming soon)"
+      "mapPlaceholder": "Map area (Google Maps integration coming soon)",
+      "dogSelection": {
+        "single": "Showing conditions for {name}",
+        "multi": "Showing conditions for {count} dogs",
+        "clear": "Show all"
+      }
     },
     "filters": {
       "title": "Filters",
@@ -133,6 +126,28 @@
       "caution": "Check before you go",
       "detail": "Details",
       "conditions": "Conditions",
+      "eligibility": {
+        "canVisit": "Your dog can visit",
+        "tooLarge": "Too large for this place",
+        "dogsNotAllowed": "Dogs not allowed here",
+        "sizeUnconfirmed": "Size limit unconfirmed"
+      },
+      "dogMatch": {
+        "single": {
+          "MATCH": "Matches {name}'s profile",
+          "SIZE_LIMIT": "{name}'s size is not allowed",
+          "PET_NOT_ALLOWED": "Dogs are not allowed at this place",
+          "BREED_RESTRICTION": "Breed restrictions apply — check before visiting",
+          "UNKNOWN_CONDITION": "Check the pet policy before visiting"
+        },
+        "multi": {
+          "MATCH": "Matches all your dogs",
+          "SIZE_LIMIT": "One of your dogs is over the size limit",
+          "PET_NOT_ALLOWED": "Dogs are not allowed at this place",
+          "BREED_RESTRICTION": "Breed restrictions apply — check before visiting",
+          "UNKNOWN_CONDITION": "Check the pet policy before visiting"
+        }
+      },
       "indoor": {
         "allowed": "Indoor allowed",
         "outdoorOnly": "Outdoor / terrace only",
@@ -175,7 +190,65 @@
         "userReport": "User report"
       },
       "walkFallback": "Set your location",
-      "staleBadge": "{weeks} wk old"
+      "staleBadge": "{weeks} wk old",
+      "lastChecked": "Checked {date}",
+      "notChecked": "Not checked yet",
+      "select": "Select {name}",
+      "openDetails": "Open details for {name}"
+    },
+    "preview": {
+      "title": "Selected place",
+      "close": "Close summary",
+      "viewDetails": "Details",
+      "directions": "Directions",
+      "lastChecked": "Last checked",
+      "status": {
+        "available": {
+          "title": "Available",
+          "description": "No restrictions are listed for this place."
+        },
+        "conditional": {
+          "title": "Available with conditions",
+          "description": "Check the leash, muzzle, and other conditions below."
+        },
+        "confirm": {
+          "title": "Confirm before visiting",
+          "description": "Key conditions are unconfirmed. Check with the place first."
+        },
+        "notAllowed": {
+          "title": "Not allowed",
+          "description": "This place does not allow dogs."
+        }
+      },
+      "allowancesTitle": "Good to know",
+      "allowances": {
+        "indoorAllowed": "Indoor allowed",
+        "noCarrier": "No carrier needed",
+        "largeDogs": "Large dogs allowed",
+        "noLeash": "No leash required",
+        "noMuzzle": "No muzzle required"
+      },
+      "conditionsTitle": "Conditions",
+      "conditions": {
+        "indoorOutdoorOnly": "Outdoor seating only",
+        "indoorPartialArea": "Dogs are allowed in certain areas only",
+        "indoorNotAllowed": "Dogs are not allowed here",
+        "carrierIndoor": "Hold your dog or use a stroller indoors",
+        "carrierAlways": "A carrier or stroller is required at all times",
+        "sizeSmallOnly": "Small dogs only",
+        "sizeMediumOnly": "Up to medium-sized dogs",
+        "leashRequired": "A leash is required",
+        "leashPartialArea": "A leash is required in some areas",
+        "muzzleRequired": "A muzzle is required",
+        "muzzleConditional": "A muzzle may be required"
+      },
+      "additionalInfoTitle": "Additional information",
+      "more": "More",
+      "less": "Show less"
+    },
+    "sheet": {
+      "showList": "Show list",
+      "showMap": "Show map"
     },
     "selectedPlacePanel": {
       "visitConditionsTitle": "Before you go",
@@ -306,7 +379,7 @@
   "header": {
     "places": "Places",
     "category": "Category",
-    "myDog": "My Dog",
+    "myDog": "My Dogs",
     "favorites": "Favorites",
     "vets": "Vets",
     "comingSoon": "Soon",
@@ -318,23 +391,68 @@
     "title": "Favorites",
     "empty": "No saved places yet. Tap the heart on a place to save it here."
   },
-  "myDog": {
-    "title": "My Dog",
-    "description": "Save your dog's size to filter places by what fits.",
+  "dogs": {
+    "title": "My Dogs",
+    "description": "Save each dog's size and we will check place conditions against it.",
+    "count": "{count} of {max} dogs",
+    "addDog": "Add a dog",
+    "limitReached": "You can register up to {max} dogs.",
+    "empty": {
+      "title": "No dogs yet",
+      "description": "Add a dog to see whether a place fits, right on the place card."
+    },
+    "card": {
+      "menuLabel": "Open menu for {name}",
+      "edit": "Edit",
+      "delete": "Delete",
+      "viewPlaces": "View matching places"
+    },
+    "delete": {
+      "title": "Delete this dog?",
+      "description": "{name} will be removed. This cannot be undone.",
+      "confirm": "Delete",
+      "deleting": "Deleting..."
+    },
+    "toast": {
+      "created": "{name} was added.",
+      "updated": "{name} was saved.",
+      "deleted": "{name} was deleted."
+    },
     "form": {
+      "createTitle": "Add a dog",
+      "createDescription": "Enter a name and size. Breed is optional.",
+      "editTitle": "Edit dog",
+      "editDescription": "Update the details you saved.",
+      "close": "Close",
+      "cancel": "Cancel",
       "name": "Name",
       "namePlaceholder": "e.g. Coco",
       "size": "Size",
       "breed": "Breed (optional)",
-      "breedPlaceholder": "e.g. Poodle",
-      "save": "Save",
+      "breedPlaceholder": "Search breeds",
+      "breedClear": "Clear selected breed",
+      "breedNoResult": "No matching breed.",
+      "breedCustom": "Breed name",
+      "breedCustomPlaceholder": "Enter the breed",
+      "breedCustomHint": "What you type is shown as-is, without translation.",
+      "submitCreate": "Add",
+      "submitUpdate": "Save",
       "saving": "Saving...",
-      "success": "Saved.",
-      "invalid": "Please check this field.",
       "sizeOptions": {
         "small": "Small",
         "medium": "Medium",
         "large": "Large"
+      },
+      "errors": {
+        "name": "Enter a name between 1 and 30 characters.",
+        "size": "Select a size.",
+        "breedCode": "That breed is not available.",
+        "breedCustom": "Enter a breed between 1 and 50 characters.",
+        "AUTH_REQUIRED": "Sign in and try again.",
+        "DOG_LIMIT_REACHED": "You can register up to 10 dogs.",
+        "NOT_FOUND": "This dog could not be updated.",
+        "VALIDATION_FAILED": "Check the details you entered.",
+        "INTERNAL_ERROR": "Something did not go through. Try again."
       }
     }
   },

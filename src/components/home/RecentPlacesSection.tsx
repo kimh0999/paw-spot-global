@@ -14,11 +14,11 @@ export default async function RecentPlacesSection({
   const t = await getTranslations("home.recentPlaces");
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16 bg-surface">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900">{t("title")}</h2>
-          <p className="mt-2 text-sm text-gray-500">{t("description")}</p>
+          <h2 className="text-2xl font-bold text-content">{t("title")}</h2>
+          <p className="mt-2 text-sm text-content-secondary">{t("description")}</p>
         </div>
 
         {places.length > 0 ? (
@@ -28,15 +28,15 @@ export default async function RecentPlacesSection({
             ))}
           </div>
         ) : (
-          <div className="rounded-2xl border border-gray-200 bg-gray-50 px-6 py-12 text-center">
-            <p className="text-sm text-gray-500">{t("empty")}</p>
+          <div className="rounded-2xl border border-border bg-surface-subtle px-6 py-12 text-center">
+            <p className="text-sm text-content-secondary">{t("empty")}</p>
           </div>
         )}
 
         <div className="flex justify-center mt-10">
           <Link
             href="/places"
-            className="px-8 py-3 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 active:bg-orange-700 transition-colors"
+            className="px-8 py-3 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary-hover active:bg-primary transition-colors"
           >
             {t("viewAll")}
           </Link>

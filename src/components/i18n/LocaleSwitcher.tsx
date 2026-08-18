@@ -14,15 +14,15 @@ export default function LocaleSwitcher() {
   };
 
   return (
-    <div className="flex items-center gap-1 bg-gray-100 rounded-full p-1 shrink-0">
+    <div className="flex items-center gap-1 bg-surface-subtle rounded-full p-1 shrink-0">
       {SUPPORTED_LOCALES.map((l) => (
         <button
           key={l}
           onClick={() => switchLocale(l)}
           className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
             locale === l
-              ? "bg-white text-gray-900 shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
+              ? "bg-surface text-content shadow-sm"
+              : "text-content-secondary hover:text-content"
           }`}
         >
           {l.toUpperCase()}

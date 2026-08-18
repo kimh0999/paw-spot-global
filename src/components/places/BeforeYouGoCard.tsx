@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 
 import type { ConditionStatus, PlaceDetail } from "@/types/place";
 import ConditionBadge from "./ConditionBadge";
+import { TriangleAlert } from "lucide-react";
 
 interface Props {
   condition: PlaceDetail["condition"];
@@ -84,25 +85,25 @@ export default async function BeforeYouGoCard({ condition, locale }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="px-5 py-4 bg-gray-50/60 border-b border-gray-100">
-        <h2 className="text-lg font-bold text-gray-900">{t("title")}</h2>
-        <p className="text-sm text-gray-500 mt-0.5">{t("subtitle")}</p>
+    <div className="bg-surface rounded-2xl border shadow-sm overflow-hidden">
+      <div className="px-5 py-4 bg-surface-subtle border-b">
+        <h2 className="text-lg font-bold text-content">{t("title")}</h2>
+        <p className="text-sm text-content-secondary mt-0.5">{t("subtitle")}</p>
       </div>
 
       {!condition ? (
         <div className="px-5 py-8 text-center">
-          <p className="text-sm text-gray-400">{t("noCondition")}</p>
+          <p className="text-sm text-content-muted">{t("noCondition")}</p>
         </div>
       ) : (
         <div className="px-5 py-4">
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y">
             {conditionRows.map((row) => (
               <div
                 key={row.label}
                 className="flex items-center justify-between gap-4 py-3"
               >
-                <span className="text-sm text-gray-500 shrink-0">{row.label}</span>
+                <span className="text-sm text-content-secondary shrink-0">{row.label}</span>
                 <ConditionBadge label={row.value} status={row.status} />
               </div>
             ))}
@@ -111,23 +112,24 @@ export default async function BeforeYouGoCard({ condition, locale }: Props) {
           {(condition.cautions ||
             condition.requiredItems.length > 0 ||
             condition.breedRestrictions) && (
-            <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+            <div className="mt-4 pt-4 border-t space-y-3">
               {condition.cautions && (
-                <div className="bg-amber-50 rounded-xl px-4 py-3">
-                  <p className="text-xs font-semibold text-amber-700 mb-1">
-                    ⚠️ {t("cautions")}
+                <div className="bg-warning-soft rounded-xl px-4 py-3">
+                  <p className="flex items-center gap-1 text-xs font-semibold text-warning mb-1">
+                    <TriangleAlert className="w-4 h-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+                    {t("cautions")}
                   </p>
-                  <p className="text-sm text-amber-800 leading-relaxed">
+                  <p className="text-sm text-warning leading-relaxed">
                     {condition.cautions}
                   </p>
                 </div>
               )}
               {condition.requiredItems.length > 0 && (
                 <div className="flex items-start gap-3">
-                  <span className="text-xs font-medium text-gray-400 shrink-0 pt-0.5 min-w-[80px]">
+                  <span className="text-xs font-medium text-content-secondary shrink-0 pt-0.5 min-w-[80px]">
                     {t("requiredItems")}
                   </span>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-content-secondary">
                     {condition.requiredItems
                       .map((item) => (item === "POOP_BAG" ? t("poopBag") : item))
                       .join(", ")}
@@ -136,10 +138,10 @@ export default async function BeforeYouGoCard({ condition, locale }: Props) {
               )}
               {condition.breedRestrictions && (
                 <div className="flex items-start gap-3">
-                  <span className="text-xs font-medium text-gray-400 shrink-0 pt-0.5 min-w-[80px]">
+                  <span className="text-xs font-medium text-content-secondary shrink-0 pt-0.5 min-w-[80px]">
                     {t("breedRestriction")}
                   </span>
-                  <p className="text-sm text-gray-600">{condition.breedRestrictions}</p>
+                  <p className="text-sm text-content-secondary">{condition.breedRestrictions}</p>
                 </div>
               )}
             </div>

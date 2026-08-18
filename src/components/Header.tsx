@@ -2,12 +2,13 @@
 
 import { useTranslations } from "next-intl";
 import { useSession, signOut } from "next-auth/react";
+import { PawPrint } from "lucide-react";
 
 import { Link } from "@/i18n/navigation";
 import LocaleSwitcher from "@/components/i18n/LocaleSwitcher";
 
 const navLinkClass =
-  "text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors";
+  "text-sm font-medium text-content-secondary hover:text-content transition-colors";
 
 export default function Header() {
   const t = useTranslations("header");
@@ -16,12 +17,12 @@ export default function Header() {
   const isAuthenticated = status === "authenticated" && !!session?.user;
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
+    <header className="sticky top-0 z-header bg-surface border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-8">
           <Link href="/" className="flex items-center gap-2 shrink-0">
-            <span className="text-2xl">🐾</span>
-            <span className="font-bold text-gray-900 text-base">Paw Spot Global</span>
+            <PawPrint className="w-6 h-6 text-primary" strokeWidth={1.5} aria-hidden="true" />
+            <span className="font-bold text-content text-base">Paw Spot Global</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-6">
@@ -33,7 +34,7 @@ export default function Header() {
               {t("category")}
             </Link>
 
-            <Link href="/my-dog" className={navLinkClass}>
+            <Link href="/profile/dogs" className={navLinkClass}>
               {t("myDog")}
             </Link>
 
@@ -42,11 +43,11 @@ export default function Header() {
             </Link>
 
             <span
-              className="flex items-center gap-1.5 text-sm font-medium text-gray-400 cursor-not-allowed select-none"
+              className="flex items-center gap-1.5 text-sm font-medium text-content-muted cursor-not-allowed select-none"
               aria-disabled="true"
             >
               {t("vets")}
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-surface-subtle text-content-secondary">
                 {t("comingSoon")}
               </span>
             </span>
@@ -55,7 +56,7 @@ export default function Header() {
           <div className="flex items-center gap-4 shrink-0">
             {isAuthenticated ? (
               <>
-                <span className="hidden sm:inline text-sm font-medium text-gray-700 max-w-[10rem] truncate">
+                <span className="hidden sm:inline text-sm font-medium text-content max-w-[10rem] truncate">
                   {session.user?.name ?? session.user?.email}
                 </span>
                 <button

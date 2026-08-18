@@ -56,11 +56,11 @@ export default async function AdminPlaceEditPage({ params }: Props) {
   };
 
   const successContent = (
-    <div className="rounded border border-green-500 p-4">
-      <p className="font-medium text-green-700">{t("saveSuccess")}</p>
+    <div className="rounded border border-success p-4">
+      <p className="font-medium text-success">{t("saveSuccess")}</p>
       <Link
         href="/admin/places"
-        className="mt-2 inline-block text-sm text-blue-600 hover:underline"
+        className="mt-2 inline-block text-sm text-primary hover:underline"
       >
         {t("backToList")}
       </Link>
@@ -76,7 +76,7 @@ export default async function AdminPlaceEditPage({ params }: Props) {
         </div>
         <Link
           href="/admin/places"
-          className="shrink-0 text-sm text-gray-500 hover:text-gray-800 transition-colors"
+          className="shrink-0 text-sm text-content-secondary hover:text-content transition-colors"
         >
           ← {t("backToList")}
         </Link>

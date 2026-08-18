@@ -1,38 +1,39 @@
 "use client";
 
 import { useTranslations, useLocale } from "next-intl";
-import { Coffee, Utensils, Compass, MapPin, Footprints, History } from "lucide-react";
 
-import type { PlaceListItem, ConditionStatus } from "@/types/place";
+import { getVisitEligibility } from "@/lib/places/eligibility";
+import { formatDistance } from "@/lib/geo/distance";
 import { displayPlaceName, isSupportedLocale } from "@/lib/i18n/locale";
-import { formatDistance, formatWalkingTime } from "@/lib/geo/distance";
-import { STALE_VERIFICATION_WEEKS, weeksSinceVerified } from "@/lib/places/display";
-import ConditionBadge from "./ConditionBadge";
+import { cn } from "@/lib/utils";
+import type { DogMatchResult } from "@/lib/dogs/matching";
+import type { DogSizeFilter, PlaceListItem } from "@/types/place";
+import DogMatchBadge from "./DogMatchBadge";
+import EligibilityBanner from "./EligibilityBanner";
+import PlaceConditionSummary from "./PlaceConditionSummary";
 
 interface PlaceCardProps {
   place: PlaceListItem;
   referenceDate: Date;
-  onClick?: () => void;
+  onClick: () => void;
+  /** 카드 전체 버튼이 무엇을 하는지. 접근 가능한 이름에 그대로 반영한다. */
+  action: "select" | "openDetails";
+  isSelected?: boolean;
+  /** 등록된 반려견 크기. 있으면 방문 가능 여부를 카드 위에 단언한다. */
+  dogSize?: DogSizeFilter;
+  /** URL에서 고른 반려견과 대조한 결과. 있으면 크기 단독 판정 대신 이 배지를 쓴다. */
+  dogMatch?: DogMatchResult & { dogName: string | null };
 }
 
-const categoryIconStyle: Record<PlaceListItem["category"], string> = {
-  cafe: "bg-orange-50 text-orange-500",
-  restaurant: "bg-orange-50 text-orange-500",
-  travel: "bg-orange-50 text-orange-500",
-  etc: "bg-stone-100 text-stone-500",
-};
-
-function CategoryIcon({ category }: { category: PlaceListItem["category"] }) {
-  const props = { size: 18, "aria-hidden": true as const };
-  switch (category) {
-    case "cafe": return <Coffee {...props} />;
-    case "restaurant": return <Utensils {...props} />;
-    case "travel": return <Compass {...props} />;
-    default: return <MapPin {...props} />;
-  }
-}
-
-export default function PlaceCard({ place, referenceDate, onClick }: PlaceCardProps) {
+export default function PlaceCard({
+  place,
+  referenceDate,
+  onClick,
+  action,
+  isSelected = false,
+  dogSize = "all",
+  dogMatch,
+}: PlaceCardProps) {
   const t = useTranslations("places");
   const rawLocale = useLocale();
   const locale = isSupportedLocale(rawLocale) ? rawLocale : "en";
@@ -45,117 +46,64 @@ export default function PlaceCard({ place, referenceDate, onClick }: PlaceCardPr
   const categoryLabel = categoryLabels[place.category] ?? place.category;
 
   const { primary: placeName } = displayPlaceName(place, locale);
+  const actionLabel = t(`card.${action}`, { name: placeName });
   const distanceText =
     place.distanceMeters != null
       ? formatDistance(place.distanceMeters, locale)
       : null;
-  const walkText = formatWalkingTime(place.distanceMeters, locale);
-
-  const weeksStale = weeksSinceVerified(place.latestVerifiedAt, referenceDate);
-  const isStale = weeksStale != null && weeksStale >= STALE_VERIFICATION_WEEKS;
-
-  const chips: Array<{ label: string; status: ConditionStatus }> = [];
-
-  switch (place.indoor) {
-    case "allowed":
-      chips.push({ label: t("card.indoor.allowed"), status: "good" });
-      break;
-    case "outdoor_only":
-      chips.push({ label: t("card.indoor.outdoorOnly"), status: "warning" });
-      break;
-    case "partial_area":
-      chips.push({ label: t("card.indoor.partialArea"), status: "warning" });
-      break;
-    case "not_allowed":
-      chips.push({ label: t("card.indoor.notAllowed"), status: "bad" });
-      break;
-    default:
-      chips.push({ label: t("card.indoor.unknown"), status: "warning" });
-  }
-
-  switch (place.carrierStrollerPolicy) {
-    case "not_required":
-      chips.push({ label: t("card.carrierStroller.notRequired"), status: "good" });
-      break;
-    case "required_indoor":
-      chips.push({ label: t("card.carrierStroller.requiredIndoor"), status: "warning" });
-      break;
-    case "required_always":
-      chips.push({ label: t("card.carrierStroller.requiredAlways"), status: "bad" });
-      break;
-    default:
-      chips.push({ label: t("card.carrierStroller.unknown"), status: "warning" });
-  }
-
-  if (place.maxDogSize === "small") {
-    chips.push({ label: t("card.maxDogSize.small"), status: "neutral" });
-  } else if (place.maxDogSize === "medium") {
-    chips.push({ label: t("card.maxDogSize.medium"), status: "neutral" });
-  } else if (place.maxDogSize === "large") {
-    chips.push({ label: t("card.maxDogSize.large"), status: "neutral" });
-  }
+  const eligibility = getVisitEligibility(place, dogSize);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:border-orange-200 hover:bg-orange-50/30 transition-colors">
-      <div className="p-3">
-        {/* Header: icon + name + distance */}
-        <div className="flex items-start gap-2.5 mb-2">
-          <div
-            className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center ${categoryIconStyle[place.category]}`}
-          >
-            <CategoryIcon category={place.category} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-1">
-              <h3 className="font-semibold text-gray-900 text-[15px] leading-snug truncate">
-                {placeName}
-              </h3>
-              {distanceText && (
-                <span className="shrink-0 text-[11px] font-semibold text-gray-500 mt-0.5">
-                  {distanceText}
-                </span>
-              )}
-            </div>
-            <p className="text-[11px] text-gray-400 mt-0.5 truncate">
-              {categoryLabel} · {place.address}
-            </p>
-            {walkText && (
-              <p className="flex items-center gap-1 text-[11px] text-gray-500 mt-0.5">
-                <Footprints size={11} className="shrink-0" aria-hidden="true" />
-                {walkText}
-              </p>
-            )}
-          </div>
-        </div>
+    <div
+      className={cn(
+        "relative rounded-2xl border p-3 transition-colors",
+        isSelected
+          ? "border-primary bg-primary-soft"
+          : "border-border bg-surface hover:border-border-strong hover:bg-surface-subtle",
+      )}
+    >
+      {/* 카드 전체가 선택 대상이다. 중첩 button/link를 만들지 않도록 투명 버튼을 겹쳐 둔다. */}
+      <button
+        type="button"
+        onClick={onClick}
+        aria-current={isSelected ? "true" : undefined}
+        className="absolute inset-0 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      >
+        <span className="sr-only">{actionLabel}</span>
+      </button>
 
-        {/* Condition chips */}
-        {chips.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-2">
-            {chips.map((chip) => (
-              <ConditionBadge key={chip.label} label={chip.label} status={chip.status} />
-            ))}
-          </div>
+      <div className="flex items-start justify-between gap-2">
+        <h3 className="min-w-0 break-words text-base font-semibold leading-snug text-content">
+          {placeName}
+        </h3>
+        {distanceText && (
+          <span className="shrink-0 text-sm font-semibold text-content">
+            {distanceText}
+          </span>
         )}
-
-        {/* Footer */}
-        <div className="border-t border-gray-100 pt-2 flex items-center justify-between gap-2">
-          {isStale ? (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100">
-              <History size={10} aria-hidden="true" />
-              {t("card.staleBadge", { weeks: weeksStale })}
-            </span>
-          ) : (
-            <span aria-hidden="true" />
-          )}
-          <button
-            type="button"
-            onClick={onClick}
-            className="shrink-0 text-[11px] font-semibold text-orange-500 hover:text-orange-600 transition-colors"
-          >
-            {t("card.detail")} →
-          </button>
-        </div>
       </div>
+
+      <p className="mt-0.5 truncate text-sm text-content-secondary">
+        {categoryLabel} · {place.address}
+      </p>
+
+      {dogMatch ? (
+        <DogMatchBadge
+          status={dogMatch.status}
+          reason={dogMatch.reason}
+          dogName={dogMatch.dogName}
+          className="mt-2"
+        />
+      ) : (
+        eligibility && <EligibilityBanner eligibility={eligibility} className="mt-2" />
+      )}
+
+      {/* 조건 줄 수가 달라도 카드 높이가 흔들리지 않도록 최소 높이를 준다 */}
+      <PlaceConditionSummary
+        place={place}
+        referenceDate={referenceDate}
+        className="mt-2 min-h-14"
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { LoaderCircle, MapPin } from "lucide-react";
 import { useRouter } from "@/i18n/navigation";
 import { navigateToNearbyPlaces } from "@/lib/location/navigation";
 
@@ -33,11 +34,11 @@ export default function HeroActions() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t("searchPlaceholder")}
-          className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 placeholder:text-gray-400"
+          className="flex-1 px-4 py-3 border border-strong rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary placeholder:text-content-muted"
         />
         <button
           type="submit"
-          className="px-5 py-3 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 active:bg-orange-700 transition-colors shrink-0"
+          className="px-5 py-3 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary-hover active:bg-primary transition-colors shrink-0"
         >
           {t("searchButton")}
         </button>
@@ -48,9 +49,14 @@ export default function HeroActions() {
           type="button"
           onClick={handleMyLocation}
           disabled={isLocating}
-          className="px-5 py-2.5 border-2 border-orange-200 text-orange-700 bg-white rounded-xl text-sm font-medium hover:bg-orange-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 px-5 py-2.5 border-2 border-primary text-primary bg-surface rounded-xl text-sm font-medium hover:bg-primary-soft transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {isLocating ? "⏳" : "📍"} {t("myLocation")}
+          {isLocating ? (
+            <LoaderCircle className="w-5 h-5 animate-spin" strokeWidth={1.5} aria-hidden="true" />
+          ) : (
+            <MapPin className="w-5 h-5" strokeWidth={1.5} aria-hidden="true" />
+          )}
+          {t("myLocation")}
         </button>
       </div>
     </>

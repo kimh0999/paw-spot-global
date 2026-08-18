@@ -31,9 +31,17 @@ export interface PlaceListItem {
   maxDogSize: "small" | "medium" | "large" | "unknown" | null;
   leash: "required" | "not_required" | "partial_area" | "unknown" | null;
   muzzle: "required" | "not_required" | "conditional" | "unknown" | null;
+  /** 자유 텍스트. 반려견 판정에서는 "확인 필요" 신호로만 쓴다. */
+  breedRestrictions: string | null;
   caution: string | null;
   latestVerifiedAt: string | null;
   verificationMethod: string | null;
+}
+
+export interface CategoryPlacesResult {
+  places: PlaceListItem[];
+  /** 해당 카테고리의 전체 공개 장소 수. places는 조회 limit 만큼만 담는다. */
+  totalCount: number;
 }
 
 export type HomePlaceItem = Pick<

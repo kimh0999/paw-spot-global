@@ -20,9 +20,24 @@ const SEOUL_CITY_HALL = { lat: 37.5665, lng: 126.978 };
 const DEFAULT_ZOOM = 14;
 
 // Map pin drawn as an SVG path so we can recolour per state without recreating markers.
-// Selection = blue, hover = emphasised orange, default = brand orange.
+// Colours come from the design tokens: selected = primary, hover = primary-hover, default = unknown grey.
 const PIN_PATH =
   "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z";
+
+// Tokens are read once on the client; the palette is light-mode only (DESIGN.md §4).
+let markerColors: { default: string; hover: string; selected: string } | null = null;
+
+function getMarkerColors() {
+  if (!markerColors) {
+    const root = getComputedStyle(document.documentElement);
+    markerColors = {
+      default: root.getPropertyValue("--color-unknown").trim(),
+      hover: root.getPropertyValue("--color-primary-hover").trim(),
+      selected: root.getPropertyValue("--color-primary").trim(),
+    };
+  }
+  return markerColors;
+}
 
 function pinIcon(color: string, scale: number): google.maps.Symbol {
   return {
@@ -39,9 +54,10 @@ function pinIcon(color: string, scale: number): google.maps.Symbol {
 type MarkerVisual = { icon: google.maps.Symbol; zIndex: number };
 
 function markerVisual(isSelected: boolean, isHovered: boolean): MarkerVisual {
-  if (isSelected) return { icon: pinIcon("#2563eb", 1.9), zIndex: 1000 };
-  if (isHovered) return { icon: pinIcon("#ea580c", 1.7), zIndex: 500 };
-  return { icon: pinIcon("#fb923c", 1.4), zIndex: 1 };
+  const colors = getMarkerColors();
+  if (isSelected) return { icon: pinIcon(colors.selected, 1.9), zIndex: 1000 };
+  if (isHovered) return { icon: pinIcon(colors.hover, 1.7), zIndex: 500 };
+  return { icon: pinIcon(colors.default, 1.4), zIndex: 1 };
 }
 
 function getInitialCenter(
@@ -223,8 +239,8 @@ export default function MapPanel({
 
   if (mapState === "no-key") {
     return (
-      <div className="w-full h-full bg-gray-100 flex items-center justify-center p-4">
-        <p className="text-sm text-gray-500 text-center">
+      <div className="w-full h-full bg-surface-subtle flex items-center justify-center p-4">
+        <p className="text-sm text-content-secondary text-center">
           Map is unavailable. Please check Google Maps API key.
         </p>
       </div>
@@ -233,8 +249,8 @@ export default function MapPanel({
 
   if (mapState === "error") {
     return (
-      <div className="w-full h-full bg-gray-100 flex items-center justify-center p-4">
-        <p className="text-sm text-gray-500 text-center">
+      <div className="w-full h-full bg-surface-subtle flex items-center justify-center p-4">
+        <p className="text-sm text-content-secondary text-center">
           Map failed to load. Please try again later.
         </p>
       </div>
@@ -246,14 +262,14 @@ export default function MapPanel({
   return (
     <div className="w-full h-full relative">
       {mapState === "loading" && (
-        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-10">
-          <p className="text-sm text-gray-500">Loading map...</p>
+        <div className="absolute inset-0 bg-surface-subtle flex items-center justify-center z-map-control">
+          <p className="text-sm text-content-secondary">Loading map...</p>
         </div>
       )}
       {mapState === "ready" && placesWithLocation.length === 0 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none z-10">
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-2.5">
-            <p className="text-sm text-gray-500">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none z-map-control">
+          <div className="bg-surface rounded-xl border border-border shadow-sm px-4 py-2.5">
+            <p className="text-sm text-content-secondary">
               No places with coordinates to show on the map.
             </p>
           </div>
@@ -267,10 +283,10 @@ export default function MapPanel({
           onClick={onRequestUserLocation}
           disabled={isLocating}
           aria-label="Move to my location"
-          className="absolute bottom-16 right-2 z-10 w-11 h-11 flex items-center justify-center bg-white rounded shadow-md hover:bg-gray-50 active:bg-gray-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="absolute bottom-28 right-2 z-map-control w-11 h-11 flex items-center justify-center bg-surface rounded shadow-md hover:bg-surface-subtle active:bg-surface-subtle transition-colors disabled:opacity-60 disabled:cursor-not-allowed lg:bottom-16"
         >
           {isLocating ? (
-            <span className="text-sm text-gray-400 select-none leading-none">…</span>
+            <span className="text-sm text-content-muted select-none leading-none">…</span>
           ) : (
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -282,7 +298,7 @@ export default function MapPanel({
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-gray-600"
+              className="text-content-secondary"
               aria-hidden="true"
             >
               <circle cx="12" cy="12" r="3" />

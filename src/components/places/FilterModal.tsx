@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { X } from "lucide-react";
 
 import type {
   PlaceFilters,
@@ -20,8 +21,8 @@ interface FilterModalProps {
 }
 
 const chipBase = "px-3 py-1.5 rounded-full text-sm border transition-colors";
-const chipActive = "bg-orange-500 border-orange-500 text-white";
-const chipInactive = "border-gray-300 text-gray-700 hover:border-gray-400 bg-white";
+const chipActive = "bg-primary border-primary text-primary-foreground";
+const chipInactive = "border-strong text-content hover:border-strong bg-surface";
 
 export default function FilterModal({
   isOpen,
@@ -67,30 +68,30 @@ export default function FilterModal({
   return (
     <>
       {isOpen && (
-        <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
+        <div className="fixed inset-0 bg-overlay z-drawer" onClick={onClose} />
       )}
 
       <div
-        className={`fixed top-0 right-0 h-full w-full max-w-sm bg-white z-50 shadow-2xl flex flex-col transition-transform duration-300 ${
+        className={`fixed top-0 right-0 h-full w-full max-w-sm bg-surface z-drawer shadow-2xl flex flex-col transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-          <h2 className="font-bold text-gray-900 text-base">{t("filters.title")}</h2>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h2 className="font-bold text-content text-base">{t("filters.title")}</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label={tCommon("close")}
-            className="text-gray-400 hover:text-gray-600 text-xl leading-none transition-colors"
+            className="text-content-muted hover:text-content-secondary transition-colors"
           >
-            ✕
+            <X className="w-5 h-5" strokeWidth={1.5} aria-hidden="true" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-5 space-y-7">
           {/* 실내 동반 여부 */}
           <section>
-            <p className="text-sm font-semibold text-gray-900 mb-2.5">{t("filters.indoor.title")}</p>
+            <p className="text-sm font-semibold text-content mb-2.5">{t("filters.indoor.title")}</p>
             <div className="flex flex-wrap gap-2">
               {INDOOR_OPTIONS.map(({ value, label }) => (
                 <button
@@ -107,7 +108,7 @@ export default function FilterModal({
 
           {/* 이동장/유모차 */}
           <section>
-            <p className="text-sm font-semibold text-gray-900 mb-2.5">{t("filters.carrier.title")}</p>
+            <p className="text-sm font-semibold text-content mb-2.5">{t("filters.carrier.title")}</p>
             <div className="flex flex-wrap gap-2">
               {CARRIER_OPTIONS.map(({ value, label }) => (
                 <button
@@ -124,7 +125,7 @@ export default function FilterModal({
 
           {/* 반려견 크기 (단일 선택) */}
           <section>
-            <p className="text-sm font-semibold text-gray-900 mb-2.5">{t("filters.dogSize.title")}</p>
+            <p className="text-sm font-semibold text-content mb-2.5">{t("filters.dogSize.title")}</p>
             <div className="flex flex-wrap gap-2">
               {DOG_SIZE_OPTIONS.map(({ value, label }) => (
                 <button
@@ -141,7 +142,7 @@ export default function FilterModal({
 
           {/* 정보 신뢰도 */}
           <section>
-            <p className="text-sm font-semibold text-gray-900 mb-2.5">{t("filters.reliability.title")}</p>
+            <p className="text-sm font-semibold text-content mb-2.5">{t("filters.reliability.title")}</p>
             <div className="flex flex-wrap gap-2">
               {RECENT_OPTIONS.map(({ value, label }) => (
                 <button
@@ -157,18 +158,18 @@ export default function FilterModal({
           </section>
         </div>
 
-        <div className="border-t border-gray-200 px-5 py-4 flex gap-3">
+        <div className="border-t border-border px-5 py-4 flex gap-3">
           <button
             type="button"
             onClick={onReset}
-            className="flex-1 py-2.5 border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+            className="flex-1 py-2.5 border border-strong rounded-xl text-sm font-semibold text-content hover:bg-surface-subtle transition-colors"
           >
             {t("filters.reset")}
           </button>
           <button
             type="button"
             onClick={onApply}
-            className="flex-1 py-2.5 bg-orange-500 rounded-xl text-sm font-semibold text-white hover:bg-orange-600 transition-colors"
+            className="flex-1 py-2.5 bg-primary rounded-xl text-sm font-semibold text-primary-foreground hover:bg-primary-hover transition-colors"
           >
             {t("filters.apply")}
           </button>
