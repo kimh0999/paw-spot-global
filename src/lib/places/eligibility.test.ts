@@ -9,10 +9,10 @@ import {
 import type { PlaceListItem } from "@/types/place";
 
 /**
- * 조건 해석의 단일 출처인 `eligibility.ts`의 **현재 동작을 고정**하는 회귀 테스트.
+ * 조건 해석의 단일 출처인 `eligibility.ts`의 회귀 테스트.
  *
- * 표시 계층을 손대기 전에 지금 화면이 무엇을 단언하는지 붙잡아 두는 것이 목적이다.
- * 이상해 보이는 동작도 고치지 않고 그대로 기록한다 — 판단이 필요한 것은 주석으로 남긴다.
+ * 표시 계층을 손대기 전에 화면이 무엇을 단언하는지 붙잡아 두는 것이 목적이다.
+ * 확인되지 않은 조건을 통과로 치지 않는다는 원칙(DESIGN.md §3.3)을 함께 고정한다.
  */
 
 function place(overrides: Partial<PlaceListItem> = {}): PlaceListItem {
@@ -217,5 +217,129 @@ describe("getVisitStatus", () => {
 
   it("모든 조건이 확실히 허용되면 방문 가능이다", () => {
     expect(getVisitStatus(fullyAllowedPlace(), "all")).toBe("available");
+  });
+});
+
+describe("getVisitEligibility — 미확인 조건은 통과로 치지 않는다", () => {
+  // 크기만 맞으면 방문 가능이라고 말하던 동작을 바로잡은 지점이다.
+  it("실내 동반이 미확인이면 크기가 맞아도 확인 필요다", () => {
+    expect(
+      getVisitEligibility({ ...fullyAllowedPlace(), indoor: "unknown" }, "small"),
+    ).toEqual({ status: "unknown", messageKey: "conditionsUnconfirmed" });
+
+    expect(
+      getVisitEligibility({ ...fullyAllowedPlace(), indoor: null }, "small"),
+    ).toEqual({ status: "unknown", messageKey: "conditionsUnconfirmed" });
+  });
+
+  it("이동장 조건이 미확인이면 확인 필요다", () => {
+    expect(
+      getVisitEligibility(
+        { ...fullyAllowedPlace(), carrierStrollerPolicy: "unknown" },
+        "small",
+      )?.status,
+    ).toBe("unknown");
+  });
+
+  it("크기 상한이 미확인이면 실내가 허용이어도 확인 필요다", () => {
+    expect(
+      getVisitEligibility({ ...fullyAllowedPlace(), maxDogSize: "unknown" }, "small"),
+    ).toEqual({ status: "unknown", messageKey: "sizeUnconfirmed" });
+
+    expect(
+      getVisitEligibility({ ...fullyAllowedPlace(), maxDogSize: null }, "small"),
+    ).toEqual({ status: "unknown", messageKey: "sizeUnconfirmed" });
+  });
+
+  it("동반 불가는 미확인보다 먼저 판정한다", () => {
+    expect(
+      getVisitEligibility(place({ indoor: "not_allowed" }), "small")?.messageKey,
+    ).toBe("dogsNotAllowed");
+  });
+
+  it("크기 초과는 다른 조건이 미확인이어도 방문 어려움이다", () => {
+    expect(getVisitEligibility(place({ maxDogSize: "small" }), "large")).toEqual({
+      status: "blocked",
+      messageKey: "tooLarge",
+    });
+  });
+
+  it("핵심 조건이 모두 확인되고 크기가 맞을 때만 방문 가능이다", () => {
+    expect(getVisitEligibility(fullyAllowedPlace(), "large")).toEqual({
+      status: "allowed",
+      messageKey: "canVisit",
+    });
+  });
+});
+
+/**
+ * 미리보기 패널은 배지를 getVisitStatus로, 바로 아래 설명을 getVisitEligibility로 만든다
+ * (PlacePreviewCard). 목록 카드도 같은 판정으로 배너를 단다(PlaceCard).
+ * 두 판정이 어긋나면 한 카드 안에서 "확인 필요"와 "방문 가능"이 동시에 표시된다.
+ */
+describe("두 판정의 정합 — 배지와 설명이 같은 뜻이어야 한다", () => {
+  const INDOOR_VALUES = [
+    "allowed",
+    "outdoor_only",
+    "partial_area",
+    "not_allowed",
+    "unknown",
+    null,
+  ] as const;
+  const CARRIER_VALUES = [
+    "not_required",
+    "required_indoor",
+    "required_always",
+    "unknown",
+    null,
+  ] as const;
+  const SIZE_VALUES = ["small", "medium", "large", "unknown", null] as const;
+
+  /** 같은 뜻으로 읽히는 조합. 이 표를 벗어나면 화면이 모순된 문구를 만든다. */
+  const ALLOWED_KEYS: Record<string, string[]> = {
+    notAllowed: ["dogsNotAllowed", "tooLarge"],
+    confirm: ["sizeUnconfirmed", "conditionsUnconfirmed"],
+    conditional: ["canVisit"],
+    available: ["canVisit"],
+  };
+
+  it("모든 조건 조합에서 배지와 설명이 같은 뜻을 가리킨다", () => {
+    const mismatches: string[] = [];
+
+    for (const indoor of INDOOR_VALUES) {
+      for (const carrier of CARRIER_VALUES) {
+        for (const maxDogSize of SIZE_VALUES) {
+          for (const dogSize of ["small", "medium", "large"] as const) {
+            const target = place({ indoor, carrierStrollerPolicy: carrier, maxDogSize });
+            const eligibility = getVisitEligibility(target, dogSize);
+            const status = getVisitStatus(target, dogSize);
+            if (!eligibility) continue;
+
+            if (!ALLOWED_KEYS[status].includes(eligibility.messageKey)) {
+              mismatches.push(
+                `indoor=${indoor} carrier=${carrier} size=${maxDogSize} dog=${dogSize}: ` +
+                  `${status} vs ${eligibility.messageKey}`,
+              );
+            }
+          }
+        }
+      }
+    }
+
+    expect(mismatches).toEqual([]);
+  });
+
+  it("방문 가능으로 단언한 장소는 확인 필요로 표시되지 않는다", () => {
+    const target = fullyAllowedPlace();
+
+    expect(getVisitEligibility(target, "small")?.status).toBe("allowed");
+    expect(getVisitStatus(target, "small")).toBe("available");
+  });
+
+  it("실내 미확인 장소는 두 판정 모두 확인 필요로 읽는다", () => {
+    const target = place({ indoor: "unknown", maxDogSize: "large" });
+
+    expect(getVisitEligibility(target, "small")?.status).toBe("unknown");
+    expect(getVisitStatus(target, "small")).toBe("confirm");
   });
 });

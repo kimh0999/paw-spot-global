@@ -130,7 +130,8 @@
         "canVisit": "우리 아이와 방문 가능",
         "tooLarge": "크기 제한으로 방문 어려움",
         "dogsNotAllowed": "반려견 동반 불가",
-        "sizeUnconfirmed": "크기 조건 미확인"
+        "sizeUnconfirmed": "크기 조건 미확인",
+        "conditionsUnconfirmed": "동반 조건 확인 필요"
       },
       "dogMatch": {
         "single": {

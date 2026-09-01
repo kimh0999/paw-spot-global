@@ -5,7 +5,12 @@ export type VisitEligibilityStatus = "allowed" | "blocked" | "unknown";
 export interface VisitEligibility {
   status: VisitEligibilityStatus;
   /** places.card.eligibility 아래의 메시지 키 */
-  messageKey: "canVisit" | "tooLarge" | "dogsNotAllowed" | "sizeUnconfirmed";
+  messageKey:
+    | "canVisit"
+    | "tooLarge"
+    | "dogsNotAllowed"
+    | "sizeUnconfirmed"
+    | "conditionsUnconfirmed";
 }
 
 const SIZE_RANK: Record<"small" | "medium" | "large", number> = {
@@ -13,6 +18,12 @@ const SIZE_RANK: Record<"small" | "medium" | "large", number> = {
   medium: 2,
   large: 3,
 };
+
+// 실내 동반·이동장·허용 크기는 방문 가능 여부를 가르는 핵심 조건이다 (DESIGN.md §1).
+function hasUnconfirmedCoreCondition(place: PlaceListItem): boolean {
+  const core = [place.indoor, place.carrierStrollerPolicy, place.maxDogSize];
+  return core.some((value) => value == null || value === "unknown");
+}
 
 /** Dog.size(DB enum)를 필터·판정에서 쓰는 값으로 옮긴다. */
 export function toDogSizeFilter(size: string): DogSizeFilter {
@@ -25,6 +36,10 @@ export function toDogSizeFilter(size: string): DogSizeFilter {
 /**
  * 등록된 반려견 크기와 장소 조건을 대조해 방문 가능 여부를 단언한다.
  * 반려견 프로필이 없으면 판정하지 않고 null을 돌려준다. 조건은 그대로 노출된다.
+ *
+ * **확인되지 않은 조건은 통과로 치지 않는다.** 크기가 맞아도 실내 동반이 미확인이면
+ * "방문 가능"이라고 말하지 않는다(DESIGN.md §3.3). 핵심 조건 판별을 getVisitStatus와
+ * 공유하므로 카드 배너와 미리보기 배지가 서로 다른 말을 하지 않는다.
  */
 export function getVisitEligibility(
   place: PlaceListItem,
@@ -37,14 +52,21 @@ export function getVisitEligibility(
   }
 
   const limit = place.maxDogSize;
-  if (limit === "small" || limit === "medium" || limit === "large") {
-    if (SIZE_RANK[limit] < SIZE_RANK[dogSize]) {
-      return { status: "blocked", messageKey: "tooLarge" };
-    }
-    return { status: "allowed", messageKey: "canVisit" };
+  if (limit !== "small" && limit !== "medium" && limit !== "large") {
+    // 상한이 확인되지 않았다. 크기가 맞는지 판단할 근거가 없다.
+    return { status: "unknown", messageKey: "sizeUnconfirmed" };
   }
 
-  return { status: "unknown", messageKey: "sizeUnconfirmed" };
+  if (SIZE_RANK[limit] < SIZE_RANK[dogSize]) {
+    return { status: "blocked", messageKey: "tooLarge" };
+  }
+
+  // 크기는 맞는다. 남은 핵심 조건이 확인되지 않았다면 아직 방문 가능이 아니다.
+  if (hasUnconfirmedCoreCondition(place)) {
+    return { status: "unknown", messageKey: "conditionsUnconfirmed" };
+  }
+
+  return { status: "allowed", messageKey: "canVisit" };
 }
 
 /**
@@ -115,11 +137,6 @@ export function getPlaceConditionBreakdown(place: PlaceListItem): PlaceCondition
   return { allowances, conditions };
 }
 
-// 실내 동반·이동장·허용 크기는 방문 가능 여부를 가르는 핵심 조건이다 (DESIGN.md §1).
-function hasUnconfirmedCoreCondition(place: PlaceListItem): boolean {
-  const core = [place.indoor, place.carrierStrollerPolicy, place.maxDogSize];
-  return core.some((value) => value == null || value === "unknown");
-}
 
 /**
  * 상태 카드에 표시할 방문 가능 상태를 실제 구조화된 데이터로 판정한다.

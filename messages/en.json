@@ -130,7 +130,8 @@
         "canVisit": "Your dog can visit",
         "tooLarge": "Too large for this place",
         "dogsNotAllowed": "Dogs not allowed here",
-        "sizeUnconfirmed": "Size limit unconfirmed"
+        "sizeUnconfirmed": "Size limit unconfirmed",
+        "conditionsUnconfirmed": "Conditions unconfirmed"
       },
       "dogMatch": {
         "single": {
