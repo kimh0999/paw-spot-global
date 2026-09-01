@@ -11,6 +11,10 @@ import {
 import { isSupportedLocale } from "@/lib/i18n/locale";
 import { createPlaceRecord } from "@/lib/places/create-place";
 import { parsePlaceFormData } from "@/lib/places/form-data";
+import {
+  PolicyDetailsWriteError,
+  parsePolicyDetailsForm,
+} from "@/lib/places/policy-details-form";
 import { placeInputSchema } from "@/lib/validation/place";
 
 export type CreatePlaceState = {
@@ -84,6 +88,8 @@ export async function createPlace(
   }
 
   const raw = parsePlaceFormData(formData);
+  // 편집기가 제출한 4개 필드. 나머지 상세 조건은 저장 시 DB 값을 그대로 잇는다.
+  const policyDetailsForm = parsePolicyDetailsForm(formData);
 
   const parsed = placeInputSchema.safeParse(raw);
   if (!parsed.success) {
@@ -96,11 +102,20 @@ export async function createPlace(
   let placeId: string;
 
   try {
-    const result = await createPlaceRecord(parsed.data, admin);
+    const result = await createPlaceRecord(parsed.data, admin, policyDetailsForm);
     placeId = result.placeId;
   } catch (err) {
     console.error("[createPlace]", err);
     const tV = await getTranslations({ locale, namespace: "admin.places.form.validation" });
+    if (err instanceof PolicyDetailsWriteError) {
+      return {
+        error: tV(
+          err.reason === "invalidExisting"
+            ? "policyDetailsCorrupted"
+            : "policyDetailsInvalid",
+        ),
+      };
+    }
     return { error: tV("submitFailed") };
   }
 

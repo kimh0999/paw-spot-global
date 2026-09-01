@@ -45,7 +45,7 @@ export default async function AdminPlaceEditPage({ params }: Props) {
       breedRestrictions: undefined,
       requiredItems: [],
       cautions: undefined,
-      hasPolicyDetails: false,
+      policyDetails: { status: "empty", value: null } as const,
     },
     verification: place.latestVerification
       ? {

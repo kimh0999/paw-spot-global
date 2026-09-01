@@ -18,6 +18,10 @@ import {
   VACCINATION_CERTIFICATE_POLICIES,
 } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { derivedColumns } from "@/lib/places/condition-consistency";
+import type { PolicyDetails, PolicyDetailsRead } from "@/lib/places/policy-details";
+import { ConditionPolicySelect } from "./policy-details/ConditionPolicySelect";
+import { PolicyDetailsSection } from "./policy-details/PolicyDetailsSection";
 import { parsePlaceFormData } from "@/lib/places/form-data";
 import { placeInputSchema, placeUpdateSchema } from "@/lib/validation/place";
 
@@ -53,8 +57,8 @@ export type PlaceFormInitialValues = {
     breedRestrictions?: string | null;
     requiredItems?: string[];
     cautions?: string | null;
-    /** 구조화된 상세 조건이 저장돼 있는지. 있을 때만 초기화 버튼을 보여준다. */
-    hasPolicyDetails?: boolean;
+    /** 저장된 구조화 상세 조건. empty·ok·invalid를 구분해 받는다. */
+    policyDetails?: PolicyDetailsRead;
   };
   verification?: {
     method?: string;
@@ -168,6 +172,19 @@ export function PlaceForm({
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   // 초기화는 저장을 눌러야 반영된다. 버튼은 폼 상태만 바꾼다.
   const [clearPolicyDetails, setClearPolicyDetails] = useState(false);
+
+  const policyDetailsRead: PolicyDetailsRead =
+    initialValues?.condition?.policyDetails ?? { status: "empty", value: null };
+  const [policyDetails, setPolicyDetails] = useState<PolicyDetails | null>(
+    policyDetailsRead.status === "ok" ? policyDetailsRead.value : null,
+  );
+
+  // 상세 조건이 실제로 계산해 주는 컬럼만 잠근다. 저장할 때 서버가 쓰는 함수와 같은 것이라
+  // 화면의 "자동 계산됨" 표시와 실제 저장값이 어긋나지 않는다.
+  // 초기화가 예약돼 있으면 상세 조건이 사라지므로 잠그지 않는다.
+  const derivedConditionColumns = derivedColumns(
+    clearPolicyDetails ? null : policyDetails,
+  );
 
   // Merge server-side field errors (state.fieldErrors) with client-side errors.
   // Client-side errors take precedence for fields the user has corrected.
@@ -649,38 +666,16 @@ export function PlaceForm({
           )}
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="condition.carrierStrollerPolicy" className="text-sm font-medium">
-            이동장/유모차 여부 *
-          </label>
-          <select
-            id="condition.carrierStrollerPolicy"
-            name="condition.carrierStrollerPolicy"
-            defaultValue={iv?.condition?.carrierStrollerPolicy ?? "UNKNOWN"}
-            className={cn(
-              "rounded border px-3 py-2",
-              allFieldErrors["condition.carrierStrollerPolicy"] && "border-destructive",
-            )}
-            aria-invalid={!!allFieldErrors["condition.carrierStrollerPolicy"]}
-            aria-describedby={
-              allFieldErrors["condition.carrierStrollerPolicy"]
-                ? "condition.carrierStrollerPolicy-error"
-                : undefined
-            }
-            onChange={() => clearError("condition.carrierStrollerPolicy")}
-          >
-            {CARRIER_STROLLER_POLICIES.map((p) => (
-              <option key={p} value={p}>
-                {CARRIER_STROLLER_LABELS[p] ?? p}
-              </option>
-            ))}
-          </select>
-          {allFieldErrors["condition.carrierStrollerPolicy"] && (
-            <p id="condition.carrierStrollerPolicy-error" className="text-sm text-destructive">
-              {allFieldErrors["condition.carrierStrollerPolicy"]}
-            </p>
-          )}
-        </div>
+        <ConditionPolicySelect
+          name="condition.carrierStrollerPolicy"
+          label="이동장/유모차 여부"
+          options={CARRIER_STROLLER_POLICIES}
+          optionLabels={CARRIER_STROLLER_LABELS}
+          defaultValue={iv?.condition?.carrierStrollerPolicy ?? "UNKNOWN"}
+          derivedValue={derivedConditionColumns.carrierStrollerPolicy}
+          error={allFieldErrors["condition.carrierStrollerPolicy"]}
+          onChange={() => clearError("condition.carrierStrollerPolicy")}
+        />
 
         <div className="flex flex-col gap-1">
           <label htmlFor="condition.maxDogSize" className="text-sm font-medium">
@@ -713,103 +708,38 @@ export function PlaceForm({
           )}
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="condition.leash" className="text-sm font-medium">
-            목줄 여부 *
-          </label>
-          <select
-            id="condition.leash"
-            name="condition.leash"
-            defaultValue={iv?.condition?.leash ?? "UNKNOWN"}
-            className={cn(
-              "rounded border px-3 py-2",
-              allFieldErrors["condition.leash"] && "border-destructive",
-            )}
-            aria-invalid={!!allFieldErrors["condition.leash"]}
-            aria-describedby={
-              allFieldErrors["condition.leash"] ? "condition.leash-error" : undefined
-            }
-            onChange={() => clearError("condition.leash")}
-          >
-            {LEASH_POLICIES.map((p) => (
-              <option key={p} value={p}>
-                {LEASH_LABELS[p] ?? p}
-              </option>
-            ))}
-          </select>
-          {allFieldErrors["condition.leash"] && (
-            <p id="condition.leash-error" className="text-sm text-destructive">
-              {allFieldErrors["condition.leash"]}
-            </p>
-          )}
-        </div>
+        <ConditionPolicySelect
+          name="condition.leash"
+          label="목줄 여부"
+          options={LEASH_POLICIES}
+          optionLabels={LEASH_LABELS}
+          defaultValue={iv?.condition?.leash ?? "UNKNOWN"}
+          derivedValue={derivedConditionColumns.leash}
+          error={allFieldErrors["condition.leash"]}
+          onChange={() => clearError("condition.leash")}
+        />
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="condition.muzzle" className="text-sm font-medium">
-            입마개 여부 *
-          </label>
-          <select
-            id="condition.muzzle"
-            name="condition.muzzle"
-            defaultValue={iv?.condition?.muzzle ?? "UNKNOWN"}
-            className={cn(
-              "rounded border px-3 py-2",
-              allFieldErrors["condition.muzzle"] && "border-destructive",
-            )}
-            aria-invalid={!!allFieldErrors["condition.muzzle"]}
-            aria-describedby={
-              allFieldErrors["condition.muzzle"] ? "condition.muzzle-error" : undefined
-            }
-            onChange={() => clearError("condition.muzzle")}
-          >
-            {MUZZLE_POLICIES.map((p) => (
-              <option key={p} value={p}>
-                {MUZZLE_LABELS[p] ?? p}
-              </option>
-            ))}
-          </select>
-          {allFieldErrors["condition.muzzle"] && (
-            <p id="condition.muzzle-error" className="text-sm text-destructive">
-              {allFieldErrors["condition.muzzle"]}
-            </p>
-          )}
-        </div>
+        <ConditionPolicySelect
+          name="condition.muzzle"
+          label="입마개 여부"
+          options={MUZZLE_POLICIES}
+          optionLabels={MUZZLE_LABELS}
+          defaultValue={iv?.condition?.muzzle ?? "UNKNOWN"}
+          derivedValue={derivedConditionColumns.muzzle}
+          error={allFieldErrors["condition.muzzle"]}
+          onChange={() => clearError("condition.muzzle")}
+        />
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="condition.vaccinationCertificatePolicy" className="text-sm font-medium">
-            {t("vaccinationCertificate.label")} *
-          </label>
-          <select
-            id="condition.vaccinationCertificatePolicy"
-            name="condition.vaccinationCertificatePolicy"
-            defaultValue={iv?.condition?.vaccinationCertificatePolicy ?? "UNKNOWN"}
-            className={cn(
-              "rounded border px-3 py-2",
-              allFieldErrors["condition.vaccinationCertificatePolicy"] && "border-destructive",
-            )}
-            aria-invalid={!!allFieldErrors["condition.vaccinationCertificatePolicy"]}
-            aria-describedby={
-              allFieldErrors["condition.vaccinationCertificatePolicy"]
-                ? "condition.vaccinationCertificatePolicy-error"
-                : undefined
-            }
-            onChange={() => clearError("condition.vaccinationCertificatePolicy")}
-          >
-            {VACCINATION_CERTIFICATE_POLICIES.map((p) => (
-              <option key={p} value={p}>
-                {VACCINATION_LABELS[p] ?? p}
-              </option>
-            ))}
-          </select>
-          {allFieldErrors["condition.vaccinationCertificatePolicy"] && (
-            <p
-              id="condition.vaccinationCertificatePolicy-error"
-              className="text-sm text-destructive"
-            >
-              {allFieldErrors["condition.vaccinationCertificatePolicy"]}
-            </p>
-          )}
-        </div>
+        <ConditionPolicySelect
+          name="condition.vaccinationCertificatePolicy"
+          label={t("vaccinationCertificate.label")}
+          options={VACCINATION_CERTIFICATE_POLICIES}
+          optionLabels={VACCINATION_LABELS}
+          defaultValue={iv?.condition?.vaccinationCertificatePolicy ?? "UNKNOWN"}
+          derivedValue={derivedConditionColumns.vaccinationCertificatePolicy}
+          error={allFieldErrors["condition.vaccinationCertificatePolicy"]}
+          onChange={() => clearError("condition.vaccinationCertificatePolicy")}
+        />
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">견종 제한</span>
@@ -857,7 +787,15 @@ export function PlaceForm({
           잘못 들어갔을 때 되돌리는 장치. 위의 실내·크기·목줄·입마개·예방접종 같은
           핵심 조건은 그대로 남는다. 편집 UI는 아직 없어 초기화만 제공한다.
         */}
-        {iv?.condition?.hasPolicyDetails && (
+        {!clearPolicyDetails && (
+          <PolicyDetailsSection
+            read={policyDetailsRead}
+            value={policyDetails}
+            onChange={setPolicyDetails}
+          />
+        )}
+
+        {policyDetailsRead.status !== "empty" && (
           <div className="flex flex-col gap-2 rounded border p-3">
             <input
               type="hidden"

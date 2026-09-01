@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // 실제 모듈은 DB에 붙으므로 prisma만 대체한다. 검증 대상은 upsert에 실리는 값이다.
 const { placeCondition, verification, executeRaw } = vi.hoisted(() => ({
-  placeCondition: { upsert: vi.fn() },
+  placeCondition: { upsert: vi.fn(), findUnique: vi.fn() },
   verification: { findFirst: vi.fn(), create: vi.fn() },
   executeRaw: vi.fn(),
 }));
@@ -23,8 +23,50 @@ vi.mock("@/lib/db/prisma", () => {
 });
 
 import { updatePlaceRecord } from "@/lib/places/update-place";
-import { EMPTY_POLICY_DETAILS } from "@/lib/places/policy-details";
+import {
+  PolicyDetailsWriteError,
+  type PolicyDetailsFormInput,
+} from "@/lib/places/policy-details-form";
+import type { PolicyDetails } from "@/lib/places/policy-details";
 import type { PlaceUpdate } from "@/lib/validation/place";
+
+/** 편집기가 보내는 4개 필드. 나머지는 서버가 DB에서 잇는다. */
+function submitted(
+  overrides: Partial<PolicyDetailsFormInput> = {},
+): PolicyDetailsFormInput {
+  return {
+    entry: { vaccinationCompletionPolicy: "UNKNOWN" },
+    preparation: [],
+    handling: [],
+    uncertainties: [],
+    ...overrides,
+  };
+}
+
+/** 편집 화면에 없는 5개 필드가 채워져 있는 기존 값. */
+const EXISTING: PolicyDetails = {
+  version: 1,
+  entry: { vaccinationCompletionPolicy: "REQUIRED" },
+  preparation: [
+    { mode: "ALL_OF", scope: "ALWAYS", items: [{ item: "POOP_BAG", status: "REQUIRED" }] },
+  ],
+  handling: [{ mode: "UNKNOWN", rules: [{ rule: "FREE_ROAM", status: "PROHIBITED" }] }],
+  spaceExceptions: [
+    { area: "FLOOR", floor: 2, appliesToSize: "ALL", access: "NOT_ALLOWED" },
+  ],
+  behaviorRestrictions: [{ trigger: "BARKING", outcome: "MAY_RESTRICT" }],
+  admission: {
+    feePolicy: "PAID",
+    rates: [{ period: "WEEKDAY", amountKrw: 3000, dogSize: "ALL" }],
+    includedServices: ["댕푸치노 1잔"],
+  },
+  hygiene: ["OWNER_LIABILITY"],
+  uncertainties: [{ target: "MAX_DOG_SIZE", reason: "원문에 크기 언급 없음" }],
+};
+
+function savedPolicyDetails() {
+  return upsertedCondition().policyDetails as PolicyDetails;
+}
 
 const admin = { email: "admin@example.com" } as Parameters<typeof updatePlaceRecord>[2];
 
@@ -97,6 +139,7 @@ function upsertedCondition() {
 beforeEach(() => {
   vi.clearAllMocks();
   verification.findFirst.mockResolvedValue(null);
+  placeCondition.findUnique.mockResolvedValue(null);
 });
 
 describe("구조화 상세 조건 초기화", () => {
@@ -125,24 +168,25 @@ describe("구조화 상세 조건 초기화", () => {
     expect(upsertedCondition()).not.toHaveProperty("policyDetails");
   });
 
-  it("초기화 신호가 값보다 우선한다", async () => {
+  it("초기화 신호가 편집기 제출값보다 우선한다", async () => {
+    placeCondition.findUnique.mockResolvedValue({ policyDetails: EXISTING });
+
     await updatePlaceRecord(
       "place-1",
-      input({ clearPolicyDetails: true, policyDetails: EMPTY_POLICY_DETAILS }),
+      input({ clearPolicyDetails: true }),
       admin,
+      submitted({
+        preparation: [
+          {
+            mode: "ALL_OF",
+            scope: "ALWAYS",
+            items: [{ item: "LEASH", status: "REQUIRED" }],
+          },
+        ],
+      }),
     );
 
     expect(upsertedCondition().policyDetails).toBe(Prisma.DbNull);
-  });
-
-  it("값이 오면 그대로 저장한다", async () => {
-    await updatePlaceRecord(
-      "place-1",
-      input({ policyDetails: EMPTY_POLICY_DETAILS }),
-      admin,
-    );
-
-    expect(upsertedCondition().policyDetails).toEqual(EMPTY_POLICY_DETAILS);
   });
 });
 
@@ -263,5 +307,253 @@ describe("안내문 원문 스냅샷 이력", () => {
       sourceLanguages: ["ko"],
       sourceUrl: "https://example.com/notice",
     });
+  });
+});
+
+describe("구조화 상세 조건 병합", () => {
+  const LEASH_OR_CARRIER = [
+    {
+      mode: "ANY_OF",
+      scope: "ALWAYS",
+      items: [
+        { item: "LEASH", status: "REQUIRED" },
+        { item: "CARRIER", status: "REQUIRED" },
+      ],
+    },
+  ];
+
+  // 편집기에 없는 필드를 hidden으로 왕복시키지 않으므로 DB 값이 유일한 출처다.
+  it("화면에 없는 5개 필드를 수정 후에도 그대로 보존한다", async () => {
+    placeCondition.findUnique.mockResolvedValue({ policyDetails: EXISTING });
+
+    await updatePlaceRecord(
+      "place-1",
+      input(),
+      admin,
+      submitted({ preparation: LEASH_OR_CARRIER }),
+    );
+
+    const saved = savedPolicyDetails();
+    expect(saved.spaceExceptions).toEqual(EXISTING.spaceExceptions);
+    expect(saved.behaviorRestrictions).toEqual(EXISTING.behaviorRestrictions);
+    expect(saved.admission).toEqual(EXISTING.admission);
+    expect(saved.hygiene).toEqual(EXISTING.hygiene);
+    expect(saved.version).toBe(1);
+  });
+
+  it("기존 값이 NULL이면 공식 기본값 위에 병합해 새로 만든다", async () => {
+    placeCondition.findUnique.mockResolvedValue({ policyDetails: null });
+
+    await updatePlaceRecord("place-1", input(), admin, submitted());
+
+    const saved = savedPolicyDetails();
+    expect(saved.version).toBe(1);
+    expect(saved.spaceExceptions).toEqual([]);
+    expect(saved.admission).toBeNull();
+    expect(saved.hygiene).toEqual([]);
+  });
+
+  // 깨진 값을 빈 값으로 밀어버리면 무엇이 있었는지 영영 알 수 없다.
+  it("기존 JSON이 깨져 있으면 저장을 중단한다", async () => {
+    placeCondition.findUnique.mockResolvedValue({
+      policyDetails: { version: 99, unknownKey: true },
+    });
+
+    await expect(
+      updatePlaceRecord("place-1", input(), admin, submitted()),
+    ).rejects.toBeInstanceOf(PolicyDetailsWriteError);
+    expect(placeCondition.upsert).not.toHaveBeenCalled();
+  });
+
+  it("편집기를 제출하지 않으면 기존 JSON을 건드리지 않는다", async () => {
+    placeCondition.findUnique.mockResolvedValue({ policyDetails: EXISTING });
+
+    await updatePlaceRecord("place-1", input(), admin);
+
+    expect(upsertedCondition()).not.toHaveProperty("policyDetails");
+  });
+
+  // "편집기 미제출"과 "빈 그룹 제출"은 다른 뜻이다.
+  it("빈 그룹을 제출하면 그 그룹만 초기화하고 나머지는 남긴다", async () => {
+    placeCondition.findUnique.mockResolvedValue({ policyDetails: EXISTING });
+
+    await updatePlaceRecord("place-1", input(), admin, submitted({ preparation: [] }));
+
+    const saved = savedPolicyDetails();
+    expect(saved.preparation).toEqual([]);
+    expect(saved.handling).toEqual([]);
+    expect(saved.uncertainties).toEqual([]);
+    expect(saved.spaceExceptions).toEqual(EXISTING.spaceExceptions);
+  });
+
+  it("handling과 uncertainties를 항목별로 저장한다", async () => {
+    placeCondition.findUnique.mockResolvedValue({ policyDetails: null });
+
+    await updatePlaceRecord(
+      "place-1",
+      input(),
+      admin,
+      submitted({
+        handling: [
+          {
+            mode: "ANY_OF",
+            rules: [
+              { rule: "HELD_BY_OWNER", status: "REQUIRED" },
+              { rule: "PET_SEAT", status: "REQUIRED" },
+            ],
+          },
+        ],
+        uncertainties: [
+          {
+            target: "PREPARATION",
+            reason: "슬래시가 택일인지 불명확",
+            quote: "리드줄 / 이동가방 / 유모차 필수",
+            question: "셋 중 하나만 챙기면 되나요?",
+          },
+        ],
+      }),
+    );
+
+    const saved = savedPolicyDetails();
+    expect(saved.handling[0].rules).toHaveLength(2);
+    expect(saved.uncertainties[0]).toEqual({
+      target: "PREPARATION",
+      reason: "슬래시가 택일인지 불명확",
+      quote: "리드줄 / 이동가방 / 유모차 필수",
+      question: "셋 중 하나만 챙기면 되나요?",
+    });
+  });
+
+  it("잘못된 enum이 담긴 제출은 거부한다", async () => {
+    placeCondition.findUnique.mockResolvedValue({ policyDetails: null });
+
+    await expect(
+      updatePlaceRecord(
+        "place-1",
+        input(),
+        admin,
+        submitted({
+          handling: [{ mode: "ANY_OF", rules: [{ rule: "TELEPORT", status: "REQUIRED" }] }],
+        }),
+      ),
+    ).rejects.toBeInstanceOf(PolicyDetailsWriteError);
+    expect(placeCondition.upsert).not.toHaveBeenCalled();
+  });
+
+  it("항목이 하나도 없는 그룹은 거부한다", async () => {
+    placeCondition.findUnique.mockResolvedValue({ policyDetails: null });
+
+    await expect(
+      updatePlaceRecord(
+        "place-1",
+        input(),
+        admin,
+        submitted({ preparation: [{ mode: "ANY_OF", scope: "ALWAYS", items: [] }] }),
+      ),
+    ).rejects.toBeInstanceOf(PolicyDetailsWriteError);
+  });
+});
+
+describe("병합 결과와 조건 컬럼 정합", () => {
+  const LEASH_OR_CARRIER = [
+    {
+      mode: "ANY_OF",
+      scope: "ALWAYS",
+      items: [
+        { item: "LEASH", status: "REQUIRED" },
+        { item: "CARRIER", status: "REQUIRED" },
+      ],
+    },
+  ];
+
+  // "목줄 또는 이동가방"을 leash=REQUIRED로 저장하면 이동가방만 챙긴 방문자에게
+  // 사실과 다른 안내가 나간다.
+  it("택일 관계는 목줄을 REQUIRED로 단언하지 않는다", async () => {
+    placeCondition.findUnique.mockResolvedValue({ policyDetails: null });
+
+    await updatePlaceRecord(
+      "place-1",
+      input({ leash: "REQUIRED" }),
+      admin,
+      submitted({ preparation: LEASH_OR_CARRIER }),
+    );
+
+    expect(upsertedCondition().leash).toBe("UNKNOWN");
+  });
+
+  it("상세 조건이 언급하지 않은 PARTIAL_AREA는 보존한다", async () => {
+    placeCondition.findUnique.mockResolvedValue({ policyDetails: null });
+
+    await updatePlaceRecord(
+      "place-1",
+      input({ leash: "PARTIAL_AREA" }),
+      admin,
+      submitted({
+        handling: [{ mode: "UNKNOWN", rules: [{ rule: "FREE_ROAM", status: "PROHIBITED" }] }],
+      }),
+    );
+
+    expect(upsertedCondition().leash).toBe("PARTIAL_AREA");
+  });
+
+  it("단일 항목 REQUIRED는 그대로 컬럼에 반영한다", async () => {
+    placeCondition.findUnique.mockResolvedValue({ policyDetails: null });
+
+    await updatePlaceRecord(
+      "place-1",
+      input({ muzzle: "UNKNOWN" }),
+      admin,
+      submitted({
+        preparation: [
+          {
+            mode: "ALL_OF",
+            scope: "ALWAYS",
+            items: [{ item: "MUZZLE", status: "REQUIRED" }],
+          },
+        ],
+      }),
+    );
+
+    expect(upsertedCondition().muzzle).toBe("REQUIRED");
+  });
+
+  // 접종 "완료 요구"와 증빙 "지참 요구"는 다른 조건이라 서로를 덮지 않는다.
+  it("vaccinationCompletionPolicy와 VACCINATION_PROOF를 독립적으로 저장한다", async () => {
+    placeCondition.findUnique.mockResolvedValue({ policyDetails: null });
+
+    await updatePlaceRecord(
+      "place-1",
+      input({ vaccinationCertificatePolicy: "UNKNOWN" }),
+      admin,
+      submitted({ entry: { vaccinationCompletionPolicy: "REQUIRED" } }),
+    );
+
+    const saved = upsertedCondition();
+    // 완료 요구만 있고 증빙 언급이 없으므로 증빙 컬럼은 관리자 입력 그대로 남는다.
+    expect(saved.vaccinationCertificatePolicy).toBe("UNKNOWN");
+    expect(savedPolicyDetails().entry.vaccinationCompletionPolicy).toBe("REQUIRED");
+  });
+
+  it("증빙 NOT_REQUIRED가 와도 완료 요구는 따라 바뀌지 않는다", async () => {
+    placeCondition.findUnique.mockResolvedValue({ policyDetails: null });
+
+    await updatePlaceRecord(
+      "place-1",
+      input({ vaccinationCertificatePolicy: "REQUIRED" }),
+      admin,
+      submitted({
+        entry: { vaccinationCompletionPolicy: "REQUIRED" },
+        preparation: [
+          {
+            mode: "ALL_OF",
+            scope: "ALWAYS",
+            items: [{ item: "VACCINATION_PROOF", status: "NOT_REQUIRED" }],
+          },
+        ],
+      }),
+    );
+
+    expect(upsertedCondition().vaccinationCertificatePolicy).toBe("NOT_REQUIRED");
+    expect(savedPolicyDetails().entry.vaccinationCompletionPolicy).toBe("REQUIRED");
   });
 });

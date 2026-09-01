@@ -1,17 +1,25 @@
 import { randomUUID } from "crypto";
 
 import type { VerifiedAdmin } from "@/lib/auth/require-admin";
-import { reconciledColumns } from "@/lib/places/condition-consistency";
+import { reconcileConditionColumns } from "@/lib/places/condition-consistency";
 import { prisma } from "@/lib/db/prisma";
 import { pointFromLngLat } from "@/lib/geo/postgis";
+import {
+  resolvePolicyDetails,
+  type PolicyDetailsFormInput,
+} from "@/lib/places/policy-details-form";
 import type { PlaceInput } from "@/lib/validation/place";
 
 export async function createPlaceRecord(
   input: PlaceInput,
   admin: VerifiedAdmin,
+  policyDetailsForm?: PolicyDetailsFormInput,
 ): Promise<{ placeId: string }> {
   const { location, condition, verification, ...placeData } = input;
   const id = randomUUID();
+
+  // 새 장소라 기존 값이 없다. 제출이 없으면 상세 조건 없이 만들어진다.
+  const policy = resolvePolicyDetails(null, policyDetailsForm);
 
   await prisma.$transaction(async (tx) => {
     await tx.$executeRaw`
@@ -45,8 +53,8 @@ export async function createPlaceRecord(
         breedRestrictions: condition.breedRestrictions ?? null,
         requiredItems: condition.requiredItems,
         cautions: condition.cautions ?? null,
-        ...reconciledColumns(condition),
-        ...(condition.policyDetails ? { policyDetails: condition.policyDetails } : {}),
+        ...reconcileConditionColumns(policy.effective, condition),
+        ...policy.write,
       },
     });
 

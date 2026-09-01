@@ -10,6 +10,10 @@ import {
 } from "@/lib/auth/require-admin";
 import { isSupportedLocale } from "@/lib/i18n/locale";
 import { parsePlaceFormData } from "@/lib/places/form-data";
+import {
+  PolicyDetailsWriteError,
+  parsePolicyDetailsForm,
+} from "@/lib/places/policy-details-form";
 import { updatePlaceRecord } from "@/lib/places/update-place";
 import { placeUpdateSchema } from "@/lib/validation/place";
 
@@ -86,6 +90,8 @@ export async function updatePlace(
   }
 
   const raw = parsePlaceFormData(formData);
+  // 편집기가 제출한 4개 필드. 나머지 상세 조건은 저장 시 DB 값을 그대로 잇는다.
+  const policyDetailsForm = parsePolicyDetailsForm(formData);
 
   // Pass raw data directly; placeUpdateSchema.superRefine handles partial verification.
   const parsed = placeUpdateSchema.safeParse(raw);
@@ -98,10 +104,19 @@ export async function updatePlace(
   }
 
   try {
-    await updatePlaceRecord(id, parsed.data, admin);
+    await updatePlaceRecord(id, parsed.data, admin, policyDetailsForm);
   } catch (err) {
     console.error("[updatePlace]", err);
     const tV = await getTranslations({ locale, namespace: "admin.places.form.validation" });
+    if (err instanceof PolicyDetailsWriteError) {
+      return {
+        error: tV(
+          err.reason === "invalidExisting"
+            ? "policyDetailsCorrupted"
+            : "policyDetailsInvalid",
+        ),
+      };
+    }
     return { error: tV("submitFailed") };
   }
 

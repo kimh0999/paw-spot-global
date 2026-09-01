@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
 import { HOME_CATEGORY_PLACE_LIMIT, MVP_PLACE_CATEGORIES } from "@/lib/places/constants";
-import { readPolicyDetails } from "@/lib/places/policy-details";
+import { readPolicyDetails, type PolicyDetailsRead } from "@/lib/places/policy-details";
 import type {
   CategoryFilterValue,
   CategoryPlacesResult,
@@ -507,10 +507,10 @@ export interface AdminPlaceDetail {
     requiredItems: string[];
     cautions: string | null;
     /**
-     * 구조화된 상세 조건이 저장돼 있는지.
-     * 아직 편집 UI가 없어 JSON 본문은 폼으로 보내지 않고, 초기화 버튼을 보일지만 정한다.
+     * 구조화된 상세 조건 읽기 결과.
+     * empty·ok·invalid를 구분해 넘긴다 — 깨진 값을 편집기가 조용히 빈 값으로 덮어쓰지 않게.
      */
-    hasPolicyDetails: boolean;
+    policyDetails: PolicyDetailsRead;
   } | null;
   latestVerification: {
     method: string;
@@ -614,7 +614,7 @@ export async function getAdminPlaceById(id: string): Promise<AdminPlaceDetail | 
           breedRestrictions: place.condition.breedRestrictions ?? null,
           requiredItems: place.condition.requiredItems as string[],
           cautions: place.condition.cautions ?? null,
-          hasPolicyDetails: place.condition.policyDetails != null,
+          policyDetails: readPolicyDetails(place.condition.policyDetails),
         }
       : null,
     latestVerification: latestVerification

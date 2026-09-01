@@ -111,14 +111,14 @@ function summarize(
   return "UNKNOWN";
 }
 
-function reconcileCarrierColumn(
+/** 언급되지 않았으면 null — 이 경우 기존 컬럼 값을 그대로 둔다. */
+function deriveCarrierColumn(
   evidence: Map<PreparationItem, ItemEvidence>,
-  current: CarrierStrollerPolicy,
-): CarrierStrollerPolicy {
+): CarrierStrollerPolicy | null {
   const found = CARRIER_COLUMN_ITEMS.map((item) => evidence.get(item)).filter(
     (e): e is ItemEvidence => e?.mentioned === true,
   );
-  if (found.length === 0) return current;
+  if (found.length === 0) return null;
 
   const required = found.find((e) => e.requiredAlone);
   if (required) return required.indoorOnly ? "REQUIRED_INDOOR" : "REQUIRED_ALWAYS";
@@ -126,6 +126,37 @@ function reconcileCarrierColumn(
   if (found.some((e) => e.requiredAsAlternative)) return "UNKNOWN";
   if (found.every((e) => e.confirmedNotRequired)) return "NOT_REQUIRED";
   return "UNKNOWN";
+}
+
+/**
+ * policyDetails가 **실제로 값을 계산해 주는** 컬럼만 돌려준다.
+ *
+ * 관리자 폼은 이 결과에 있는 항목만 읽기 전용으로 잠근다. 여기 없는 컬럼은
+ * 상세 조건이 언급하지 않은 것이므로 관리자가 계속 직접 골라야 한다
+ * (`leash=PARTIAL_AREA`처럼 준비물 그룹으로 표현할 수 없는 값이 여기 해당한다).
+ * 폼이 이 함수를 그대로 쓰기 때문에 화면의 "자동 계산됨" 표시와 실제 저장값이 어긋나지 않는다.
+ */
+export function derivedColumns(
+  details: PolicyDetails | null,
+): Partial<ReconcilableColumns> {
+  if (!details) return {};
+
+  const evidence = collectEvidence(details);
+  const derived: Partial<ReconcilableColumns> = {};
+
+  const leash = summarize(evidence.get("LEASH"));
+  if (leash) derived.leash = leash;
+
+  const muzzle = summarize(evidence.get("MUZZLE"));
+  if (muzzle) derived.muzzle = muzzle;
+
+  const vaccination = summarize(evidence.get("VACCINATION_PROOF"));
+  if (vaccination) derived.vaccinationCertificatePolicy = vaccination;
+
+  const carrier = deriveCarrierColumn(evidence);
+  if (carrier) derived.carrierStrollerPolicy = carrier;
+
+  return derived;
 }
 
 /**
@@ -140,37 +171,5 @@ export function reconcileConditionColumns(
   details: PolicyDetails | null,
   current: ReconcilableColumns,
 ): ReconcilableColumns {
-  if (!details) return current;
-
-  const evidence = collectEvidence(details);
-
-  const leash = summarize(evidence.get("LEASH"));
-  const muzzle = summarize(evidence.get("MUZZLE"));
-  const vaccination = summarize(evidence.get("VACCINATION_PROOF"));
-
-  return {
-    leash: leash ?? current.leash,
-    muzzle: muzzle ?? current.muzzle,
-    carrierStrollerPolicy: reconcileCarrierColumn(
-      evidence,
-      current.carrierStrollerPolicy,
-    ),
-    vaccinationCertificatePolicy: vaccination ?? current.vaccinationCertificatePolicy,
-  };
-}
-
-/**
- * 검증된 장소 조건 입력에서 저장할 컬럼 값을 뽑는다.
- * create-place / update-place가 컬럼을 직접 쓰지 않고 이 함수를 거치게 해서,
- * 어느 쓰기 경로로 들어와도 원본과 요약값이 어긋나지 않게 한다.
- */
-export function reconciledColumns(
-  input: ReconcilableColumns & { policyDetails?: PolicyDetails },
-): ReconcilableColumns {
-  return reconcileConditionColumns(input.policyDetails ?? null, {
-    leash: input.leash,
-    muzzle: input.muzzle,
-    carrierStrollerPolicy: input.carrierStrollerPolicy,
-    vaccinationCertificatePolicy: input.vaccinationCertificatePolicy,
-  });
+  return { ...current, ...derivedColumns(details) };
 }

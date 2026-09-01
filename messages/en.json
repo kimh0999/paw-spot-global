@@ -608,6 +608,8 @@
           "invalidPhone": "Enter digits, spaces, hyphens, +, or parentheses only (e.g. 02-123-4567).",
           "verificationIncomplete": "Please fill in both verification method and date, or leave both empty.",
           "snapshotWithoutVerification": "Enter the verification method and date to save the policy snapshot.",
+          "policyDetailsInvalid": "The detailed conditions could not be saved. Check the preparation, handling, and unconfirmed item entries.",
+          "policyDetailsCorrupted": "The stored detailed conditions are in an unreadable format, so saving was stopped. Reset them before saving again.",
           "submitFailed": "Save failed. Please try again.",
           "fixFieldErrors": "Please fix the errors below before saving."
         }

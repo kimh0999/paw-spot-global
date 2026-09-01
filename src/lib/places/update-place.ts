@@ -1,9 +1,13 @@
 import { Prisma } from "@prisma/client";
 
 import type { VerifiedAdmin } from "@/lib/auth/require-admin";
-import { reconciledColumns } from "@/lib/places/condition-consistency";
+import { reconcileConditionColumns } from "@/lib/places/condition-consistency";
 import { prisma } from "@/lib/db/prisma";
 import { pointFromLngLat } from "@/lib/geo/postgis";
+import {
+  resolvePolicyDetails,
+  type PolicyDetailsFormInput,
+} from "@/lib/places/policy-details-form";
 import type { PlaceUpdate } from "@/lib/validation/place";
 
 /**
@@ -23,6 +27,7 @@ export async function updatePlaceRecord(
   id: string,
   input: PlaceUpdate,
   admin: VerifiedAdmin,
+  policyDetailsForm?: PolicyDetailsFormInput,
 ): Promise<void> {
   const { location, condition, verification, ...placeData } = input;
 
@@ -86,13 +91,18 @@ export async function updatePlaceRecord(
       WHERE id = ${id}
     `;
 
-    // policyDetails를 보내지 않은 입력은 기존 JSON을 지우지 않고 그대로 둔다.
-    // 초기화 신호가 오면 DB NULL로 되돌린다 — 핵심 조건 컬럼은 그대로 살려둔다.
-    const policyDetailsWrite = condition.clearPolicyDetails
-      ? { policyDetails: Prisma.DbNull }
-      : condition.policyDetails
-        ? { policyDetails: condition.policyDetails }
-        : {};
+    // 편집기가 보내지 않은 필드(공간 예외·행동 제한·요금·위생)는 화면에 없으므로
+    // 여기서 DB의 최신 값을 읽어 그대로 잇는다. 읽기·병합·쓰기가 같은 트랜잭션 안에 있다.
+    const existingCondition = await tx.placeCondition.findUnique({
+      where: { placeId: id },
+      select: { policyDetails: true },
+    });
+
+    // 초기화 신호는 병합보다 우선한다 — 제출값과 무관하게 전체를 NULL로 되돌리고,
+    // 핵심 조건 컬럼은 그대로 살려둔다.
+    const policy = condition.clearPolicyDetails
+      ? { write: { policyDetails: Prisma.DbNull }, effective: null }
+      : resolvePolicyDetails(existingCondition?.policyDetails ?? null, policyDetailsForm);
 
     const conditionData = {
       indoor: condition.indoor,
@@ -100,8 +110,8 @@ export async function updatePlaceRecord(
       breedRestrictions: condition.breedRestrictions ?? null,
       requiredItems: condition.requiredItems,
       cautions: condition.cautions ?? null,
-      ...reconciledColumns(condition),
-      ...policyDetailsWrite,
+      ...reconcileConditionColumns(policy.effective, condition),
+      ...policy.write,
     };
 
     await tx.placeCondition.upsert({

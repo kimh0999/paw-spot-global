@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  derivedColumns,
   reconcileConditionColumns,
   type ReconcilableColumns,
 } from "@/lib/places/condition-consistency";
@@ -220,5 +221,57 @@ describe("언급되지 않은 항목은 건드리지 않는다", () => {
     };
 
     expect(reconcileConditionColumns(EMPTY_POLICY_DETAILS, current)).toEqual(current);
+  });
+});
+
+describe("derivedColumns — 관리자 폼이 잠글 항목", () => {
+  it("상세 조건이 없으면 아무것도 잠그지 않는다", () => {
+    expect(derivedColumns(null)).toEqual({});
+  });
+
+  // 언급되지 않은 항목까지 잠그면 관리자가 PARTIAL_AREA 같은 값을 넣을 방법을 잃는다.
+  it("언급되지 않은 항목은 결과에 넣지 않는다", () => {
+    const derived = derivedColumns(
+      details([{ mode: "ALL_OF", items: [["MUZZLE", "REQUIRED"]] }]),
+    );
+
+    expect(derived).toHaveProperty("muzzle", "REQUIRED");
+    expect(derived).not.toHaveProperty("leash");
+    expect(derived).not.toHaveProperty("carrierStrollerPolicy");
+    expect(derived).not.toHaveProperty("vaccinationCertificatePolicy");
+  });
+
+  it("택일 그룹은 잠그되 UNKNOWN으로 계산한다", () => {
+    const derived = derivedColumns(
+      details([
+        {
+          mode: "ANY_OF",
+          items: [
+            ["LEASH", "REQUIRED"],
+            ["CARRIER", "REQUIRED"],
+          ],
+        },
+      ]),
+    );
+
+    expect(derived.leash).toBe("UNKNOWN");
+    expect(derived.carrierStrollerPolicy).toBe("UNKNOWN");
+  });
+
+  it("케이지도 이동장 컬럼을 계산한다", () => {
+    const derived = derivedColumns(
+      details([{ mode: "ALL_OF", scope: "INDOOR", items: [["CRATE", "REQUIRED"]] }]),
+    );
+
+    expect(derived.carrierStrollerPolicy).toBe("REQUIRED_INDOOR");
+  });
+
+  it("증빙 항목은 예방접종 증빙 컬럼만 계산한다", () => {
+    const derived = derivedColumns(
+      details([{ mode: "ALL_OF", items: [["VACCINATION_PROOF", "REQUIRED"]] }]),
+    );
+
+    expect(derived.vaccinationCertificatePolicy).toBe("REQUIRED");
+    expect(derived).not.toHaveProperty("leash");
   });
 });
