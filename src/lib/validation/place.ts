@@ -11,6 +11,7 @@ import {
   REQUIRED_ITEMS,
   VACCINATION_CERTIFICATE_POLICIES,
 } from "@/lib/constants";
+import { policyDetailsSchema } from "@/lib/places/policy-details";
 
 // @handle, handle, or instagram.com URL
 const INSTAGRAM_REGEX =
@@ -62,6 +63,12 @@ const placeBaseSchema = z.object({
     breedRestrictions: z.string().max(500).nullish(),
     requiredItems: z.array(z.enum(REQUIRED_ITEMS)),
     cautions: z.string().max(1000).nullish(),
+    // 생략하면 기존 값을 그대로 둔다. 아직 이 필드를 보내지 않는 입력 경로가 있어
+    // null과 undefined를 구분한다 — undefined는 "변경 없음"이다.
+    policyDetails: policyDetailsSchema.optional(),
+    // 잘못 들어간 구조화 상세 조건을 미구조화 상태로 되돌리는 신호.
+    // 실내·크기·목줄 같은 핵심 조건 컬럼은 건드리지 않는다.
+    clearPolicyDetails: z.boolean().default(false),
   }),
 });
 

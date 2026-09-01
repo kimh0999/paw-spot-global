@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 
 import type { VerifiedAdmin } from "@/lib/auth/require-admin";
+import { reconciledColumns } from "@/lib/places/condition-consistency";
 import { prisma } from "@/lib/db/prisma";
 import { pointFromLngLat } from "@/lib/geo/postgis";
 import type { PlaceInput } from "@/lib/validation/place";
@@ -40,14 +41,12 @@ export async function createPlaceRecord(
       data: {
         placeId: id,
         indoor: condition.indoor,
-        carrierStrollerPolicy: condition.carrierStrollerPolicy,
         maxDogSize: condition.maxDogSize,
-        leash: condition.leash,
-        muzzle: condition.muzzle,
-        vaccinationCertificatePolicy: condition.vaccinationCertificatePolicy,
         breedRestrictions: condition.breedRestrictions ?? null,
         requiredItems: condition.requiredItems,
         cautions: condition.cautions ?? null,
+        ...reconciledColumns(condition),
+        ...(condition.policyDetails ? { policyDetails: condition.policyDetails } : {}),
       },
     });
 

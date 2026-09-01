@@ -1,4 +1,7 @@
+import { Prisma } from "@prisma/client";
+
 import type { VerifiedAdmin } from "@/lib/auth/require-admin";
+import { reconciledColumns } from "@/lib/places/condition-consistency";
 import { prisma } from "@/lib/db/prisma";
 import { pointFromLngLat } from "@/lib/geo/postgis";
 import type { PlaceUpdate } from "@/lib/validation/place";
@@ -46,31 +49,28 @@ export async function updatePlaceRecord(
       WHERE id = ${id}
     `;
 
+    // policyDetails를 보내지 않은 입력은 기존 JSON을 지우지 않고 그대로 둔다.
+    // 초기화 신호가 오면 DB NULL로 되돌린다 — 핵심 조건 컬럼은 그대로 살려둔다.
+    const policyDetailsWrite = condition.clearPolicyDetails
+      ? { policyDetails: Prisma.DbNull }
+      : condition.policyDetails
+        ? { policyDetails: condition.policyDetails }
+        : {};
+
+    const conditionData = {
+      indoor: condition.indoor,
+      maxDogSize: condition.maxDogSize,
+      breedRestrictions: condition.breedRestrictions ?? null,
+      requiredItems: condition.requiredItems,
+      cautions: condition.cautions ?? null,
+      ...reconciledColumns(condition),
+      ...policyDetailsWrite,
+    };
+
     await tx.placeCondition.upsert({
       where: { placeId: id },
-      create: {
-        placeId: id,
-        indoor: condition.indoor,
-        carrierStrollerPolicy: condition.carrierStrollerPolicy,
-        maxDogSize: condition.maxDogSize,
-        leash: condition.leash,
-        muzzle: condition.muzzle,
-        vaccinationCertificatePolicy: condition.vaccinationCertificatePolicy,
-        breedRestrictions: condition.breedRestrictions ?? null,
-        requiredItems: condition.requiredItems,
-        cautions: condition.cautions ?? null,
-      },
-      update: {
-        indoor: condition.indoor,
-        carrierStrollerPolicy: condition.carrierStrollerPolicy,
-        maxDogSize: condition.maxDogSize,
-        leash: condition.leash,
-        muzzle: condition.muzzle,
-        vaccinationCertificatePolicy: condition.vaccinationCertificatePolicy,
-        breedRestrictions: condition.breedRestrictions ?? null,
-        requiredItems: condition.requiredItems,
-        cautions: condition.cautions ?? null,
-      },
+      create: { placeId: id, ...conditionData },
+      update: conditionData,
     });
 
     if (shouldCreateVerification && verification) {

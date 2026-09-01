@@ -1,3 +1,5 @@
+import type { PolicyDetails } from "@/lib/places/policy-details";
+
 export type ConditionStatus = "good" | "warning" | "bad" | "neutral";
 
 export type PlaceCategory = "cafe" | "restaurant" | "travel";
@@ -79,10 +81,16 @@ export interface PlaceDetail {
     breedRestrictions: string | null;
     requiredItems: string[];
     cautions: string | null;
+    /** 스키마와 맞지 않거나 아직 구조화되지 않은 장소는 null이다. */
+    policyDetails: PolicyDetails | null;
   } | null;
   latestVerification: {
     verifiedAt: string;
     method: string;
     note: string | null;
+    /** 확인 당시의 안내문 원문. 표시용 문구가 아니라 근거 자료다. */
+    rawPolicyText: string | null;
+    sourceLanguages: string[];
+    sourceUrl: string | null;
   } | null;
 }

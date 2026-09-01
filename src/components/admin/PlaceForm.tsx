@@ -52,6 +52,8 @@ export type PlaceFormInitialValues = {
     breedRestrictions?: string | null;
     requiredItems?: string[];
     cautions?: string | null;
+    /** 구조화된 상세 조건이 저장돼 있는지. 있을 때만 초기화 버튼을 보여준다. */
+    hasPolicyDetails?: boolean;
   };
   verification?: {
     method?: string;
@@ -154,6 +156,8 @@ export function PlaceForm({
   const [lat, setLat] = useState<string>(String(initialValues?.lat ?? ""));
   const [lng, setLng] = useState<string>(String(initialValues?.lng ?? ""));
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  // 초기화는 저장을 눌러야 반영된다. 버튼은 폼 상태만 바꾼다.
+  const [clearPolicyDetails, setClearPolicyDetails] = useState(false);
 
   // Merge server-side field errors (state.fieldErrors) with client-side errors.
   // Client-side errors take precedence for fields the user has corrected.
@@ -837,6 +841,50 @@ export function PlaceForm({
             className="rounded border px-3 py-2"
           />
         </label>
+
+        {/*
+          구조화 상세 조건(준비물 관계·매장 내 상태·공간 예외·행동 제한·요금)이
+          잘못 들어갔을 때 되돌리는 장치. 위의 실내·크기·목줄·입마개·예방접종 같은
+          핵심 조건은 그대로 남는다. 편집 UI는 아직 없어 초기화만 제공한다.
+        */}
+        {iv?.condition?.hasPolicyDetails && (
+          <div className="flex flex-col gap-2 rounded border p-3">
+            <input
+              type="hidden"
+              name="condition.clearPolicyDetails"
+              value={clearPolicyDetails ? "true" : "false"}
+            />
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-medium">구조화 상세 조건</span>
+              <p className="text-xs text-muted-foreground">
+                준비물 관계, 매장 내 상태, 공간 예외, 행동 제한, 요금이 저장돼 있습니다.
+                위의 핵심 조건은 초기화해도 유지됩니다.
+              </p>
+            </div>
+            {clearPolicyDetails ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-sm text-destructive">
+                  저장하면 상세 조건이 삭제됩니다. 아직 저장되지 않았습니다.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setClearPolicyDetails(false)}
+                  className="rounded border px-3 py-1.5 text-sm"
+                >
+                  초기화 취소
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setClearPolicyDetails(true)}
+                className="self-start rounded border px-3 py-1.5 text-sm"
+              >
+                상세 조건 초기화
+              </button>
+            )}
+          </div>
+        )}
       </section>
 
       {/* 검증 정보 */}

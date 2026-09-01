@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
 import { HOME_CATEGORY_PLACE_LIMIT, MVP_PLACE_CATEGORIES } from "@/lib/places/constants";
+import { readPolicyDetails } from "@/lib/places/policy-details";
 import type {
   CategoryFilterValue,
   CategoryPlacesResult,
@@ -313,6 +314,20 @@ export async function getCategoryPlaces(
   return { places: rows.map((row) => toPlaceListItem(row)), totalCount };
 }
 
+/**
+ * 깨진 JSON을 "조건 없음"으로 조용히 넘기지 않는다.
+ * 표시에서는 미확인으로 떨어지되 어느 장소가 잘못됐는지는 로그에 남겨 고칠 수 있게 한다.
+ */
+function readPolicyDetailsOrWarn(placeId: string, value: unknown) {
+  const read = readPolicyDetails(value);
+  if (read.status === "invalid") {
+    console.warn(
+      `[places] policyDetails 형식 오류 place=${placeId}: ${read.issues.join(", ")}`,
+    );
+  }
+  return read.value;
+}
+
 export async function getPlaceById(id: string): Promise<PlaceDetail | null> {
   const place = await prisma.place.findUnique({
     where: { id },
@@ -338,6 +353,7 @@ export async function getPlaceById(id: string): Promise<PlaceDetail | null> {
           breedRestrictions: true,
           requiredItems: true,
           cautions: true,
+          policyDetails: true,
         },
       },
       verifications: {
@@ -347,6 +363,9 @@ export async function getPlaceById(id: string): Promise<PlaceDetail | null> {
           verifiedAt: true,
           method: true,
           note: true,
+          rawPolicyText: true,
+          sourceLanguages: true,
+          sourceUrl: true,
         },
       },
     },
@@ -396,6 +415,7 @@ export async function getPlaceById(id: string): Promise<PlaceDetail | null> {
           breedRestrictions: place.condition.breedRestrictions ?? null,
           requiredItems: place.condition.requiredItems as string[],
           cautions: place.condition.cautions ?? null,
+          policyDetails: readPolicyDetailsOrWarn(place.id, place.condition.policyDetails),
         }
       : null,
     latestVerification: latestVerification
@@ -403,6 +423,9 @@ export async function getPlaceById(id: string): Promise<PlaceDetail | null> {
           verifiedAt: formatVerifiedAt(latestVerification.verifiedAt),
           method: mapVerificationMethod(String(latestVerification.method)),
           note: latestVerification.note ?? null,
+          rawPolicyText: latestVerification.rawPolicyText ?? null,
+          sourceLanguages: latestVerification.sourceLanguages,
+          sourceUrl: latestVerification.sourceUrl ?? null,
         }
       : null,
   };
@@ -483,6 +506,11 @@ export interface AdminPlaceDetail {
     breedRestrictions: string | null;
     requiredItems: string[];
     cautions: string | null;
+    /**
+     * 구조화된 상세 조건이 저장돼 있는지.
+     * 아직 편집 UI가 없어 JSON 본문은 폼으로 보내지 않고, 초기화 버튼을 보일지만 정한다.
+     */
+    hasPolicyDetails: boolean;
   } | null;
   latestVerification: {
     method: string;
@@ -520,6 +548,7 @@ export async function getAdminPlaceById(id: string): Promise<AdminPlaceDetail | 
           breedRestrictions: true,
           requiredItems: true,
           cautions: true,
+          policyDetails: true,
         },
       },
       verifications: {
@@ -578,6 +607,7 @@ export async function getAdminPlaceById(id: string): Promise<AdminPlaceDetail | 
           breedRestrictions: place.condition.breedRestrictions ?? null,
           requiredItems: place.condition.requiredItems as string[],
           cautions: place.condition.cautions ?? null,
+          hasPolicyDetails: place.condition.policyDetails != null,
         }
       : null,
     latestVerification: latestVerification

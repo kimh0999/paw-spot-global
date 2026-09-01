@@ -145,6 +145,11 @@ model PlaceCondition {
   requiredItems                 String[]
   cautions                      String?
 
+  // 컬럼으로 표현할 수 없는 복합 이용수칙 — 준비물의 AND/OR, 매장 내 상태,
+  // 공간 예외, 행동 제한, 요금, 위생 수칙, 항목별 불확실성.
+  // 형식은 src/lib/places/policy-details.ts의 policyDetailsSchema가 강제한다.
+  policyDetails                 Json?
+
   updatedAt             DateTime              @updatedAt
 }
 
@@ -156,6 +161,14 @@ model Verification {
   method      VerificationMethod
   verifiedAt  DateTime
   note        String?
+
+  // 확인 당시의 안내문 원문 스냅샷. PlaceCondition에는 현재 공개 중인 구조화 값만 두고,
+  // 원문은 여기에 확인 시점 단위로 쌓아 정책이 바뀌어도 과거 근거가 남게 한다.
+  // 한·영이 병기된 안내문은 쪼개지 않고 통째로 보존하며 원문의 오타도 고치지 않는다.
+  rawPolicyText   String?
+  sourceLanguages String[]           @default([])
+  sourceUrl       String?
+
   createdAt   DateTime           @default(now())
 
   @@index([placeId])

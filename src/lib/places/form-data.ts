@@ -23,6 +23,7 @@ export type ParsedPlaceFormData = {
     breedRestrictions: string | null;
     requiredItems: string[];
     cautions: string | null;
+    clearPolicyDetails: boolean;
   };
   verification: {
     method: string;
@@ -74,6 +75,9 @@ export function parsePlaceFormData(formData: FormData): ParsedPlaceFormData {
       breedRestrictions: nullIfEmpty(formData.get("condition.breedRestrictions")),
       requiredItems: formData.getAll("condition.requiredItems").map(String),
       cautions: nullIfEmpty(formData.get("condition.cautions")),
+      // 구조화 상세 조건 초기화 신호. 폼이 policyDetails 본문을 보내지 않으므로
+      // "변경 없음"(신호 없음)과 "지우기"(신호 있음)를 이 값으로 구분한다.
+      clearPolicyDetails: formData.get("condition.clearPolicyDetails") === "true",
     },
     verification: {
       method: String(formData.get("verification.method") ?? ""),
