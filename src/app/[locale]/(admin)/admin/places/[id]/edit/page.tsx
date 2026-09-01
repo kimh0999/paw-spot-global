@@ -52,6 +52,9 @@ export default async function AdminPlaceEditPage({ params }: Props) {
           method: place.latestVerification.method,
           verifiedAt: place.latestVerification.verifiedAt,
           note: place.latestVerification.note ?? undefined,
+          rawPolicyText: place.latestVerification.rawPolicyText ?? undefined,
+          sourceLanguages: place.latestVerification.sourceLanguages,
+          sourceUrl: place.latestVerification.sourceUrl ?? undefined,
         }
       : undefined,
   };

@@ -57,6 +57,9 @@ export async function createPlaceRecord(
         method: verification.method,
         verifiedAt: verification.verifiedAt,
         note: verification.note ?? null,
+        rawPolicyText: verification.rawPolicyText ?? null,
+        sourceLanguages: verification.sourceLanguages,
+        sourceUrl: verification.sourceUrl ?? null,
       },
     });
   });

@@ -9,6 +9,7 @@ import {
   PLACE_CATEGORIES,
   PLACE_VISIBILITY,
   REQUIRED_ITEMS,
+  SUPPORTED_LOCALES,
   VACCINATION_CERTIFICATE_POLICIES,
 } from "@/lib/constants";
 import { policyDetailsSchema } from "@/lib/places/policy-details";
@@ -72,10 +73,19 @@ const placeBaseSchema = z.object({
   }),
 });
 
+// 확인 당시의 안내문 원문 스냅샷(D-03). 표시용 문구가 아니라 근거 자료라
+// 오타도 그대로 둔다. 한·영 병기 안내문은 쪼개지 않고 통째로 보존한다.
+const policySnapshotShape = {
+  rawPolicyText: z.string().max(5000).optional(),
+  sourceLanguages: z.array(z.enum(SUPPORTED_LOCALES)).default([]),
+  sourceUrl: z.string().url().nullish(),
+};
+
 const verificationSchema = z.object({
   method: z.enum(["PHONE", "DM", "WEBSITE", "ON_SITE"]),
   verifiedAt: z.coerce.date().refine(isNotFutureKST, { message: "futureVerifiedAt" }),
   note: z.string().max(500).optional(),
+  ...policySnapshotShape,
 });
 
 export const placeInputSchema = placeBaseSchema.extend({
@@ -92,12 +102,30 @@ export const placeUpdateSchema = placeBaseSchema
       method: z.string(),
       verifiedAt: z.string(),
       note: z.string().optional(),
+      ...policySnapshotShape,
     }),
   })
   .superRefine((data, ctx) => {
-    const { method, verifiedAt } = data.verification;
+    const { method, verifiedAt, rawPolicyText, sourceLanguages, sourceUrl } =
+      data.verification;
     const hasMethod = method !== "";
     const hasVerifiedAt = verifiedAt !== "";
+
+    // 원문 스냅샷은 Verification 행에 실린다. 확인 방법·확인일이 없으면 담을 행이
+    // 없으므로 입력을 조용히 버리는 대신 무엇이 빠졌는지 알린다.
+    const hasSnapshot =
+      (rawPolicyText ?? "").trim() !== "" ||
+      sourceLanguages.length > 0 ||
+      (sourceUrl ?? "").trim() !== "";
+
+    if (!hasMethod && !hasVerifiedAt && hasSnapshot) {
+      ctx.addIssue({
+        code: "custom" as const,
+        message: "snapshotWithoutVerification",
+        path: ["verification"],
+      });
+      return;
+    }
 
     if (hasMethod !== hasVerifiedAt) {
       ctx.addIssue({
@@ -137,6 +165,9 @@ export const placeUpdateSchema = placeBaseSchema
             method: rawV.method as "PHONE" | "DM" | "WEBSITE" | "ON_SITE",
             verifiedAt: new Date(rawV.verifiedAt),
             note: rawV.note,
+            rawPolicyText: rawV.rawPolicyText,
+            sourceLanguages: rawV.sourceLanguages,
+            sourceUrl: rawV.sourceUrl,
           }
         : undefined,
     };

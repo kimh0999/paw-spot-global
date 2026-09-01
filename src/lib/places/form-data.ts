@@ -29,6 +29,10 @@ export type ParsedPlaceFormData = {
     method: string;
     verifiedAt: string;
     note?: string;
+    /** 확인 당시의 안내문 원문. 표시용 문구가 아니라 근거 자료다. */
+    rawPolicyText?: string;
+    sourceLanguages: string[];
+    sourceUrl: string | null;
   };
 };
 
@@ -83,6 +87,9 @@ export function parsePlaceFormData(formData: FormData): ParsedPlaceFormData {
       method: String(formData.get("verification.method") ?? ""),
       verifiedAt: String(formData.get("verification.verifiedAt") ?? ""),
       note: nullIfEmpty(formData.get("verification.note")) ?? undefined,
+      rawPolicyText: nullIfEmpty(formData.get("verification.rawPolicyText")) ?? undefined,
+      sourceLanguages: formData.getAll("verification.sourceLanguages").map(String),
+      sourceUrl: nullIfEmpty(formData.get("verification.sourceUrl")),
     },
   };
 }

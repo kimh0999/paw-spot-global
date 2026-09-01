@@ -14,6 +14,7 @@ import {
   PLACE_CATEGORIES,
   PLACE_VISIBILITY,
   REQUIRED_ITEMS,
+  SUPPORTED_LOCALES,
   VACCINATION_CERTIFICATE_POLICIES,
 } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -59,6 +60,10 @@ export type PlaceFormInitialValues = {
     method?: string;
     verifiedAt?: string;
     note?: string | null;
+    /** 확인 당시의 안내문 원문 스냅샷. 다시 채워 넣어 수정 이력을 이어붙인다. */
+    rawPolicyText?: string | null;
+    sourceLanguages?: string[];
+    sourceUrl?: string | null;
   };
 };
 
@@ -68,6 +73,11 @@ type PlaceFormProps = {
   initialValues?: PlaceFormInitialValues;
   submitLabel?: string;
   successContent?: React.ReactNode;
+};
+
+const SOURCE_LANGUAGE_LABELS: Record<string, string> = {
+  ko: "한국어",
+  en: "영어",
 };
 
 const INDOOR_LABELS: Record<string, string> = {
@@ -974,6 +984,72 @@ export function PlaceForm({
             className="rounded border px-3 py-2"
           />
         </label>
+
+        {/*
+          확인 당시의 안내문 원문. 사용자에게 보여줄 문구가 아니라 근거 자료라
+          오타·줄바꿈을 그대로 두고, 한·영이 섞여 있어도 쪼개지 않고 통째로 붙여넣는다.
+          저장하면 기존 이력을 고치지 않고 새 확인 이력이 쌓인다.
+        */}
+        <label className="flex flex-col gap-1">
+          <span className="text-sm font-medium">안내문 원문</span>
+          <textarea
+            name="verification.rawPolicyText"
+            maxLength={5000}
+            rows={6}
+            defaultValue={iv?.verification?.rawPolicyText ?? ""}
+            className="rounded border px-3 py-2"
+          />
+          <span className="text-xs text-muted-foreground">
+            매장 안내문을 고치지 말고 그대로 붙여넣으세요. 오타도 수정하지 않습니다.
+          </span>
+        </label>
+
+        <fieldset className="flex flex-col gap-2 rounded border p-3">
+          <legend className="px-1 text-sm font-medium">원문 언어</legend>
+          {SUPPORTED_LOCALES.map((lang) => (
+            <label key={lang} className="flex items-center gap-2">
+              <input
+                name="verification.sourceLanguages"
+                type="checkbox"
+                value={lang}
+                defaultChecked={iv?.verification?.sourceLanguages?.includes(lang) ?? false}
+                className="h-4 w-4"
+              />
+              <span className="text-sm">{SOURCE_LANGUAGE_LABELS[lang] ?? lang}</span>
+            </label>
+          ))}
+          <p className="text-xs text-muted-foreground">
+            한·영이 병기된 안내문은 둘 다 선택하세요.
+          </p>
+        </fieldset>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="verification.sourceUrl" className="text-sm font-medium">
+            원문 출처 URL
+          </label>
+          <input
+            id="verification.sourceUrl"
+            name="verification.sourceUrl"
+            type="url"
+            defaultValue={iv?.verification?.sourceUrl ?? ""}
+            className={cn(
+              "rounded border px-3 py-2",
+              allFieldErrors["verification.sourceUrl"] && "border-destructive",
+            )}
+            aria-invalid={!!allFieldErrors["verification.sourceUrl"]}
+            aria-describedby={
+              allFieldErrors["verification.sourceUrl"]
+                ? "verification.sourceUrl-error"
+                : undefined
+            }
+            onChange={() => clearError("verification.sourceUrl")}
+          />
+          {allFieldErrors["verification.sourceUrl"] && (
+            <p id="verification.sourceUrl-error" className="text-sm text-destructive">
+              {allFieldErrors["verification.sourceUrl"]}
+            </p>
+          )}
+        </div>
       </section>
 
       {/* 외부 데이터 연동 정보 */}

@@ -517,6 +517,10 @@ export interface AdminPlaceDetail {
     verifiedAt: string;
     note: string | null;
     verifiedBy: string;
+    /** 확인 당시의 안내문 원문. 폼에 다시 채워 넣어 수정 이력을 이어붙인다. */
+    rawPolicyText: string | null;
+    sourceLanguages: string[];
+    sourceUrl: string | null;
   } | null;
 }
 
@@ -559,6 +563,9 @@ export async function getAdminPlaceById(id: string): Promise<AdminPlaceDetail | 
           verifiedAt: true,
           note: true,
           verifiedBy: true,
+          rawPolicyText: true,
+          sourceLanguages: true,
+          sourceUrl: true,
         },
       },
     },
@@ -616,6 +623,9 @@ export async function getAdminPlaceById(id: string): Promise<AdminPlaceDetail | 
           verifiedAt: formatDateForInput(latestVerification.verifiedAt),
           note: latestVerification.note ?? null,
           verifiedBy: latestVerification.verifiedBy,
+          rawPolicyText: latestVerification.rawPolicyText ?? null,
+          sourceLanguages: latestVerification.sourceLanguages,
+          sourceUrl: latestVerification.sourceUrl ?? null,
         }
       : null,
   };
