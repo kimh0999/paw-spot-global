@@ -1,5 +1,12 @@
 import { getTranslations } from "next-intl/server";
 
+import { toPolicyDisplay } from "@/lib/places/policy-display";
+import {
+  buildHandlingSentence,
+  buildPreparationSentence,
+  buildUncertaintySentence,
+  type Translate,
+} from "@/lib/places/policy-sentences";
 import type { ConditionStatus, PlaceDetail } from "@/types/place";
 import ConditionBadge from "./ConditionBadge";
 import { TriangleAlert } from "lucide-react";
@@ -9,11 +16,41 @@ interface Props {
   locale: string;
 }
 
+/** 내용이 있을 때만 나타나는 항목 목록. 긴 안내문 대신 짧은 줄로 나눠 보여준다. */
+function PolicyBlock({ title, lines }: { title: string; lines: string[] }) {
+  if (lines.length === 0) return null;
+
+  return (
+    <div className="mt-4 pt-4 border-t">
+      <p className="text-xs font-semibold text-content-secondary">{title}</p>
+      <ul className="mt-2 space-y-1.5">
+        {lines.map((line) => (
+          <li key={line} className="flex gap-2 text-sm text-content-secondary">
+            <span aria-hidden="true" className="text-content-muted">
+              ·
+            </span>
+            <span className="leading-relaxed">{line}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export default async function BeforeYouGoCard({ condition, locale }: Props) {
   const t = await getTranslations({
     locale,
     namespace: "places.detail.beforeYouGo",
   });
+  const tp = await getTranslations({
+    locale,
+    namespace: "places.detail.policyDetails",
+  });
+  // 문장 조합은 순수 함수에 두고 여기서는 메시지 조회만 넘긴다.
+  const translate: Translate = (key, values) => tp(key, values);
+
+  // 구조화되지 않았거나 형식이 깨진 장소는 null이라 기존 조건 6행만 그대로 보인다.
+  const policy = toPolicyDisplay(condition?.policyDetails ?? null);
 
   const none: { value: string; status: ConditionStatus } = {
     value: t("checkWithStore"),
@@ -145,6 +182,35 @@ export default async function BeforeYouGoCard({ condition, locale }: Props) {
                 </div>
               )}
             </div>
+          )}
+
+          {policy && (
+            <>
+              {policy.entry && (
+                <PolicyBlock
+                  title={tp("entryTitle")}
+                  lines={[tp(`entry.${policy.entry.policy}`)]}
+                />
+              )}
+              <PolicyBlock
+                title={tp("preparationTitle")}
+                lines={policy.preparation.map((line) =>
+                  buildPreparationSentence(line, translate, locale),
+                )}
+              />
+              <PolicyBlock
+                title={tp("handlingTitle")}
+                lines={policy.handling.map((line) =>
+                  buildHandlingSentence(line, translate, locale),
+                )}
+              />
+              <PolicyBlock
+                title={tp("uncertaintyTitle")}
+                lines={policy.uncertainties.map((line) =>
+                  buildUncertaintySentence(line, translate),
+                )}
+              />
+            </>
           )}
         </div>
       )}

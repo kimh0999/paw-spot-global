@@ -356,6 +356,79 @@
           "not_required": "Not required"
         }
       },
+      "policyDetails": {
+        "entryTitle": "Entry requirements",
+        "preparationTitle": "Before you arrive",
+        "handlingTitle": "Inside the place",
+        "uncertaintyTitle": "Needs confirmation",
+        "entry": {
+          "REQUIRED": "Only dogs with completed vaccinations can enter",
+          "NOT_REQUIRED": "Completed vaccination is not required"
+        },
+        "items": {
+          "LEASH": "a leash",
+          "CARRIER": "a carrier bag",
+          "CRATE": "a crate",
+          "STROLLER": "a pet stroller",
+          "MUZZLE": "a muzzle",
+          "PET_SEAT": "a pet seat",
+          "VACCINATION_PROOF": "vaccination proof",
+          "POOP_BAG": "poop bags"
+        },
+        "rules": {
+          "FREE_ROAM": "letting your dog roam freely",
+          "HELD_BY_OWNER": "holding your dog",
+          "PET_SEAT": "seating your dog in a pet seat",
+          "IN_CARRIER": "keeping your dog in a carrier",
+          "ON_LEASH_FLOOR": "keeping your dog on a leash on the floor",
+          "ON_CHAIR_OR_TABLE": "putting your dog on chairs or tables"
+        },
+        "ruleClauses": {
+          "FREE_ROAM": "let your dog roam freely",
+          "HELD_BY_OWNER": "hold your dog",
+          "PET_SEAT": "seat your dog in a pet seat",
+          "IN_CARRIER": "keep your dog in a carrier",
+          "ON_LEASH_FLOOR": "keep your dog on a leash on the floor",
+          "ON_CHAIR_OR_TABLE": "put your dog on chairs or tables"
+        },
+        "targets": {
+          "INDOOR": "the indoor access rules",
+          "MAX_DOG_SIZE": "the dog size limit",
+          "BREED_RESTRICTIONS": "the breed restrictions",
+          "CARRIER_STROLLER": "the carrier and stroller requirements",
+          "LEASH": "the leash requirements",
+          "MUZZLE": "the muzzle requirements",
+          "VACCINATION_CERTIFICATE": "the vaccination proof requirements",
+          "VACCINATION_COMPLETION": "the vaccination requirements",
+          "PREPARATION": "what you need to bring",
+          "HANDLING": "how your dog must stay",
+          "SPACE": "which areas you can use",
+          "BEHAVIOR": "the behavior rules",
+          "ADMISSION": "the entry fee",
+          "HYGIENE": "the hygiene and liability rules"
+        },
+        "preparation": {
+          "REQUIRED": "You must bring {items}",
+          "RECOMMENDED": "Bringing {items} is recommended",
+          "ALLOWED": "You may bring {items}",
+          "NOT_REQUIRED": "You do not need to bring {items}",
+          "UNKNOWN": "Whether you need {items} is unconfirmed",
+          "relationUnknown": "Check with the place whether you need both {items} or just one of them"
+        },
+        "handling": {
+          "REQUIRED": "You must {items}",
+          "ALLOWED": "You may {items}",
+          "PROHIBITED": "You must not {items}",
+          "CONDITIONAL": "You may need to {items}, depending on the situation",
+          "UNKNOWN": "Whether you must {items} is unconfirmed",
+          "relationUnknown": "Check with the place whether all of these rules apply or only one: {items}."
+        },
+        "uncertainty": {
+          "default": "Check {target} with the place"
+        },
+        "indoorOnly": "When indoors: {text}",
+        "scopeUnknownNote": "{text} (check when this applies)"
+      },
       "info": {
         "title": "Place Info",
         "website": "Website",

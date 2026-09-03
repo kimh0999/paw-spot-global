@@ -356,6 +356,79 @@
           "not_required": "불필요"
         }
       },
+      "policyDetails": {
+        "entryTitle": "입장 조건",
+        "preparationTitle": "입장 전 준비",
+        "handlingTitle": "매장 안에서",
+        "uncertaintyTitle": "확인 필요",
+        "entry": {
+          "REQUIRED": "예방접종을 완료한 반려견만 입장할 수 있습니다",
+          "NOT_REQUIRED": "예방접종 완료 여부를 따로 요구하지 않습니다"
+        },
+        "items": {
+          "LEASH": "목줄",
+          "CARRIER": "이동가방",
+          "CRATE": "케이지",
+          "STROLLER": "유모차",
+          "MUZZLE": "입마개",
+          "PET_SEAT": "전용 의자",
+          "VACCINATION_PROOF": "예방접종 증빙",
+          "POOP_BAG": "배변봉투"
+        },
+        "rules": {
+          "FREE_ROAM": "매장 안에서 자유롭게 다니기",
+          "HELD_BY_OWNER": "반려견을 안고 있기",
+          "PET_SEAT": "전용 의자에 앉히기",
+          "IN_CARRIER": "이동장 안에 두기",
+          "ON_LEASH_FLOOR": "목줄을 매고 바닥에서 걷게 하기",
+          "ON_CHAIR_OR_TABLE": "의자나 테이블 위에 올리기"
+        },
+        "ruleClauses": {
+          "FREE_ROAM": "반려견이 매장 안에서 자유롭게 다니게 해",
+          "HELD_BY_OWNER": "반려견을 안고 있어",
+          "PET_SEAT": "전용 의자에 앉혀",
+          "IN_CARRIER": "이동장 안에 두어",
+          "ON_LEASH_FLOOR": "목줄을 매고 바닥에서 걷게 해",
+          "ON_CHAIR_OR_TABLE": "의자나 테이블 위에 올려"
+        },
+        "targets": {
+          "INDOOR": "실내 동반",
+          "MAX_DOG_SIZE": "동반 가능한 크기",
+          "BREED_RESTRICTIONS": "견종 제한",
+          "CARRIER_STROLLER": "이동장·유모차",
+          "LEASH": "목줄",
+          "MUZZLE": "입마개",
+          "VACCINATION_CERTIFICATE": "예방접종 증빙",
+          "VACCINATION_COMPLETION": "예방접종 완료",
+          "PREPARATION": "준비물",
+          "HANDLING": "반려견 동반 상태",
+          "SPACE": "이용 가능 구역",
+          "BEHAVIOR": "행동 제한",
+          "ADMISSION": "입장료",
+          "HYGIENE": "위생·책임"
+        },
+        "preparation": {
+          "REQUIRED": "{items} 반드시 챙겨야 합니다",
+          "RECOMMENDED": "{items} 챙기시길 권장합니다",
+          "ALLOWED": "{items} 가져오실 수 있습니다",
+          "NOT_REQUIRED": "{items} 챙기지 않아도 됩니다",
+          "UNKNOWN": "{items} 챙겨야 하는지 확인되지 않았습니다",
+          "relationUnknown": "{items} 모두 챙겨야 하는지 하나만 챙기면 되는지 매장에 확인해 주세요"
+        },
+        "handling": {
+          "REQUIRED": "{items}야 합니다",
+          "ALLOWED": "{items}도 됩니다",
+          "PROHIBITED": "{items}서는 안 됩니다",
+          "CONDITIONAL": "{items}야 하는 경우가 있습니다",
+          "UNKNOWN": "{items}야 하는지 확인되지 않았습니다",
+          "relationUnknown": "{items} 모두 지켜야 하는지 하나만 지키면 되는지 매장에 확인해 주세요"
+        },
+        "uncertainty": {
+          "default": "{target} 조건을 매장에 확인해 주세요"
+        },
+        "indoorOnly": "실내 동반 시 {text}",
+        "scopeUnknownNote": "{text} (언제 적용되는지는 매장에 확인해 주세요)"
+      },
       "info": {
         "title": "장소 정보",
         "website": "홈페이지",
