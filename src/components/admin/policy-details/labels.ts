@@ -61,6 +61,14 @@ export const HANDLING_RULE_LABELS: Record<string, string> = {
   ON_CHAIR_OR_TABLE: "의자·테이블 위에 올리기",
 };
 
+/** 준비물과 달리 실외가 있다. 실내와 실외에 서로 다른 상태를 요구하는 안내문이 실제로 있다. */
+export const HANDLING_SCOPE_LABELS: Record<string, string> = {
+  ALWAYS: "항상",
+  INDOOR: "실내에서만",
+  OUTDOOR: "실외에서만",
+  UNKNOWN: "확인 필요",
+};
+
 export const HANDLING_STATUS_LABELS: Record<string, string> = {
   REQUIRED: "반드시 그래야 함",
   ALLOWED: "해도 됨",

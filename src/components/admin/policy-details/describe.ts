@@ -103,12 +103,19 @@ function handlingClause(phrase: string, status: string): string {
 }
 
 /** 매장 내 상태 묶음 한 개를 문장으로. */
+const HANDLING_SCOPE_PREFIX: Record<string, string> = {
+  INDOOR: "실내에서는 ",
+  OUTDOOR: "실외에서는 ",
+};
+
 export function describeHandling(group: HandlingGroup): string {
   const names = group.rules.map((rule) => HANDLING_RULE_LABELS[rule.rule] ?? rule.rule);
   if (names.length === 0) return "매장 안에서의 상태를 1개 이상 선택하세요.";
 
-  const note =
-    group.mode === "UNKNOWN" && names.length > 1 ? " (항목 간 관계 확인 필요)" : "";
+  const prefix = HANDLING_SCOPE_PREFIX[group.scope] ?? "";
+  const notes: string[] = [];
+  if (group.scope === "UNKNOWN") notes.push("적용 범위 확인 필요");
+  if (group.mode === "UNKNOWN" && names.length > 1) notes.push("항목 간 관계 확인 필요");
 
   const status = sharedStatus(group.rules);
   const body =
@@ -118,7 +125,8 @@ export function describeHandling(group: HandlingGroup): string {
           .join(" · ")
       : handlingClause(joinItemNames(names, group.mode), status);
 
-  return `${body}${note}`;
+  const suffix = notes.length > 0 ? ` (${notes.join(" · ")})` : "";
+  return `${prefix}${body}${suffix}`;
 }
 
 /** 선택 상자에 쓸 라벨. 값이 목록에 없으면 원래 코드를 그대로 보여준다. */

@@ -78,6 +78,7 @@ function parseHandling(formData: FormData): unknown[] {
     const base = `${PREFIX}.handling.${g}`;
     return {
       mode: text(formData, `${base}.mode`),
+      scope: text(formData, `${base}.scope`),
       rules: indices(formData, `${base}.rules.`).map((i) => ({
         rule: text(formData, `${base}.rules.${i}.rule`),
         status: text(formData, `${base}.rules.${i}.status`),
@@ -121,7 +122,17 @@ export function parsePolicyDetailsForm(
   };
 }
 
-export type PolicyDetailsFailure = "invalidExisting" | "invalidInput";
+export type PolicyDetailsFailure =
+  | "invalidExisting"
+  | "invalidInput"
+  | "handlingMultiNotRequired";
+
+/** 실패 이유별 관리자 안내 메시지 키(`admin.places.form.validation`). */
+export const POLICY_DETAILS_ERROR_MESSAGE_KEY: Record<PolicyDetailsFailure, string> = {
+  invalidExisting: "policyDetailsCorrupted",
+  invalidInput: "policyDetailsInvalid",
+  handlingMultiNotRequired: "policyDetailsHandlingMultiNotRequired",
+};
 
 /** 저장을 멈춰야 하는 상황. 관리자에게 무엇이 잘못됐는지 알리려고 이유를 구분한다. */
 export class PolicyDetailsWriteError extends Error {
@@ -132,6 +143,23 @@ export class PolicyDetailsWriteError extends Error {
     super(`policyDetails ${reason}: ${issues.join(", ")}`);
     this.name = "PolicyDetailsWriteError";
   }
+}
+
+/**
+ * 행동을 2개 이상 묶은 조건은 전부 "반드시 그래야 함"일 때만 허용한다.
+ *
+ * 금지·허용·조건부를 한 묶음에 넣으면 "A해야 하거나 B해서는 안 됩니다"처럼 앞 절이
+ * 요구로 읽혀 뜻이 뒤집힌다. 묶음의 관계(모두/하나)는 요구에만 의미가 있으므로
+ * 금지·허용·조건부는 조건을 하나씩 나눠 입력한다.
+ *
+ * 관리자 화면이 같은 규칙으로 막지만 폼을 거치지 않는 입력도 있으므로 여기서 한 번 더 본다.
+ */
+function findHandlingViolations(handling: PolicyDetails["handling"]): string[] {
+  return handling.flatMap((group, index) =>
+    group.rules.length > 1 && group.rules.some((rule) => rule.status !== "REQUIRED")
+      ? [`handling.${index}: 행동 2개 이상은 모두 REQUIRED여야 합니다`]
+      : [],
+  );
 }
 
 export type PolicyDetailsResolution = {
@@ -183,6 +211,11 @@ export function resolvePolicyDetails(
         (issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`,
       ),
     );
+  }
+
+  const violations = findHandlingViolations(parsed.data.handling);
+  if (violations.length > 0) {
+    throw new PolicyDetailsWriteError("handlingMultiNotRequired", violations);
   }
 
   return { write: { policyDetails: parsed.data }, effective: parsed.data };

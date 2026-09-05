@@ -50,7 +50,9 @@ const EXISTING: PolicyDetails = {
   preparation: [
     { mode: "ALL_OF", scope: "ALWAYS", items: [{ item: "POOP_BAG", status: "REQUIRED" }] },
   ],
-  handling: [{ mode: "UNKNOWN", rules: [{ rule: "FREE_ROAM", status: "PROHIBITED" }] }],
+  handling: [
+    { mode: "UNKNOWN", scope: "ALWAYS", rules: [{ rule: "FREE_ROAM", status: "PROHIBITED" }] },
+  ],
   spaceExceptions: [
     { area: "FLOOR", floor: 2, appliesToSize: "ALL", access: "NOT_ALLOWED" },
   ],
@@ -397,6 +399,7 @@ describe("구조화 상세 조건 병합", () => {
         handling: [
           {
             mode: "ANY_OF",
+            scope: "ALWAYS",
             rules: [
               { rule: "HELD_BY_OWNER", status: "REQUIRED" },
               { rule: "PET_SEAT", status: "REQUIRED" },
@@ -489,7 +492,9 @@ describe("병합 결과와 조건 컬럼 정합", () => {
       input({ leash: "PARTIAL_AREA" }),
       admin,
       submitted({
-        handling: [{ mode: "UNKNOWN", rules: [{ rule: "FREE_ROAM", status: "PROHIBITED" }] }],
+        handling: [
+    { mode: "UNKNOWN", scope: "ALWAYS", rules: [{ rule: "FREE_ROAM", status: "PROHIBITED" }] },
+  ],
       }),
     );
 

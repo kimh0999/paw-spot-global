@@ -421,12 +421,14 @@
           "PROHIBITED": "You must not {items}",
           "CONDITIONAL": "You may need to {items}, depending on the situation",
           "UNKNOWN": "Whether you must {items} is unconfirmed",
-          "relationUnknown": "Check with the place whether all of these rules apply or only one: {items}."
+          "relationUnknown": "Check with the place whether all of these rules apply or only one: {items}",
+          "multiNotRequired": "Check the in-store rules with the place"
         },
         "uncertainty": {
           "default": "Check {target} with the place"
         },
         "indoorOnly": "When indoors: {text}",
+        "outdoorOnly": "When outdoors: {text}",
         "scopeUnknownNote": "{text} (check when this applies)"
       },
       "info": {
@@ -685,7 +687,8 @@
           "policyDetailsInvalid": "The detailed conditions could not be saved. Check the preparation, handling, and unconfirmed item entries.",
           "policyDetailsCorrupted": "The stored detailed conditions are in an unreadable format, so saving was stopped. Reset them before saving again.",
           "submitFailed": "Save failed. Please try again.",
-          "fixFieldErrors": "Please fix the errors below before saving."
+          "fixFieldErrors": "Please fix the errors below before saving.",
+          "policyDetailsHandlingMultiNotRequired": "A condition with two or more behaviors can only be saved when every behavior is required. Add prohibited, allowed, or conditional behaviors as separate conditions, one at a time."
         }
       }
     }

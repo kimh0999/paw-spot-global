@@ -40,6 +40,14 @@ export type PolicyHandlingLine = {
   ruleKeys: HandlingRule[];
   relation: PolicyRelation;
   status: HandlingStatus;
+  /**
+   * 언제 적용되는 상태인지.
+   *
+   * 준비물처럼 boolean 두 개로 나누지 않고 값을 그대로 넘긴다 — 실외 한정이 있어
+   * 두 개로는 모자라고, 하나를 늘리면 세 boolean이 서로 배타적이라는 사실이 타입에서
+   * 사라진다.
+   */
+  scope: HandlingGroup["scope"];
 };
 
 export type PolicyUncertaintyLine = {
@@ -145,7 +153,12 @@ function toHandlingLines(groups: PolicyDetails["handling"]): PolicyHandlingLine[
 
     if (status === null) {
       for (const rule of group.rules) {
-        lines.push({ ruleKeys: [rule.rule], relation: "allOf", status: rule.status });
+        lines.push({
+          ruleKeys: [rule.rule],
+          relation: "allOf",
+          status: rule.status,
+          scope: group.scope,
+        });
       }
       continue;
     }
@@ -154,6 +167,7 @@ function toHandlingLines(groups: PolicyDetails["handling"]): PolicyHandlingLine[
       ruleKeys: group.rules.map((rule) => rule.rule),
       relation: RELATION_BY_MODE[group.mode],
       status,
+      scope: group.scope,
     });
   }
 

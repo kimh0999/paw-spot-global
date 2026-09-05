@@ -11,6 +11,7 @@ import {
 import { isSupportedLocale } from "@/lib/i18n/locale";
 import { parsePlaceFormData } from "@/lib/places/form-data";
 import {
+  POLICY_DETAILS_ERROR_MESSAGE_KEY,
   PolicyDetailsWriteError,
   parsePolicyDetailsForm,
 } from "@/lib/places/policy-details-form";
@@ -111,9 +112,7 @@ export async function updatePlace(
     if (err instanceof PolicyDetailsWriteError) {
       return {
         error: tV(
-          err.reason === "invalidExisting"
-            ? "policyDetailsCorrupted"
-            : "policyDetailsInvalid",
+          POLICY_DETAILS_ERROR_MESSAGE_KEY[err.reason] as Parameters<typeof tV>[0],
         ),
       };
     }

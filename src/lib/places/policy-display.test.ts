@@ -222,6 +222,7 @@ describe("toPolicyDisplay — 매장 내 상태", () => {
         handling: [
           {
             mode: "ANY_OF",
+            scope: "ALWAYS",
             rules: [
               { rule: "HELD_BY_OWNER", status: "REQUIRED" },
               { rule: "PET_SEAT", status: "REQUIRED" },
@@ -235,6 +236,7 @@ describe("toPolicyDisplay — 매장 내 상태", () => {
       ruleKeys: ["HELD_BY_OWNER", "PET_SEAT"],
       relation: "anyOf",
       status: "REQUIRED",
+      scope: "ALWAYS",
     });
   });
 
@@ -242,7 +244,7 @@ describe("toPolicyDisplay — 매장 내 상태", () => {
     const display = toPolicyDisplay(
       details({
         handling: [
-          { mode: "UNKNOWN", rules: [{ rule: "FREE_ROAM", status: "PROHIBITED" }] },
+          { mode: "UNKNOWN", scope: "ALWAYS", rules: [{ rule: "FREE_ROAM", status: "PROHIBITED" }] },
         ],
       }),
     );
@@ -331,7 +333,7 @@ describe("toPolicyDisplay — 빈 값과 하위 호환", () => {
       toPolicyDisplay(
         details({
           preparation: [{ mode: "ANY_OF", scope: "ALWAYS", items: [] }],
-          handling: [{ mode: "ANY_OF", rules: [] }],
+          handling: [{ mode: "ANY_OF", scope: "ALWAYS", rules: [] }],
         }),
       ),
     ).toBeNull();

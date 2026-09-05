@@ -55,6 +55,7 @@ describe("parsePolicyDetailsForm — 인덱스 파싱", () => {
         [`${P}.preparation.0.items.1.item`]: "CARRIER",
         [`${P}.preparation.0.items.1.status`]: "REQUIRED",
         [`${P}.handling.0.mode`]: "UNKNOWN",
+        [`${P}.handling.0.scope`]: "INDOOR",
         [`${P}.handling.0.rules.0.rule`]: "FREE_ROAM",
         [`${P}.handling.0.rules.0.status`]: "PROHIBITED",
         [`${P}.uncertainties.0.target`]: "PREPARATION",
@@ -73,7 +74,11 @@ describe("parsePolicyDetailsForm — 인덱스 파싱", () => {
       },
     ]);
     expect(parsed?.handling).toEqual([
-      { mode: "UNKNOWN", rules: [{ rule: "FREE_ROAM", status: "PROHIBITED" }] },
+      {
+        mode: "UNKNOWN",
+        scope: "INDOOR",
+        rules: [{ rule: "FREE_ROAM", status: "PROHIBITED" }],
+      },
     ]);
     expect(parsed?.uncertainties).toEqual([
       { target: "PREPARATION", reason: "슬래시가 택일인지 불명확" },
@@ -173,6 +178,122 @@ describe("resolvePolicyDetails", () => {
 });
 
 /**
+ * 행동을 2개 이상 묶은 조건은 전부 "반드시"일 때만 허용한다.
+ *
+ * 묶음의 관계(모두/하나)는 요구에만 뜻이 통한다. 금지·허용·조건부를 섞으면 표시 문장에서
+ * 앞 절이 요구로 읽혀 뜻이 뒤집힌다. 관리자 화면이 먼저 막지만 폼을 거치지 않는 입력도
+ * 있으므로 저장 경로에서 다시 본다.
+ */
+describe("resolvePolicyDetails — 매장 내 상태 묶음 규칙", () => {
+  function submit(rules: Array<{ rule: string; status: string }>) {
+    return {
+      entry: { vaccinationCompletionPolicy: "UNKNOWN" },
+      preparation: [],
+      handling: [{ mode: "ANY_OF", scope: "ALWAYS", rules }],
+      uncertainties: [],
+    };
+  }
+
+  it("행동 2개 이상이 모두 REQUIRED면 저장한다", () => {
+    const resolved = resolvePolicyDetails(
+      null,
+      submit([
+        { rule: "HELD_BY_OWNER", status: "REQUIRED" },
+        { rule: "PET_SEAT", status: "REQUIRED" },
+      ]),
+    );
+
+    expect(resolved.write.policyDetails?.handling[0].rules).toHaveLength(2);
+  });
+
+  it.each(["PROHIBITED", "ALLOWED", "CONDITIONAL", "UNKNOWN"])(
+    "행동 2개 이상이 %s면 저장을 거부한다",
+    (status) => {
+      let thrown: unknown;
+      try {
+        resolvePolicyDetails(
+          null,
+          submit([
+            { rule: "FREE_ROAM", status },
+            { rule: "ON_CHAIR_OR_TABLE", status },
+          ]),
+        );
+      } catch (err) {
+        thrown = err;
+      }
+
+      expect(thrown).toBeInstanceOf(PolicyDetailsWriteError);
+      expect((thrown as PolicyDetailsWriteError).reason).toBe("handlingMultiNotRequired");
+    },
+  );
+
+  // 하나만 REQUIRED가 아니어도 묶음 전체가 성립하지 않는다.
+  it("일부만 REQUIRED여도 저장을 거부한다", () => {
+    expect(() =>
+      resolvePolicyDetails(
+        null,
+        submit([
+          { rule: "HELD_BY_OWNER", status: "REQUIRED" },
+          { rule: "FREE_ROAM", status: "PROHIBITED" },
+        ]),
+      ),
+    ).toThrow(PolicyDetailsWriteError);
+  });
+
+  it.each(["PROHIBITED", "ALLOWED", "CONDITIONAL"])(
+    "행동이 하나면 %s를 그대로 저장한다",
+    (status) => {
+      const resolved = resolvePolicyDetails(null, submit([{ rule: "FREE_ROAM", status }]));
+
+      expect(resolved.write.policyDetails?.handling[0].rules[0].status).toBe(status);
+    },
+  );
+
+  // 화면을 거치지 않고 FormData를 직접 만들어도 같은 규칙에 걸린다.
+  it("관리자 화면을 우회한 FormData도 저장 경로에서 막는다", () => {
+    const submitted = parsePolicyDetailsForm(
+      form({
+        [`${P}.entry.vaccinationCompletionPolicy`]: "UNKNOWN",
+        [`${P}.handling.0.mode`]: "ANY_OF",
+        [`${P}.handling.0.scope`]: "ALWAYS",
+        [`${P}.handling.0.rules.0.rule`]: "FREE_ROAM",
+        [`${P}.handling.0.rules.0.status`]: "PROHIBITED",
+        [`${P}.handling.0.rules.1.rule`]: "ON_CHAIR_OR_TABLE",
+        [`${P}.handling.0.rules.1.status`]: "PROHIBITED",
+      }),
+    );
+
+    expect(() => resolvePolicyDetails(null, submitted)).toThrow(PolicyDetailsWriteError);
+  });
+
+  it("이미 저장돼 있던 어긋난 묶음도 다시 제출되면 막는다", () => {
+    const existing: PolicyDetails = {
+      ...EMPTY_POLICY_DETAILS,
+      handling: [
+        {
+          mode: "ANY_OF",
+          scope: "ALWAYS",
+          rules: [
+            { rule: "FREE_ROAM", status: "PROHIBITED" },
+            { rule: "ON_CHAIR_OR_TABLE", status: "PROHIBITED" },
+          ],
+        },
+      ],
+    };
+
+    expect(() =>
+      resolvePolicyDetails(
+        existing,
+        submit([
+          { rule: "FREE_ROAM", status: "PROHIBITED" },
+          { rule: "ON_CHAIR_OR_TABLE", status: "PROHIBITED" },
+        ]),
+      ),
+    ).toThrow(PolicyDetailsWriteError);
+  });
+});
+
+/**
  * 수정 화면 로드 경로.
  * 폼 컴포넌트를 렌더링하는 테스트는 없다(프로젝트에 jsdom·RTL이 없다).
  * 화면이 쓰는 두 계산 — 기존 값 읽기와 잠금 대상 산출 — 을 데이터 수준에서 확인한다.
@@ -191,7 +312,9 @@ describe("기존 policyDetails 수정 화면 로드", () => {
         ],
       },
     ],
-    handling: [{ mode: "UNKNOWN", rules: [{ rule: "FREE_ROAM", status: "PROHIBITED" }] }],
+    handling: [
+      { mode: "UNKNOWN", scope: "ALWAYS", rules: [{ rule: "FREE_ROAM", status: "PROHIBITED" }] },
+    ],
     spaceExceptions: [{ area: "FLOOR", floor: 2, appliesToSize: "ALL", access: "NOT_ALLOWED" }],
     behaviorRestrictions: [{ trigger: "BARKING", outcome: "MAY_RESTRICT" }],
     admission: { feePolicy: "PAID", rates: [], includedServices: [] },

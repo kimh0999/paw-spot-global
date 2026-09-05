@@ -421,12 +421,14 @@
           "PROHIBITED": "{items}서는 안 됩니다",
           "CONDITIONAL": "{items}야 하는 경우가 있습니다",
           "UNKNOWN": "{items}야 하는지 확인되지 않았습니다",
-          "relationUnknown": "{items} 모두 지켜야 하는지 하나만 지키면 되는지 매장에 확인해 주세요"
+          "relationUnknown": "{items} 모두 지켜야 하는지 하나만 지키면 되는지 매장에 확인해 주세요",
+          "multiNotRequired": "매장 내 이용 조건을 매장에 확인해 주세요"
         },
         "uncertainty": {
           "default": "{target} 조건을 매장에 확인해 주세요"
         },
         "indoorOnly": "실내 동반 시 {text}",
+        "outdoorOnly": "실외 동반 시 {text}",
         "scopeUnknownNote": "{text} (언제 적용되는지는 매장에 확인해 주세요)"
       },
       "info": {
@@ -685,7 +687,8 @@
           "policyDetailsInvalid": "상세 조건을 저장하지 못했습니다. 준비물·매장 내 상태·확인 항목 입력을 확인하세요.",
           "policyDetailsCorrupted": "저장된 상세 조건의 형식이 올바르지 않아 저장을 중단했습니다. 상세 조건을 초기화한 뒤 다시 저장하세요.",
           "submitFailed": "저장에 실패했습니다. 다시 시도해주세요.",
-          "fixFieldErrors": "아래 오류를 수정한 후 저장해주세요."
+          "fixFieldErrors": "아래 오류를 수정한 후 저장해주세요.",
+          "policyDetailsHandlingMultiNotRequired": "행동을 2개 이상 묶은 조건은 모두 \"반드시 그래야 함\"일 때만 저장됩니다. 금지·허용·조건부 행동은 하나씩 별도의 조건으로 추가해 주세요."
         }
       }
     }

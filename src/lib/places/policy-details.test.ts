@@ -104,12 +104,13 @@ describe("policyDetailsSchema — 매장 내 상태", () => {
         handling: [
           {
             mode: "ANY_OF",
+            scope: "ALWAYS",
             rules: [
               { rule: "HELD_BY_OWNER", status: "REQUIRED" },
               { rule: "PET_SEAT", status: "REQUIRED" },
             ],
           },
-          { mode: "ALL_OF", rules: [{ rule: "FREE_ROAM", status: "PROHIBITED" }] },
+          { mode: "ALL_OF", scope: "ALWAYS", rules: [{ rule: "FREE_ROAM", status: "PROHIBITED" }] },
         ],
       }),
     );

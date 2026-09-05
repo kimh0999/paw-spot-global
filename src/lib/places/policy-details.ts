@@ -61,6 +61,16 @@ export const HANDLING_RULES = [
 ] as const;
 export type HandlingRule = (typeof HANDLING_RULES)[number];
 
+/**
+ * 매장 내 상태가 적용되는 범위.
+ *
+ * 준비물(`PREPARATION_SCOPES`)과 달리 `OUTDOOR`가 있다. 실제 안내문이 실내와 실외에
+ * 서로 다른 상태를 요구한다 — "실내에서는 안고 계세요 / 실외는 목줄만 하면 됩니다".
+ * 범위가 없으면 두 문장이 한 화면에서 모순되게 읽힌다.
+ */
+export const HANDLING_SCOPES = ["ALWAYS", "INDOOR", "OUTDOOR", "UNKNOWN"] as const;
+export type HandlingScope = (typeof HANDLING_SCOPES)[number];
+
 export const HANDLING_STATUS = [
   "REQUIRED",
   "ALLOWED",
@@ -141,6 +151,7 @@ const preparationGroupSchema = z.strictObject({
 
 const handlingGroupSchema = z.strictObject({
   mode: z.enum(GROUP_MODES),
+  scope: z.enum(HANDLING_SCOPES),
   rules: z
     .array(
       z.strictObject({

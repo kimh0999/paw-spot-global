@@ -24,13 +24,11 @@ import {
  * 실제 메시지 파일을 읽어 화면에 나가는 문구를 그대로 검증한다.
  */
 describe("joinPolicyItems", () => {
+  // "모두"는 여기서 붙이지 않는다 — 한국어는 목적격 조사 뒤에 와야 자연스러워서
+  // ("목줄과 입마개를 모두") 문장 조합 단계에서 붙인다.
   it("한국어는 받침에 따라 와/과를 고른다", () => {
-    expect(joinPolicyItems(["목줄", "이동가방"], "allOf", "ko")).toBe(
-      "목줄과 이동가방 모두",
-    );
-    expect(joinPolicyItems(["케이지", "유모차"], "allOf", "ko")).toBe(
-      "케이지와 유모차 모두",
-    );
+    expect(joinPolicyItems(["목줄", "이동가방"], "allOf", "ko")).toBe("목줄과 이동가방");
+    expect(joinPolicyItems(["케이지", "유모차"], "allOf", "ko")).toBe("케이지와 유모차");
   });
 
   it("한국어 택일은 '또는 … 중 하나'로 잇는다", () => {
@@ -176,7 +174,7 @@ describe("문장 조합 — 매장 안에서", () => {
     const line = {
       ruleKeys: ["HELD_BY_OWNER", "PET_SEAT"] as PolicyHandlingLine["ruleKeys"],
       relation: "anyOf" as const,
-      status: "REQUIRED" as const,
+      status: "REQUIRED" as const, scope: "ALWAYS" as const,
     };
 
     expect(buildHandlingSentence(line, translator("ko"), "ko")).toBe(
@@ -191,7 +189,7 @@ describe("문장 조합 — 매장 안에서", () => {
     const line = {
       ruleKeys: ["FREE_ROAM"] as PolicyHandlingLine["ruleKeys"],
       relation: "unknown" as const,
-      status: "PROHIBITED" as const,
+      status: "PROHIBITED" as const, scope: "ALWAYS" as const,
     };
 
     expect(buildHandlingSentence(line, translator("ko"), "ko")).toBe(
@@ -207,14 +205,14 @@ describe("문장 조합 — 매장 안에서", () => {
     const line = {
       ruleKeys: ["HELD_BY_OWNER", "IN_CARRIER"] as PolicyHandlingLine["ruleKeys"],
       relation: "unknown" as const,
-      status: "REQUIRED" as const,
+      status: "REQUIRED" as const, scope: "ALWAYS" as const,
     };
 
     expect(buildHandlingSentence(line, translator("ko"), "ko")).toBe(
       "반려견을 안고 있기와 이동장 안에 두기를 모두 지켜야 하는지 하나만 지키면 되는지 매장에 확인해 주세요",
     );
     expect(buildHandlingSentence(line, translator("en"), "en")).toBe(
-      "Check with the place whether all of these rules apply or only one: holding your dog and keeping your dog in a carrier.",
+      "Check with the place whether all of these rules apply or only one: holding your dog and keeping your dog in a carrier",
     );
   });
 
@@ -222,7 +220,7 @@ describe("문장 조합 — 매장 안에서", () => {
     const line = {
       ruleKeys: ["HELD_BY_OWNER", "IN_CARRIER"] as PolicyHandlingLine["ruleKeys"],
       relation: "unknown" as const,
-      status: "REQUIRED" as const,
+      status: "REQUIRED" as const, scope: "ALWAYS" as const,
     };
 
     const ko = buildHandlingSentence(line, translator("ko"), "ko");
@@ -246,15 +244,278 @@ describe("문장 조합 — 매장 안에서", () => {
         "PET_SEAT",
       ] as PolicyHandlingLine["ruleKeys"],
       relation: "unknown" as const,
-      status: "REQUIRED" as const,
+      status: "REQUIRED" as const, scope: "ALWAYS" as const,
     };
 
     expect(buildHandlingSentence(line, translator("ko"), "ko")).toBe(
       "반려견을 안고 있기, 이동장 안에 두기, 전용 의자에 앉히기를 모두 지켜야 하는지 하나만 지키면 되는지 매장에 확인해 주세요",
     );
     expect(buildHandlingSentence(line, translator("en"), "en")).toBe(
-      "Check with the place whether all of these rules apply or only one: holding your dog, keeping your dog in a carrier and seating your dog in a pet seat.",
+      "Check with the place whether all of these rules apply or only one: holding your dog, keeping your dog in a carrier and seating your dog in a pet seat",
     );
+  });
+});
+
+/**
+ * 행동 2개 이상은 모두 "반드시"일 때만 한 문장으로 이을 수 있다.
+ * 금지·허용·조건부가 섞이면 앞 절이 요구로 읽혀 뜻이 뒤집히므로 문장을 만들지 않는다.
+ * 저장은 policy-details-form이 막지만, 옛 데이터와 폼 밖 입력이 화면까지 올 수 있다.
+ */
+describe("문장 조합 — 행동 2개 이상인데 필수가 아닌 조건", () => {
+  const rules = ["FREE_ROAM", "ON_CHAIR_OR_TABLE"] as PolicyHandlingLine["ruleKeys"];
+
+  it.each(["PROHIBITED", "ALLOWED", "CONDITIONAL", "UNKNOWN"] as const)(
+    "%s는 뜻을 추측하지 않고 확인을 요청한다",
+    (status) => {
+      const line = { ruleKeys: rules, relation: "anyOf" as const, status, scope: "ALWAYS" as const };
+
+      expect(buildHandlingSentence(line, translator("ko"), "ko")).toBe(
+        "매장 내 이용 조건을 매장에 확인해 주세요",
+      );
+      expect(buildHandlingSentence(line, translator("en"), "en")).toBe(
+        "Check the in-store rules with the place",
+      );
+    },
+  );
+
+  // 뜻이 뒤집히던 문장이 다시 나오지 않는지 본다.
+  it("금지 조건을 요구처럼 잇지 않는다", () => {
+    const ko = buildHandlingSentence(
+      { ruleKeys: rules, relation: "allOf", status: "PROHIBITED", scope: "ALWAYS" },
+      translator("ko"),
+      "ko",
+    );
+    const en = buildHandlingSentence(
+      { ruleKeys: rules, relation: "anyOf", status: "PROHIBITED", scope: "ALWAYS" },
+      translator("en"),
+      "en",
+    );
+
+    expect(ko).not.toContain("해야 하거나");
+    expect(ko).not.toContain("해야 하고");
+    expect(en).not.toContain("must not either");
+  });
+
+  it("행동이 하나면 금지·허용·조건부를 그대로 문장으로 만든다", () => {
+    const one = ["FREE_ROAM"] as PolicyHandlingLine["ruleKeys"];
+
+    expect(
+      buildHandlingSentence(
+        { ruleKeys: one, relation: "unknown", status: "ALLOWED", scope: "ALWAYS" },
+        translator("ko"),
+        "ko",
+      ),
+    ).toBe("반려견이 매장 안에서 자유롭게 다니게 해도 됩니다");
+    expect(
+      buildHandlingSentence(
+        { ruleKeys: one, relation: "unknown", status: "CONDITIONAL", scope: "ALWAYS" },
+        translator("en"),
+        "en",
+      ),
+    ).toBe("You may need to let your dog roam freely, depending on the situation");
+  });
+
+  it("모두 필수면 지금처럼 한 문장으로 잇는다", () => {
+    expect(
+      buildHandlingSentence(
+        {
+          ruleKeys: ["HELD_BY_OWNER", "PET_SEAT"] as PolicyHandlingLine["ruleKeys"],
+          relation: "anyOf",
+          status: "REQUIRED",
+          scope: "ALWAYS",
+        },
+        translator("ko"),
+        "ko",
+      ),
+    ).toBe("반려견을 안고 있어야 하거나 전용 의자에 앉혀야 합니다");
+  });
+});
+
+/**
+ * DB에 이미 들어 있던 어긋난 묶음이 화면까지 오는 경로.
+ * 저장은 이제 막히지만 옛 행과 폼 밖 입력은 그대로 남아 있다.
+ */
+describe("어긋난 묶음이 화면에 닿아도 뜻이 뒤집히지 않는다", () => {
+  function handlingSentences(details: PolicyDetails, locale: "ko" | "en"): string[] {
+    const display = toPolicyDisplay(details);
+    return (display?.handling ?? []).map((line) =>
+      buildHandlingSentence(line, translator(locale), locale),
+    );
+  }
+
+  const broken: PolicyDetails = {
+    ...EMPTY_POLICY_DETAILS,
+    handling: [
+      {
+        mode: "ANY_OF",
+        scope: "ALWAYS",
+        rules: [
+          { rule: "FREE_ROAM", status: "PROHIBITED" },
+          { rule: "ON_CHAIR_OR_TABLE", status: "PROHIBITED" },
+        ],
+      },
+    ],
+  };
+
+  it("금지 묶음은 정형 안내로 내린다", () => {
+    expect(handlingSentences(broken, "ko")).toEqual([
+      "매장 내 이용 조건을 매장에 확인해 주세요",
+    ]);
+    expect(handlingSentences(broken, "en")).toEqual([
+      "Check the in-store rules with the place",
+    ]);
+  });
+
+  // 상태가 섞인 묶음은 표시 계층이 한 줄씩 나누므로 단일 문장 규칙을 그대로 탄다.
+  it("상태가 섞인 묶음은 행동별로 나뉘어 각각 정확히 표현된다", () => {
+    const mixed: PolicyDetails = {
+      ...EMPTY_POLICY_DETAILS,
+      handling: [
+        {
+          mode: "ALL_OF",
+          scope: "ALWAYS",
+          rules: [
+            { rule: "HELD_BY_OWNER", status: "REQUIRED" },
+            { rule: "FREE_ROAM", status: "PROHIBITED" },
+          ],
+        },
+      ],
+    };
+
+    expect(handlingSentences(mixed, "ko")).toEqual([
+      "반려견을 안고 있어야 합니다",
+      "반려견이 매장 안에서 자유롭게 다니게 해서는 안 됩니다",
+    ]);
+  });
+});
+
+/**
+ * 실내/실외 구분. 범위가 빠지면 "안고 계세요"와 "바닥에서 걷게 해도 됩니다"가
+ * 한 화면에서 모순돼 보인다 — 실제 매장 안내문(화람)이 이 형태다.
+ */
+describe("문장 조합 — 매장 안에서의 적용 범위", () => {
+  const held = ["HELD_BY_OWNER"] as PolicyHandlingLine["ruleKeys"];
+
+  it("실내 한정을 문장에 남긴다", () => {
+    const line: PolicyHandlingLine = {
+      ruleKeys: held,
+      relation: "unknown",
+      status: "REQUIRED",
+      scope: "INDOOR",
+    };
+
+    expect(buildHandlingSentence(line, translator("ko"), "ko")).toBe(
+      "실내 동반 시 반려견을 안고 있어야 합니다",
+    );
+    expect(buildHandlingSentence(line, translator("en"), "en")).toBe(
+      "When indoors: You must hold your dog",
+    );
+  });
+
+  it("실외 한정을 문장에 남긴다", () => {
+    const line: PolicyHandlingLine = {
+      ruleKeys: ["ON_LEASH_FLOOR"] as PolicyHandlingLine["ruleKeys"],
+      relation: "unknown",
+      status: "ALLOWED",
+      scope: "OUTDOOR",
+    };
+
+    expect(buildHandlingSentence(line, translator("ko"), "ko")).toBe(
+      "실외 동반 시 목줄을 매고 바닥에서 걷게 해도 됩니다",
+    );
+    expect(buildHandlingSentence(line, translator("en"), "en")).toBe(
+      "When outdoors: You may keep your dog on a leash on the floor",
+    );
+  });
+
+  it("범위가 확인되지 않았으면 확인을 덧붙인다", () => {
+    const line: PolicyHandlingLine = {
+      ruleKeys: held,
+      relation: "unknown",
+      status: "REQUIRED",
+      scope: "UNKNOWN",
+    };
+
+    expect(buildHandlingSentence(line, translator("ko"), "ko")).toBe(
+      "반려견을 안고 있어야 합니다 (언제 적용되는지는 매장에 확인해 주세요)",
+    );
+  });
+
+  it("항상 적용이면 아무것도 덧붙이지 않는다", () => {
+    const line: PolicyHandlingLine = {
+      ruleKeys: held,
+      relation: "unknown",
+      status: "REQUIRED",
+      scope: "ALWAYS",
+    };
+
+    expect(buildHandlingSentence(line, translator("ko"), "ko")).toBe(
+      "반려견을 안고 있어야 합니다",
+    );
+  });
+
+  // 실제 매장 안내문 한 건이 뜻을 잃지 않고 담기는지 본다.
+  it("실내와 실외에 서로 다른 상태를 요구하는 안내문을 담는다", () => {
+    const hwaram: PolicyDetails = {
+      ...EMPTY_POLICY_DETAILS,
+      handling: [
+        {
+          mode: "ANY_OF",
+          scope: "INDOOR",
+          rules: [
+            { rule: "IN_CARRIER", status: "REQUIRED" },
+            { rule: "HELD_BY_OWNER", status: "REQUIRED" },
+          ],
+        },
+        {
+          mode: "UNKNOWN",
+          scope: "OUTDOOR",
+          rules: [{ rule: "ON_LEASH_FLOOR", status: "ALLOWED" }],
+        },
+      ],
+    };
+
+    const lines = (toPolicyDisplay(hwaram)?.handling ?? []).map((line) =>
+      buildHandlingSentence(line, translator("ko"), "ko"),
+    );
+
+    expect(lines).toEqual([
+      "실내 동반 시 이동장 안에 두어야 하거나 반려견을 안고 있어야 합니다",
+      "실외 동반 시 목줄을 매고 바닥에서 걷게 해도 됩니다",
+    ]);
+  });
+});
+
+describe("문구 정리", () => {
+  // F-3: "모두"는 목적격 조사 뒤에 온다.
+  it("한국어 '모두'는 조사 뒤에 붙는다", () => {
+    const line: PolicyPreparationLine = {
+      itemKeys: ["LEASH", "MUZZLE"],
+      relation: "allOf",
+      status: "REQUIRED",
+      indoorOnly: false,
+      scopeUnknown: false,
+    };
+
+    expect(buildPreparationSentence(line, translator("ko"), "ko")).toBe(
+      "목줄과 입마개를 모두 반드시 챙겨야 합니다",
+    );
+    expect(buildPreparationSentence(line, translator("en"), "en")).toBe(
+      "You must bring both a leash and a muzzle",
+    );
+  });
+
+  // F-2: 한 줄만 마침표로 끝나면 목록 안에서 튄다.
+  it("영어 표시 문구는 어느 것도 마침표로 끝나지 않는다", () => {
+    const messages = JSON.parse(
+      readFileSync(path.join(process.cwd(), "messages", "en.json"), "utf8"),
+    ).places.detail.policyDetails;
+    const strings = (value: unknown): string[] =>
+      typeof value === "string"
+        ? [value]
+        : Object.values(value as Record<string, unknown>).flatMap(strings);
+
+    expect(strings(messages).filter((text) => text.endsWith("."))).toEqual([]);
   });
 });
 

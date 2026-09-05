@@ -34,12 +34,9 @@ export function joinPolicyItems(
 
   if (locale === "ko") {
     if (relation === "anyOf") return `${labels.join(" 또는 ")} 중 하나`;
-    if (relation === "allOf") {
-      return labels.length === 2
-        ? `${labels[0]}${comitativeParticle(labels[0])} ${labels[1]} 모두`
-        : `${labels.join(", ")} 모두`;
-    }
-    // 관계 미확인: 나열만 한다.
+    // allOf의 "모두"는 여기서 붙이지 않는다. 한국어는 목적격 조사 뒤에 와야 자연스러워서
+    // ("목줄과 입마개를 모두") toObjectPhrase가 조사와 함께 처리한다.
+    // 관계 미확인도 나열만 한다.
     return labels.length === 2
       ? `${labels[0]}${comitativeParticle(labels[0])} ${labels[1]}`
       : labels.join(", ");
@@ -83,8 +80,42 @@ export function appendObjectParticle(phrase: string, locale: string): string {
   return `${phrase}${objectParticle(phrase)}`;
 }
 
+/**
+ * 항목 목록을 목적어 구절로 만든다.
+ *
+ * 한국어 "모두"는 목적격 조사 뒤에 와야 자연스럽다 — "목줄과 입마개**를 모두**".
+ * 영어는 `both A and B`가 이미 완결돼 있어 덧붙이지 않는다.
+ */
+function toObjectPhrase(
+  labels: string[],
+  relation: PolicyRelation,
+  locale: string,
+): string {
+  const phrase = appendObjectParticle(joinPolicyItems(labels, relation, locale), locale);
+  return locale === "ko" && relation === "allOf" && labels.length > 1
+    ? `${phrase} 모두`
+    : phrase;
+}
+
 /** 메시지 조회 함수. 컴포넌트의 next-intl 번역기를 그대로 받아 쓴다. */
 export type Translate = (key: string, values?: Record<string, string>) => string;
+
+/**
+ * 언제 적용되는 상태인지를 문장 앞에 붙인다.
+ *
+ * 범위가 빠지면 "안고 계세요"와 "바닥에서 걷게 해도 됩니다"가 한 화면에서 모순돼 보인다.
+ * 실제 안내문이 실내와 실외에 서로 다른 상태를 요구한다.
+ */
+function withScope(
+  text: string,
+  scope: PolicyHandlingLine["scope"],
+  t: Translate,
+): string {
+  if (scope === "INDOOR") return t("indoorOnly", { text });
+  if (scope === "OUTDOOR") return t("outdoorOnly", { text });
+  if (scope === "UNKNOWN") return t("scopeUnknownNote", { text });
+  return text;
+}
 
 /** 관계가 확인되지 않았고 항목이 둘 이상이면 무엇이 필요한지 단정할 수 없다. */
 function relationIsUnclear(relation: PolicyRelation, count: number): boolean {
@@ -106,7 +137,7 @@ export function buildPreparationSentence(
   const relation = relationIsUnclear(line.relation, line.itemKeys.length)
     ? "unknown"
     : line.relation;
-  const items = appendObjectParticle(joinPolicyItems(labels, relation, locale), locale);
+  const items = toObjectPhrase(labels, relation, locale);
 
   let text =
     relation === "unknown" && line.itemKeys.length > 1
@@ -124,18 +155,31 @@ export function buildHandlingSentence(
   t: Translate,
   locale: string,
 ): string {
+  // 행동 2개 이상은 모두 "반드시"일 때만 한 문장으로 이을 수 있다(저장 규칙과 같다).
+  // 금지·허용·조건부가 섞이면 "A해야 하거나 B해서는 안 됩니다"처럼 앞 절이 요구로 읽혀
+  // 뜻이 뒤집힌다. 옛 데이터나 폼 밖에서 들어온 값이면 추측하지 말고 확인을 요청한다.
+  if (line.ruleKeys.length > 1 && line.status !== "REQUIRED") {
+    return t("handling.multiNotRequired");
+  }
+
   if (relationIsUnclear(line.relation, line.ruleKeys.length)) {
     // 무엇을 지킬지 고르는 문제가 아니라 모두인지 하나인지가 확인되지 않은 것이다.
     const names = line.ruleKeys.map((key) => t(`rules.${key}`));
-    return t("handling.relationUnknown", {
-      items: appendObjectParticle(joinPolicyItems(names, "unknown", locale), locale),
-    });
+    return withScope(
+      t("handling.relationUnknown", { items: toObjectPhrase(names, "unknown", locale) }),
+      line.scope,
+      t,
+    );
   }
 
   const clauses = line.ruleKeys.map((key) => t(`ruleClauses.${key}`));
-  return t(`handling.${line.status}`, {
-    items: joinHandlingClauses(clauses, line.relation, locale),
-  });
+  return withScope(
+    t(`handling.${line.status}`, {
+      items: joinHandlingClauses(clauses, line.relation, locale),
+    }),
+    line.scope,
+    t,
+  );
 }
 
 /**
