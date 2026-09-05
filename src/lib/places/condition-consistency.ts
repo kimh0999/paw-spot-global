@@ -166,10 +166,64 @@ export function derivedColumns(
  * - policyDetails가 언급하지 않은 항목의 컬럼도 건드리지 않는다.
  *   `leash=PARTIAL_AREA`처럼 준비물 그룹으로 표현할 수 없는 값이 살아남는다.
  * - 언급된 항목은 원본이 이기며, REQUIRED에서 UNKNOWN으로 내려갈 수도 있다.
+ *
+ * 돌려주는 키는 이 네 개뿐이다. 호출한 쪽이 결과를 저장 데이터에 펼치므로, 넘겨받은
+ * 객체를 통째로 되돌려주면 조건 컬럼이 아닌 값(`clearPolicyDetails` 같은 폼 신호)까지
+ * 저장 데이터에 섞인다.
  */
 export function reconcileConditionColumns(
   details: PolicyDetails | null,
   current: ReconcilableColumns,
 ): ReconcilableColumns {
-  return { ...current, ...derivedColumns(details) };
+  const derived = derivedColumns(details);
+
+  return {
+    leash: derived.leash ?? current.leash,
+    muzzle: derived.muzzle ?? current.muzzle,
+    carrierStrollerPolicy: derived.carrierStrollerPolicy ?? current.carrierStrollerPolicy,
+    vaccinationCertificatePolicy:
+      derived.vaccinationCertificatePolicy ?? current.vaccinationCertificatePolicy,
+  };
+}
+
+/**
+ * `PlaceCondition.requiredItems`가 표현하는 준비물.
+ * 지금은 배변봉투 하나뿐이며(`REQUIRED_ITEMS`), 상세 조건의 같은 항목과 사실이 겹친다.
+ */
+const POOP_BAG: PreparationItem = "POOP_BAG";
+
+/**
+ * 상세 조건이 배변봉투를 필수로 정하는지.
+ *
+ * - `true` / `false`: 준비물 그룹이 이 항목을 언급했다. 상세 조건이 기준이다.
+ * - `null`: 언급하지 않았다 — 컬럼 규칙과 같이 관리자가 고른 값을 그대로 둔다.
+ *
+ * 판단은 컬럼과 같은 `summarize`를 쓴다. 그래서 택일(목줄 **또는** 배변봉투)이나
+ * 권장·확인 필요는 REQUIRED가 되지 않는다. `requiredItems`는 "확인되지 않음"을 담을 수
+ * 없고 목록에 있으면 화면에 "필요 준비물"로 단언되므로, 확신할 수 없으면 빼는 쪽이 맞다.
+ * 뺀다고 "필요 없음"이 되지는 않는다 — 목록이 비면 그 줄 자체가 표시되지 않고,
+ * 확인이 필요하다는 사실은 policyDetails에 그대로 남아 상세 화면에 나온다.
+ */
+export function derivedPoopBagRequired(details: PolicyDetails | null): boolean | null {
+  if (!details) return null;
+
+  const summary = summarize(collectEvidence(details).get(POOP_BAG));
+  return summary === null ? null : summary === "REQUIRED";
+}
+
+/**
+ * 저장할 `requiredItems`를 정한다.
+ *
+ * 배변봉투 외의 항목은 건드리지 않는다 — 상세 조건이 아무 말도 하지 않는 값이다.
+ * 이 함수는 관리자 폼이 아니라 모든 쓰기 경로가 호출한다(create-place.ts / update-place.ts).
+ */
+export function reconcileRequiredItems(
+  details: PolicyDetails | null,
+  current: readonly string[],
+): string[] {
+  const required = derivedPoopBagRequired(details);
+  if (required === null) return [...current];
+
+  const others = current.filter((item) => item !== POOP_BAG);
+  return required ? [...others, POOP_BAG] : others;
 }

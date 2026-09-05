@@ -1,4 +1,9 @@
-import { GROUP_MODES, PREPARATION_SCOPES, PREPARATION_STATUS } from "@/lib/places/policy-details";
+import {
+  GROUP_MODES,
+  PREPARATION_ITEMS,
+  PREPARATION_SCOPES,
+  PREPARATION_STATUS,
+} from "@/lib/places/policy-details";
 import type { PolicyDetails, PreparationItem } from "@/lib/places/policy-details";
 
 import { describePreparation, sharedStatus } from "./describe";
@@ -7,7 +12,6 @@ import {
   PREPARATION_ITEM_LABELS,
   PREPARATION_SCOPE_LABELS,
   PREPARATION_STATUS_LABELS,
-  SELECTABLE_PREPARATION_ITEMS,
 } from "./labels";
 
 type Groups = PolicyDetails["preparation"];
@@ -21,14 +25,6 @@ type Props = {
 
 const FIELD = "condition.policyDetails.preparation";
 const MAX_GROUPS = 5;
-
-/** 새로 고를 수 없는 항목이라도 이미 저장돼 있으면 보여 준다(해제는 가능). */
-function visibleItems(group: Group): PreparationItem[] {
-  const extra = group.items
-    .map((item) => item.item)
-    .filter((item) => !SELECTABLE_PREPARATION_ITEMS.includes(item));
-  return [...SELECTABLE_PREPARATION_ITEMS, ...extra];
-}
 
 /**
  * 방문 전에 챙겨야 하는 물건.
@@ -71,7 +67,7 @@ export function PreparationGroupsField({ groups, onChange }: Props) {
         return (
           <div key={index} className="flex flex-col gap-3 rounded border p-3">
             <div className="flex flex-wrap gap-x-4 gap-y-2">
-              {visibleItems(group).map((item) => (
+              {PREPARATION_ITEMS.map((item) => (
                 <label key={item} className="flex items-center gap-2">
                   <input
                     type="checkbox"

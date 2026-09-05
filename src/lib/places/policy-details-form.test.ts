@@ -5,6 +5,7 @@ import {
   PolicyDetailsWriteError,
   parsePolicyDetailsForm,
   resolvePolicyDetails,
+  type PolicyDetailsFormInput,
 } from "@/lib/places/policy-details-form";
 import {
   EMPTY_POLICY_DETAILS,
@@ -24,6 +25,23 @@ function form(entries: Record<string, string | string[]>, submit = true): FormDa
 
 const P = "condition.policyDetails";
 
+/** 편집기가 보내는 8개 그룹. 화면을 거치지 않는 호출도 같은 모양이어야 한다. */
+function submitInput(
+  overrides: Partial<PolicyDetailsFormInput> = {},
+): PolicyDetailsFormInput {
+  return {
+    entry: { vaccinationCompletionPolicy: "UNKNOWN" },
+    preparation: [],
+    handling: [],
+    spaceExceptions: [],
+    behaviorRestrictions: [],
+    admission: null,
+    hygiene: [],
+    uncertainties: [],
+    ...overrides,
+  };
+}
+
 describe("parsePolicyDetailsForm — 제출 신호", () => {
   it("신호가 없으면 undefined다 (기존 값 유지)", () => {
     expect(parsePolicyDetailsForm(form({}, false))).toBeUndefined();
@@ -38,6 +56,11 @@ describe("parsePolicyDetailsForm — 제출 신호", () => {
       entry: { vaccinationCompletionPolicy: "UNKNOWN" },
       preparation: [],
       handling: [],
+      spaceExceptions: [],
+      behaviorRestrictions: [],
+      // 입장료는 빈 배열이 아니라 null이다 — "무료"가 아니라 "다루지 않음"이다.
+      admission: null,
+      hygiene: [],
       uncertainties: [],
     });
   });
@@ -116,32 +139,42 @@ describe("parsePolicyDetailsForm — 인덱스 파싱", () => {
 });
 
 describe("parsePolicyDetailsForm — 조작된 입력", () => {
-  // 편집하지 않는 필드를 클라이언트로 왕복시키지 않으므로 주입 경로 자체가 없다.
-  it("편집 대상이 아닌 필드는 FormData로 넣어도 읽지 않는다", () => {
+  // 값은 필드 단위로만 오간다. JSON 본문을 넣어도 읽는 경로가 없다.
+  it("JSON 본문을 통째로 보내도 읽지 않는다", () => {
+    const parsed = parsePolicyDetailsForm(
+      form({
+        [`${P}.entry.vaccinationCompletionPolicy`]: "UNKNOWN",
+        [`${P}.hygiene`]: "OWNER_LIABILITY",
+        "condition.policyDetails": JSON.stringify({
+          ...EMPTY_POLICY_DETAILS,
+          hygiene: ["PET_DISHES_ONLY"],
+        }),
+      }),
+    );
+
+    expect(parsed?.hygiene).toEqual(["OWNER_LIABILITY"]);
+  });
+
+  it("알 수 없는 하위 필드는 무시한다", () => {
     const parsed = parsePolicyDetailsForm(
       form({
         [`${P}.entry.vaccinationCompletionPolicy`]: "UNKNOWN",
         [`${P}.spaceExceptions.0.area`]: "INDOOR",
+        [`${P}.spaceExceptions.0.appliesToSize`]: "ALL",
         [`${P}.spaceExceptions.0.access`]: "NOT_ALLOWED",
-        [`${P}.hygiene`]: "OWNER_LIABILITY",
-        "condition.policyDetails": JSON.stringify({ ...EMPTY_POLICY_DETAILS, hygiene: ["PET_DISHES_ONLY"] }),
-      }),
-    );
-    expect(parsed).not.toHaveProperty("spaceExceptions");
-    expect(parsed).not.toHaveProperty("hygiene");
-  });
-
-  it("오래된 JSON을 통째로 보내도 기존 DB 값이 이긴다", () => {
-    const existing: PolicyDetails = { ...EMPTY_POLICY_DETAILS, hygiene: ["OWNER_LIABILITY"] };
-    const parsed = parsePolicyDetailsForm(
-      form({
-        [`${P}.entry.vaccinationCompletionPolicy`]: "UNKNOWN",
-        "condition.policyDetails": JSON.stringify({ ...EMPTY_POLICY_DETAILS, hygiene: [] }),
+        [`${P}.spaceExceptions.0.secretFlag`]: "true",
       }),
     );
 
-    const resolved = resolvePolicyDetails(existing, parsed);
-    expect(resolved.write.policyDetails?.hygiene).toEqual(["OWNER_LIABILITY"]);
+    expect(parsed?.spaceExceptions).toEqual([
+      {
+        area: "INDOOR",
+        floor: undefined,
+        label: undefined,
+        appliesToSize: "ALL",
+        access: "NOT_ALLOWED",
+      },
+    ]);
   });
 });
 
@@ -155,7 +188,7 @@ describe("resolvePolicyDetails", () => {
   });
 
   it("기존 값이 깨져 있으면 병합하지 않고 중단한다", () => {
-    expect(() => resolvePolicyDetails({ version: 2 }, { entry: { vaccinationCompletionPolicy: "UNKNOWN" }, preparation: [], handling: [], uncertainties: [] })).toThrow(
+    expect(() => resolvePolicyDetails({ version: 2 }, submitInput())).toThrow(
       PolicyDetailsWriteError,
     );
   });
@@ -167,12 +200,7 @@ describe("resolvePolicyDetails", () => {
   });
 
   it("version은 1로 유지된다", () => {
-    const resolved = resolvePolicyDetails(null, {
-      entry: { vaccinationCompletionPolicy: "UNKNOWN" },
-      preparation: [],
-      handling: [],
-      uncertainties: [],
-    });
+    const resolved = resolvePolicyDetails(null, submitInput());
     expect(resolved.write.policyDetails?.version).toBe(1);
   });
 });
@@ -186,12 +214,7 @@ describe("resolvePolicyDetails", () => {
  */
 describe("resolvePolicyDetails — 매장 내 상태 묶음 규칙", () => {
   function submit(rules: Array<{ rule: string; status: string }>) {
-    return {
-      entry: { vaccinationCompletionPolicy: "UNKNOWN" },
-      preparation: [],
-      handling: [{ mode: "ANY_OF", scope: "ALWAYS", rules }],
-      uncertainties: [],
-    };
+    return submitInput({ handling: [{ mode: "ANY_OF", scope: "ALWAYS", rules }] });
   }
 
   it("행동 2개 이상이 모두 REQUIRED면 저장한다", () => {
@@ -322,7 +345,7 @@ describe("기존 policyDetails 수정 화면 로드", () => {
     uncertainties: [{ target: "PREPARATION", reason: "택일 여부 불명확" }],
   };
 
-  it("저장된 값을 ok로 읽어 편집 대상 4개 필드를 그대로 넘긴다", () => {
+  it("저장된 값을 ok로 읽어 편집기에 그대로 넘긴다", () => {
     const read = readPolicyDetails(stored);
     expect(read.status).toBe("ok");
     if (read.status !== "ok") return;
@@ -333,11 +356,17 @@ describe("기존 policyDetails 수정 화면 로드", () => {
     expect(read.value.uncertainties[0].reason).toBe("택일 여부 불명확");
   });
 
-  it("화면에 없는 필드도 읽기 결과에 남아 저장 시 이어진다", () => {
+  it("8개 그룹을 모두 읽어 편집 화면에 복원한다", () => {
     const read = readPolicyDetails(stored);
     if (read.status !== "ok") throw new Error("ok가 아님");
 
-    expect(read.value.spaceExceptions).toHaveLength(1);
+    expect(read.value.spaceExceptions).toEqual([
+      { area: "FLOOR", floor: 2, appliesToSize: "ALL", access: "NOT_ALLOWED" },
+    ]);
+    expect(read.value.behaviorRestrictions).toEqual([
+      { trigger: "BARKING", outcome: "MAY_RESTRICT" },
+    ]);
+    expect(read.value.admission?.feePolicy).toBe("PAID");
     expect(read.value.hygiene).toEqual(["OWNER_LIABILITY"]);
   });
 
@@ -356,5 +385,363 @@ describe("기존 policyDetails 수정 화면 로드", () => {
     const read = readPolicyDetails({ ...stored, version: 99 });
     expect(read.status).toBe("invalid");
     expect(read.status === "invalid" && read.issues.length).toBeGreaterThan(0);
+  });
+});
+
+describe("parsePolicyDetailsForm — 층·구역별 예외", () => {
+  it("층 번호와 구역 이름을 해당 구역에서만 읽는다", () => {
+    const parsed = parsePolicyDetailsForm(
+      form({
+        [`${P}.entry.vaccinationCompletionPolicy`]: "UNKNOWN",
+        [`${P}.spaceExceptions.0.area`]: "FLOOR",
+        [`${P}.spaceExceptions.0.floor`]: "-1",
+        [`${P}.spaceExceptions.0.appliesToSize`]: "ALL",
+        [`${P}.spaceExceptions.0.access`]: "NOT_ALLOWED",
+        [`${P}.spaceExceptions.1.area`]: "OTHER",
+        [`${P}.spaceExceptions.1.label`]: "루프탑",
+        [`${P}.spaceExceptions.1.appliesToSize`]: "SMALL",
+        [`${P}.spaceExceptions.1.access`]: "ALLOWED",
+      }),
+    );
+
+    const resolved = resolvePolicyDetails(null, parsed);
+    expect(resolved.write.policyDetails?.spaceExceptions).toEqual([
+      { area: "FLOOR", floor: -1, appliesToSize: "ALL", access: "NOT_ALLOWED" },
+      { area: "OTHER", label: "루프탑", appliesToSize: "SMALL", access: "ALLOWED" },
+    ]);
+  });
+
+  // 층을 비운 채 저장되면 "어느 층인지 모르는 예외"가 남는다.
+  it("특정 층인데 층 번호가 비면 저장을 거부한다", () => {
+    const parsed = parsePolicyDetailsForm(
+      form({
+        [`${P}.entry.vaccinationCompletionPolicy`]: "UNKNOWN",
+        [`${P}.spaceExceptions.0.area`]: "FLOOR",
+        [`${P}.spaceExceptions.0.floor`]: "",
+        [`${P}.spaceExceptions.0.appliesToSize`]: "ALL",
+        [`${P}.spaceExceptions.0.access`]: "NOT_ALLOWED",
+      }),
+    );
+
+    expect(() => resolvePolicyDetails(null, parsed)).toThrow(PolicyDetailsWriteError);
+  });
+
+  it("그 밖의 구역인데 이름이 비면 저장을 거부한다", () => {
+    expect(() =>
+      resolvePolicyDetails(
+        null,
+        submitInput({
+          spaceExceptions: [{ area: "OTHER", appliesToSize: "ALL", access: "ALLOWED" }],
+        }),
+      ),
+    ).toThrow(PolicyDetailsWriteError);
+  });
+
+  it("숫자가 아닌 층 번호는 저장을 거부한다", () => {
+    const parsed = parsePolicyDetailsForm(
+      form({
+        [`${P}.entry.vaccinationCompletionPolicy`]: "UNKNOWN",
+        [`${P}.spaceExceptions.0.area`]: "FLOOR",
+        [`${P}.spaceExceptions.0.floor`]: "지하",
+        [`${P}.spaceExceptions.0.appliesToSize`]: "ALL",
+        [`${P}.spaceExceptions.0.access`]: "NOT_ALLOWED",
+      }),
+    );
+
+    expect(() => resolvePolicyDetails(null, parsed)).toThrow(PolicyDetailsWriteError);
+  });
+
+  it("없는 구역 코드는 저장을 거부한다", () => {
+    expect(() =>
+      resolvePolicyDetails(
+        null,
+        submitInput({
+          spaceExceptions: [{ area: "ROOFTOP", appliesToSize: "ALL", access: "ALLOWED" }],
+        }),
+      ),
+    ).toThrow(PolicyDetailsWriteError);
+  });
+});
+
+describe("resolvePolicyDetails — 같은 대상에 두 번 답한 입력", () => {
+  function reasonOf(run: () => unknown): string {
+    try {
+      run();
+    } catch (err) {
+      return (err as PolicyDetailsWriteError).reason;
+    }
+    throw new Error("거부되지 않았다");
+  }
+
+  // 어느 쪽이 맞는지 알 수 없으므로 자동으로 하나를 고르지 않는다.
+  it("같은 구역·크기가 두 번이면 저장을 거부한다", () => {
+    const reason = reasonOf(() =>
+      resolvePolicyDetails(
+        null,
+        submitInput({
+          spaceExceptions: [
+            { area: "TERRACE", appliesToSize: "ALL", access: "ALLOWED" },
+            { area: "TERRACE", appliesToSize: "ALL", access: "NOT_ALLOWED" },
+          ],
+        }),
+      ),
+    );
+
+    expect(reason).toBe("spaceDuplicate");
+  });
+
+  it("같은 구역이라도 적용 크기가 다르면 저장한다", () => {
+    const resolved = resolvePolicyDetails(
+      null,
+      submitInput({
+        spaceExceptions: [
+          { area: "TERRACE", appliesToSize: "SMALL", access: "ALLOWED" },
+          { area: "TERRACE", appliesToSize: "LARGE", access: "NOT_ALLOWED" },
+        ],
+      }),
+    );
+
+    expect(resolved.write.policyDetails?.spaceExceptions).toHaveLength(2);
+  });
+
+  it("같은 상황이 두 번이면 저장을 거부한다", () => {
+    const reason = reasonOf(() =>
+      resolvePolicyDetails(
+        null,
+        submitInput({
+          behaviorRestrictions: [
+            { trigger: "BARKING", outcome: "MAY_RESTRICT" },
+            { trigger: "BARKING", outcome: "NO_ENTRY" },
+          ],
+        }),
+      ),
+    );
+
+    expect(reason).toBe("behaviorDuplicate");
+  });
+
+  it("같은 기간·크기에 금액이 둘이면 저장을 거부한다", () => {
+    const reason = reasonOf(() =>
+      resolvePolicyDetails(
+        null,
+        submitInput({
+          admission: {
+            feePolicy: "PAID",
+            rates: [
+              { period: "WEEKDAY", amountKrw: 5000, dogSize: "ALL" },
+              { period: "WEEKDAY", amountKrw: 8000, dogSize: "ALL" },
+            ],
+            includedServices: [],
+          },
+        }),
+      ),
+    );
+
+    expect(reason).toBe("admissionInconsistent");
+  });
+
+  it("확인 필요인데 요금이 있으면 저장을 거부한다", () => {
+    const reason = reasonOf(() =>
+      resolvePolicyDetails(
+        null,
+        submitInput({
+          admission: {
+            feePolicy: "UNKNOWN",
+            rates: [{ period: "ALL", amountKrw: 5000, dogSize: "ALL" }],
+            includedServices: [],
+          },
+        }),
+      ),
+    );
+
+    expect(reason).toBe("admissionInconsistent");
+  });
+});
+
+describe("parsePolicyDetailsForm — 행동 제한과 위생", () => {
+  it("상황과 결과를 인덱스 순서대로 읽는다", () => {
+    const parsed = parsePolicyDetailsForm(
+      form({
+        [`${P}.entry.vaccinationCompletionPolicy`]: "UNKNOWN",
+        [`${P}.behaviorRestrictions.0.trigger`]: "BARKING",
+        [`${P}.behaviorRestrictions.0.outcome`]: "MAY_RESTRICT",
+        [`${P}.behaviorRestrictions.1.trigger`]: "AGGRESSION",
+        [`${P}.behaviorRestrictions.1.outcome`]: "NO_ENTRY",
+      }),
+    );
+
+    expect(parsed?.behaviorRestrictions).toEqual([
+      { trigger: "BARKING", outcome: "MAY_RESTRICT" },
+      { trigger: "AGGRESSION", outcome: "NO_ENTRY" },
+    ]);
+  });
+
+  // 안내문이 결과를 밝히지 않은 것도 사실이다. 추측하지 않고 그대로 남긴다.
+  it("결과가 확인되지 않은 제한도 저장한다", () => {
+    const resolved = resolvePolicyDetails(
+      null,
+      submitInput({
+        behaviorRestrictions: [{ trigger: "UNCONTROLLED", outcome: "UNKNOWN" }],
+      }),
+    );
+
+    expect(resolved.write.policyDetails?.behaviorRestrictions).toEqual([
+      { trigger: "UNCONTROLLED", outcome: "UNKNOWN" },
+    ]);
+  });
+
+  it("없는 상황 코드는 저장을 거부한다", () => {
+    expect(() =>
+      resolvePolicyDetails(
+        null,
+        submitInput({
+          behaviorRestrictions: [{ trigger: "DIGGING", outcome: "NO_ENTRY" }],
+        }),
+      ),
+    ).toThrow(PolicyDetailsWriteError);
+  });
+
+  it("체크한 위생 항목만 읽는다", () => {
+    const parsed = parsePolicyDetailsForm(
+      form({
+        [`${P}.entry.vaccinationCompletionPolicy`]: "UNKNOWN",
+        [`${P}.hygiene`]: ["POOP_OWNER_HANDLES", "OWNER_LIABILITY"],
+      }),
+    );
+
+    expect(parsed?.hygiene).toEqual(["POOP_OWNER_HANDLES", "OWNER_LIABILITY"]);
+  });
+
+  it("없는 위생 항목 코드는 저장을 거부한다", () => {
+    expect(() =>
+      resolvePolicyDetails(null, submitInput({ hygiene: ["WASH_PAWS"] })),
+    ).toThrow(PolicyDetailsWriteError);
+  });
+});
+
+describe("parsePolicyDetailsForm — 입장료", () => {
+  it("입력 신호가 없으면 null이다 (무료가 아니라 다루지 않음)", () => {
+    const parsed = parsePolicyDetailsForm(
+      form({
+        [`${P}.entry.vaccinationCompletionPolicy`]: "UNKNOWN",
+        [`${P}.admission.feePolicy`]: "PAID",
+      }),
+    );
+
+    expect(parsed?.admission).toBeNull();
+  });
+
+  it("요금과 포함 서비스를 읽고 빈 칸은 버린다", () => {
+    const parsed = parsePolicyDetailsForm(
+      form({
+        [`${P}.entry.vaccinationCompletionPolicy`]: "UNKNOWN",
+        [`${P}.admission.present`]: "true",
+        [`${P}.admission.feePolicy`]: "PAID",
+        [`${P}.admission.rates.0.period`]: "WEEKDAY",
+        [`${P}.admission.rates.0.amountKrw`]: "10000",
+        [`${P}.admission.rates.0.dogSize`]: "ALL",
+        [`${P}.admission.rates.1.period`]: "WEEKEND_HOLIDAY",
+        [`${P}.admission.rates.1.amountKrw`]: "15000",
+        [`${P}.admission.rates.1.dogSize`]: "ALL",
+        [`${P}.admission.includedServices`]: ["음료 1잔", "  ", "간식"],
+      }),
+    );
+
+    const resolved = resolvePolicyDetails(null, parsed);
+    expect(resolved.write.policyDetails?.admission).toEqual({
+      feePolicy: "PAID",
+      rates: [
+        { period: "WEEKDAY", amountKrw: 10000, dogSize: "ALL" },
+        { period: "WEEKEND_HOLIDAY", amountKrw: 15000, dogSize: "ALL" },
+      ],
+      includedServices: ["음료 1잔", "간식"],
+    });
+  });
+
+  // 빈 금액을 0으로 바꾸면 "무료"라는 없는 사실이 생긴다.
+  it("금액이 비면 0으로 바꾸지 않고 저장을 거부한다", () => {
+    const parsed = parsePolicyDetailsForm(
+      form({
+        [`${P}.entry.vaccinationCompletionPolicy`]: "UNKNOWN",
+        [`${P}.admission.present`]: "true",
+        [`${P}.admission.feePolicy`]: "PAID",
+        [`${P}.admission.rates.0.period`]: "ALL",
+        [`${P}.admission.rates.0.amountKrw`]: "",
+        [`${P}.admission.rates.0.dogSize`]: "ALL",
+      }),
+    );
+
+    expect(() => resolvePolicyDetails(null, parsed)).toThrow(PolicyDetailsWriteError);
+  });
+
+  it("무료인데 요금이 남아 있으면 저장을 거부한다", () => {
+    expect(() =>
+      resolvePolicyDetails(
+        null,
+        submitInput({
+          admission: {
+            feePolicy: "FREE",
+            rates: [{ period: "ALL", amountKrw: 5000, dogSize: "ALL" }],
+            includedServices: [],
+          },
+        }),
+      ),
+    ).toThrow(PolicyDetailsWriteError);
+  });
+
+  it("무료는 요금 없이 저장한다", () => {
+    const resolved = resolvePolicyDetails(
+      null,
+      submitInput({
+        admission: { feePolicy: "FREE", rates: [], includedServices: ["음료 1잔"] },
+      }),
+    );
+
+    expect(resolved.write.policyDetails?.admission?.feePolicy).toBe("FREE");
+  });
+});
+
+describe("resolvePolicyDetails — 4개 그룹 병합", () => {
+  const existing: PolicyDetails = {
+    ...EMPTY_POLICY_DETAILS,
+    spaceExceptions: [
+      { area: "FLOOR", floor: 2, appliesToSize: "ALL", access: "NOT_ALLOWED" },
+    ],
+    behaviorRestrictions: [{ trigger: "BARKING", outcome: "MAY_RESTRICT" }],
+    admission: { feePolicy: "PAID", rates: [], includedServices: [] },
+    hygiene: ["OWNER_LIABILITY"],
+  };
+
+  it("편집기를 열지 않으면 4개 그룹을 그대로 둔다", () => {
+    const resolved = resolvePolicyDetails(existing, undefined);
+
+    expect(resolved.write).toEqual({});
+    expect(resolved.effective).toEqual(existing);
+  });
+
+  // "편집기를 열고 모두 지웠다"와 "편집기를 열지 않았다"는 다른 뜻이다.
+  it("빈 값으로 제출하면 4개 그룹을 초기화한다", () => {
+    const saved = resolvePolicyDetails(existing, submitInput()).write.policyDetails;
+
+    expect(saved?.spaceExceptions).toEqual([]);
+    expect(saved?.behaviorRestrictions).toEqual([]);
+    expect(saved?.admission).toBeNull();
+    expect(saved?.hygiene).toEqual([]);
+  });
+
+  it("한 그룹을 고쳐도 함께 제출된 나머지 그룹이 그대로 저장된다", () => {
+    const saved = resolvePolicyDetails(
+      existing,
+      submitInput({
+        spaceExceptions: [{ area: "TERRACE", appliesToSize: "LARGE", access: "ALLOWED" }],
+        hygiene: ["OWNER_LIABILITY"],
+      }),
+    ).write.policyDetails;
+
+    expect(saved?.spaceExceptions).toEqual([
+      { area: "TERRACE", appliesToSize: "LARGE", access: "ALLOWED" },
+    ]);
+    expect(saved?.hygiene).toEqual(["OWNER_LIABILITY"]);
+    expect(saved?.version).toBe(1);
   });
 });

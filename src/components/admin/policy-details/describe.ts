@@ -2,10 +2,13 @@ import { comitativeParticle, objectParticle } from "@/lib/i18n/korean-particle";
 import type { PolicyDetails } from "@/lib/places/policy-details";
 
 import {
+  FEE_PERIOD_LABELS,
   HANDLING_RULE_LABELS,
   HANDLING_STATUS_LABELS,
   PREPARATION_ITEM_LABELS,
   PREPARATION_STATUS_LABELS,
+  SIZE_SCOPE_LABELS,
+  SPACE_AREA_LABELS,
 } from "./labels";
 
 /**
@@ -136,4 +139,86 @@ export function preparationStatusLabel(status: string): string {
 
 export function handlingStatusLabel(status: string): string {
   return HANDLING_STATUS_LABELS[status] ?? status;
+}
+
+type SpaceException = PolicyDetails["spaceExceptions"][number];
+type BehaviorRestriction = PolicyDetails["behaviorRestrictions"][number];
+type Admission = NonNullable<PolicyDetails["admission"]>;
+
+/** 층 번호는 음수가 지하다. -1을 "-1층"으로 보여주면 안내문과 다르게 읽힌다. */
+function floorName(floor: number): string {
+  return floor < 0 ? `지하 ${Math.abs(floor)}층` : `${floor}층`;
+}
+
+function areaName(item: SpaceException): string {
+  if (item.area === "FLOOR") return floorName(item.floor as number);
+  if (item.area === "OTHER") return item.label as string;
+  return SPACE_AREA_LABELS[item.area] ?? item.area;
+}
+
+/** 공간 예외 한 줄을 문장으로. 층·구역 이름이 비면 무엇을 채워야 하는지 알린다. */
+export function describeSpaceException(item: SpaceException): string {
+  if (item.area === "FLOOR" && item.floor == null) return "층 번호를 입력하세요.";
+  if (item.area === "OTHER" && !item.label) return "구역 이름을 입력하세요.";
+
+  const where = areaName(item);
+  const clause =
+    item.access === "ALLOWED"
+      ? "출입할 수 있습니다"
+      : item.access === "NOT_ALLOWED"
+        ? "출입할 수 없습니다"
+        : "출입 가능 여부가 확인되지 않았습니다";
+
+  // 크기 라벨은 모두 "견"으로 끝나 조사가 "은" 하나로 정해진다.
+  return item.appliesToSize === "ALL"
+    ? `${where}에 ${clause}`
+    : `${SIZE_SCOPE_LABELS[item.appliesToSize]}은 ${where}에 ${clause}`;
+}
+
+/** 라벨은 명사라 문장에 그대로 넣을 수 없다. 조건절은 따로 적는다. */
+const BEHAVIOR_TRIGGER_CLAUSES: Record<string, string> = {
+  BARKING: "짖는 경우",
+  AGGRESSION: "공격성을 보이는 경우",
+  UNCONTROLLED: "통제가 어려운 경우",
+  DISTURBING_OTHERS: "다른 손님에게 방해가 되는 경우",
+};
+
+export function describeBehaviorRestriction(item: BehaviorRestriction): string {
+  const when = BEHAVIOR_TRIGGER_CLAUSES[item.trigger] ?? item.trigger;
+  switch (item.outcome) {
+    case "MAY_RESTRICT":
+      return `${when} 현장에서 이용이 제한될 수 있습니다`;
+    case "NO_ENTRY":
+      return `${when} 입장할 수 없습니다`;
+    default:
+      return `${when} 어떻게 되는지 확인되지 않았습니다`;
+  }
+}
+
+function rateName(rate: Admission["rates"][number]): string {
+  const period = FEE_PERIOD_LABELS[rate.period] ?? rate.period;
+  const size = rate.dogSize === "ALL" ? "" : ` ${SIZE_SCOPE_LABELS[rate.dogSize]}`;
+  return `${period}${size} ${rate.amountKrw.toLocaleString("ko-KR")}원`;
+}
+
+/** 입장료 한 덩어리를 문장으로. 요금 행이 있는데 유료가 아니면 저장이 거부된다. */
+export function describeAdmission(admission: Admission): string {
+  const services =
+    admission.includedServices.length > 0
+      ? ` (포함: ${admission.includedServices.join(", ")})`
+      : "";
+
+  if (admission.feePolicy === "FREE") return `입장료가 없습니다${services}`;
+
+  if (admission.feePolicy === "UNKNOWN") {
+    return admission.rates.length > 0
+      ? "요금이 입력돼 있는데 유료로 표시되지 않았습니다. 이대로는 저장할 수 없습니다."
+      : `입장료가 있는지 확인되지 않았습니다${services}`;
+  }
+
+  if (admission.rates.length === 0) {
+    return "요금을 1개 이상 입력하거나, 확인되지 않았다면 '확인 필요'로 두세요.";
+  }
+
+  return `입장료 ${admission.rates.map(rateName).join(" · ")}${services}`;
 }

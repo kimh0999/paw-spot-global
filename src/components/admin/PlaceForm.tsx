@@ -18,7 +18,10 @@ import {
   VACCINATION_CERTIFICATE_POLICIES,
 } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { derivedColumns } from "@/lib/places/condition-consistency";
+import {
+  derivedColumns,
+  derivedPoopBagRequired,
+} from "@/lib/places/condition-consistency";
 import type { PolicyDetails, PolicyDetailsRead } from "@/lib/places/policy-details";
 import { ConditionPolicySelect } from "./policy-details/ConditionPolicySelect";
 import { PolicyDetailsSection } from "./policy-details/PolicyDetailsSection";
@@ -183,6 +186,10 @@ export function PlaceForm({
   // 화면의 "자동 계산됨" 표시와 실제 저장값이 어긋나지 않는다.
   // 초기화가 예약돼 있으면 상세 조건이 사라지므로 잠그지 않는다.
   const derivedConditionColumns = derivedColumns(
+    clearPolicyDetails ? null : policyDetails,
+  );
+  // 필요 준비물(배변봉투)도 같은 방식으로 상세 조건이 기준이다. null이면 관리자가 직접 고른다.
+  const derivedPoopBag = derivedPoopBagRequired(
     clearPolicyDetails ? null : policyDetails,
   );
 
@@ -754,18 +761,41 @@ export function PlaceForm({
         <div className="flex flex-col gap-2">
           <fieldset className="flex flex-col gap-2 rounded border p-3">
             <legend className="px-1 text-sm font-medium">필요 준비물</legend>
-            {REQUIRED_ITEMS.map((item) => (
-              <label key={item} className="flex items-center gap-2">
-                <input
-                  name="condition.requiredItems"
-                  type="checkbox"
-                  value={item}
-                  defaultChecked={iv?.condition?.requiredItems?.includes(item) ?? false}
-                  className="h-4 w-4"
-                />
-                <span className="text-sm">{REQUIRED_ITEM_LABELS[item] ?? item}</span>
-              </label>
-            ))}
+            {REQUIRED_ITEMS.map((item) => {
+              // 상세 조건이 이 항목을 정하면 잠근다. 저장할 때 서버가 쓰는 함수와 같은 것이라
+              // 화면의 "자동 계산됨" 표시와 실제 저장값이 어긋나지 않는다.
+              const derived = item === "POOP_BAG" ? derivedPoopBag : null;
+              const locked = derived !== null;
+
+              return (
+                <label key={item} className="flex flex-wrap items-center gap-2">
+                  {/* 잠금 상태가 바뀌면 remount해 계산된 값이 체크박스에 반영되게 한다. */}
+                  <input
+                    key={locked ? String(derived) : "manual"}
+                    name={locked ? undefined : "condition.requiredItems"}
+                    type="checkbox"
+                    value={item}
+                    disabled={locked}
+                    defaultChecked={
+                      derived ?? (iv?.condition?.requiredItems?.includes(item) ?? false)
+                    }
+                    className="h-4 w-4"
+                  />
+                  <span className="text-sm">{REQUIRED_ITEM_LABELS[item] ?? item}</span>
+                  {locked && (
+                    <>
+                      {/* 잠긴 체크박스는 제출되지 않으므로 계산된 값을 따로 보낸다. */}
+                      {derived && (
+                        <input type="hidden" name="condition.requiredItems" value={item} />
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        상세 조건에서 자동 계산됨 — 아래 준비물 그룹을 고치면 이 값도 바뀝니다.
+                      </span>
+                    </>
+                  )}
+                </label>
+              );
+            })}
           </fieldset>
           <p className="text-xs text-muted-foreground">{t("requiredItemsHelp")}</p>
         </div>
@@ -783,9 +813,9 @@ export function PlaceForm({
         </label>
 
         {/*
-          구조화 상세 조건(준비물 관계·매장 내 상태·공간 예외·행동 제한·요금)이
-          잘못 들어갔을 때 되돌리는 장치. 위의 실내·크기·목줄·입마개·예방접종 같은
-          핵심 조건은 그대로 남는다. 편집 UI는 아직 없어 초기화만 제공한다.
+          구조화 상세 조건(준비물 관계·매장 내 상태·공간 예외·행동 제한·요금·위생)이
+          잘못 들어갔을 때 통째로 되돌리는 장치. 위의 실내·크기·목줄·입마개·예방접종 같은
+          핵심 조건은 그대로 남는다.
         */}
         {!clearPolicyDetails && (
           <PolicyDetailsSection

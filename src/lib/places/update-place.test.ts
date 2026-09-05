@@ -30,7 +30,7 @@ import {
 import type { PolicyDetails } from "@/lib/places/policy-details";
 import type { PlaceUpdate } from "@/lib/validation/place";
 
-/** 편집기가 보내는 4개 필드. 나머지는 서버가 DB에서 잇는다. */
+/** 편집기가 보내는 8개 그룹. 제출 신호가 없으면 이 값 자체가 오지 않는다. */
 function submitted(
   overrides: Partial<PolicyDetailsFormInput> = {},
 ): PolicyDetailsFormInput {
@@ -38,12 +38,16 @@ function submitted(
     entry: { vaccinationCompletionPolicy: "UNKNOWN" },
     preparation: [],
     handling: [],
+    spaceExceptions: [],
+    behaviorRestrictions: [],
+    admission: null,
+    hygiene: [],
     uncertainties: [],
     ...overrides,
   };
 }
 
-/** 편집 화면에 없는 5개 필드가 채워져 있는 기존 값. */
+/** 8개 그룹이 모두 채워져 있는 기존 값. */
 const EXISTING: PolicyDetails = {
   version: 1,
   entry: { vaccinationCompletionPolicy: "REQUIRED" },
@@ -324,15 +328,21 @@ describe("구조화 상세 조건 병합", () => {
     },
   ];
 
-  // 편집기에 없는 필드를 hidden으로 왕복시키지 않으므로 DB 값이 유일한 출처다.
-  it("화면에 없는 5개 필드를 수정 후에도 그대로 보존한다", async () => {
+  // 편집기가 8개 그룹을 모두 싣고 오므로, 화면이 되돌려 보낸 값이 그대로 저장된다.
+  it("편집하지 않은 그룹도 화면이 복원한 값 그대로 저장한다", async () => {
     placeCondition.findUnique.mockResolvedValue({ policyDetails: EXISTING });
 
     await updatePlaceRecord(
       "place-1",
       input(),
       admin,
-      submitted({ preparation: LEASH_OR_CARRIER }),
+      submitted({
+        preparation: LEASH_OR_CARRIER,
+        spaceExceptions: EXISTING.spaceExceptions,
+        behaviorRestrictions: EXISTING.behaviorRestrictions,
+        admission: EXISTING.admission,
+        hygiene: EXISTING.hygiene,
+      }),
     );
 
     const saved = savedPolicyDetails();
@@ -376,16 +386,51 @@ describe("구조화 상세 조건 병합", () => {
   });
 
   // "편집기 미제출"과 "빈 그룹 제출"은 다른 뜻이다.
-  it("빈 그룹을 제출하면 그 그룹만 초기화하고 나머지는 남긴다", async () => {
+  it("빈 값으로 제출하면 8개 그룹을 모두 초기화한다", async () => {
     placeCondition.findUnique.mockResolvedValue({ policyDetails: EXISTING });
 
-    await updatePlaceRecord("place-1", input(), admin, submitted({ preparation: [] }));
+    await updatePlaceRecord("place-1", input(), admin, submitted());
 
     const saved = savedPolicyDetails();
     expect(saved.preparation).toEqual([]);
     expect(saved.handling).toEqual([]);
     expect(saved.uncertainties).toEqual([]);
-    expect(saved.spaceExceptions).toEqual(EXISTING.spaceExceptions);
+    expect(saved.spaceExceptions).toEqual([]);
+    expect(saved.behaviorRestrictions).toEqual([]);
+    expect(saved.admission).toBeNull();
+    expect(saved.hygiene).toEqual([]);
+  });
+
+  it("층·구역 예외와 입장료를 제출값 그대로 저장한다", async () => {
+    placeCondition.findUnique.mockResolvedValue({ policyDetails: null });
+
+    await updatePlaceRecord(
+      "place-1",
+      input(),
+      admin,
+      submitted({
+        spaceExceptions: [
+          { area: "TERRACE", appliesToSize: "LARGE", access: "NOT_ALLOWED" },
+        ],
+        behaviorRestrictions: [{ trigger: "AGGRESSION", outcome: "NO_ENTRY" }],
+        admission: {
+          feePolicy: "PAID",
+          rates: [{ period: "WEEKEND_HOLIDAY", amountKrw: 15000, dogSize: "ALL" }],
+          includedServices: ["음료 1잔"],
+        },
+        hygiene: ["POOP_OWNER_HANDLES"],
+      }),
+    );
+
+    const saved = savedPolicyDetails();
+    expect(saved.spaceExceptions).toEqual([
+      { area: "TERRACE", appliesToSize: "LARGE", access: "NOT_ALLOWED" },
+    ]);
+    expect(saved.behaviorRestrictions).toEqual([
+      { trigger: "AGGRESSION", outcome: "NO_ENTRY" },
+    ]);
+    expect(saved.admission?.rates[0].amountKrw).toBe(15000);
+    expect(saved.hygiene).toEqual(["POOP_OWNER_HANDLES"]);
   });
 
   it("handling과 uncertainties를 항목별로 저장한다", async () => {
@@ -560,5 +605,80 @@ describe("병합 결과와 조건 컬럼 정합", () => {
 
     expect(upsertedCondition().vaccinationCertificatePolicy).toBe("NOT_REQUIRED");
     expect(savedPolicyDetails().entry.vaccinationCompletionPolicy).toBe("REQUIRED");
+  });
+});
+
+/**
+ * 배변봉투는 `policyDetails.preparation`과 `requiredItems` 두 곳이 같은 사실을 가리킨다.
+ * 상세 조건이 기준이고, 컬럼과 마찬가지로 언급이 없으면 관리자가 고른 값을 그대로 둔다.
+ */
+describe("배변봉투 정합성", () => {
+  function poopBag(status: string) {
+    return [
+      {
+        mode: "ALL_OF",
+        scope: "ALWAYS",
+        items: [{ item: "POOP_BAG", status }],
+      },
+    ];
+  }
+
+  it("상세 조건이 필수라고 하면 관리자가 빼 두었어도 넣는다", async () => {
+    await updatePlaceRecord(
+      "place-1",
+      input({ requiredItems: [] }),
+      admin,
+      submitted({ preparation: poopBag("REQUIRED") }),
+    );
+
+    expect(upsertedCondition().requiredItems).toEqual(["POOP_BAG"]);
+  });
+
+  it("상세 조건이 필요 없다고 확인했으면 관리자가 체크했어도 뺀다", async () => {
+    await updatePlaceRecord(
+      "place-1",
+      input({ requiredItems: ["POOP_BAG"] }),
+      admin,
+      submitted({ preparation: poopBag("NOT_REQUIRED") }),
+    );
+
+    expect(upsertedCondition().requiredItems).toEqual([]);
+  });
+
+  // "권장"·"확인 필요"는 필수라는 단언이 아니다. 목록에 두면 화면이 필수로 알린다.
+  it.each(["RECOMMENDED", "ALLOWED", "UNKNOWN"])(
+    "상세 조건이 %s면 필수 목록에서 뺀다",
+    async (status) => {
+      await updatePlaceRecord(
+        "place-1",
+        input({ requiredItems: ["POOP_BAG"] }),
+        admin,
+        submitted({ preparation: poopBag(status) }),
+      );
+
+      expect(upsertedCondition().requiredItems).toEqual([]);
+    },
+  );
+
+  it("상세 조건이 배변봉투를 언급하지 않으면 관리자가 고른 값을 그대로 둔다", async () => {
+    await updatePlaceRecord(
+      "place-1",
+      input({ requiredItems: ["POOP_BAG"] }),
+      admin,
+      submitted(),
+    );
+
+    expect(upsertedCondition().requiredItems).toEqual(["POOP_BAG"]);
+  });
+
+  it("상세 조건을 초기화하면 관리자가 고른 값을 그대로 둔다", async () => {
+    await updatePlaceRecord(
+      "place-1",
+      input({ requiredItems: ["POOP_BAG"], clearPolicyDetails: true }),
+      admin,
+      submitted({ preparation: poopBag("NOT_REQUIRED") }),
+    );
+
+    expect(upsertedCondition().requiredItems).toEqual(["POOP_BAG"]);
   });
 });

@@ -6,8 +6,12 @@ import {
 } from "@/lib/places/policy-details";
 import { POLICY_DETAILS_SUBMITTED_FIELD } from "@/lib/places/policy-details-form";
 
+import { AdmissionField } from "./AdmissionField";
+import { BehaviorRestrictionsField } from "./BehaviorRestrictionsField";
 import { HandlingGroupsField } from "./HandlingGroupsField";
+import { HygieneField } from "./HygieneField";
 import { PreparationGroupsField } from "./PreparationGroupsField";
+import { SpaceExceptionsField } from "./SpaceExceptionsField";
 import { UncertaintiesField } from "./UncertaintiesField";
 import { VACCINATION_COMPLETION_LABELS } from "./labels";
 
@@ -23,9 +27,9 @@ const FIELD = "condition.policyDetails";
 /**
  * 컬럼으로 표현할 수 없는 복합 이용수칙 편집기.
  *
- * 이번 단계는 `entry` · `preparation` · `handling` · `uncertainties` 네 가지만 다룬다.
- * 공간 예외·행동 제한·요금·위생은 화면이 없고, 저장 시 서버가 DB의 기존 값을 그대로 잇는다
- * — 편집하지 않는 JSON을 클라이언트로 왕복시키지 않는다.
+ * 8개 그룹을 모두 다룬다. 값은 그룹별 필드로만 오가며 JSON 본문을 hidden으로
+ * 왕복시키지 않는다. 편집기를 열지 않았거나 편집을 취소하면 제출 신호가 없어
+ * 기존 JSON이 그대로 남는다.
  */
 export function PolicyDetailsSection({ read, value, onChange }: Props) {
   if (read.status === "invalid") {
@@ -53,7 +57,8 @@ export function PolicyDetailsSection({ read, value, onChange }: Props) {
         <p className="text-sm font-medium">상세 이용 조건</p>
         <p className="text-xs text-muted-foreground">
           &ldquo;목줄 또는 이동가방&rdquo;처럼 위의 선택 항목만으로는 옮길 수 없는 안내문을
-          입력합니다. 매장 안에서의 상태와 확인이 필요한 내용도 함께 남길 수 있습니다.
+          입력합니다. 매장 안에서의 상태, 층·구역별 예외, 행동 제한, 입장료, 위생 안내와
+          확인이 필요한 내용을 함께 남길 수 있습니다.
         </p>
         <button
           type="button"
@@ -119,6 +124,28 @@ export function PolicyDetailsSection({ read, value, onChange }: Props) {
       <HandlingGroupsField
         groups={value.handling}
         onChange={(handling) => onChange({ ...value, handling })}
+      />
+
+      <SpaceExceptionsField
+        items={value.spaceExceptions}
+        onChange={(spaceExceptions) => onChange({ ...value, spaceExceptions })}
+      />
+
+      <BehaviorRestrictionsField
+        items={value.behaviorRestrictions}
+        onChange={(behaviorRestrictions) =>
+          onChange({ ...value, behaviorRestrictions })
+        }
+      />
+
+      <AdmissionField
+        value={value.admission}
+        onChange={(admission) => onChange({ ...value, admission })}
+      />
+
+      <HygieneField
+        items={value.hygiene}
+        onChange={(hygiene) => onChange({ ...value, hygiene })}
       />
 
       <UncertaintiesField

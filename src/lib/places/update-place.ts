@@ -1,7 +1,10 @@
 import { Prisma } from "@prisma/client";
 
 import type { VerifiedAdmin } from "@/lib/auth/require-admin";
-import { reconcileConditionColumns } from "@/lib/places/condition-consistency";
+import {
+  reconcileConditionColumns,
+  reconcileRequiredItems,
+} from "@/lib/places/condition-consistency";
 import { prisma } from "@/lib/db/prisma";
 import { pointFromLngLat } from "@/lib/geo/postgis";
 import {
@@ -91,8 +94,8 @@ export async function updatePlaceRecord(
       WHERE id = ${id}
     `;
 
-    // 편집기가 보내지 않은 필드(공간 예외·행동 제한·요금·위생)는 화면에 없으므로
-    // 여기서 DB의 최신 값을 읽어 그대로 잇는다. 읽기·병합·쓰기가 같은 트랜잭션 안에 있다.
+    // 편집기가 제출되지 않았으면 기존 JSON을 그대로 두어야 하고, 제출됐어도 화면에 없는
+    // 필드(version 등)는 DB 값을 이어야 한다. 읽기·병합·쓰기가 같은 트랜잭션 안에 있다.
     const existingCondition = await tx.placeCondition.findUnique({
       where: { placeId: id },
       select: { policyDetails: true },
@@ -108,7 +111,7 @@ export async function updatePlaceRecord(
       indoor: condition.indoor,
       maxDogSize: condition.maxDogSize,
       breedRestrictions: condition.breedRestrictions ?? null,
-      requiredItems: condition.requiredItems,
+      requiredItems: reconcileRequiredItems(policy.effective, condition.requiredItems),
       cautions: condition.cautions ?? null,
       ...reconcileConditionColumns(policy.effective, condition),
       ...policy.write,

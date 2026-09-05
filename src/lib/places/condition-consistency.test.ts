@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   derivedColumns,
+  derivedPoopBagRequired,
   reconcileConditionColumns,
+  reconcileRequiredItems,
   type ReconcilableColumns,
 } from "@/lib/places/condition-consistency";
 import {
@@ -273,5 +275,70 @@ describe("derivedColumns — 관리자 폼이 잠글 항목", () => {
 
     expect(derived.vaccinationCertificatePolicy).toBe("REQUIRED");
     expect(derived).not.toHaveProperty("leash");
+  });
+});
+
+/**
+ * `requiredItems`는 "확인되지 않음"을 담을 수 없다. 목록에 있으면 화면이 필요 준비물로
+ * 단언하므로, 컬럼과 같은 요약 규칙으로 확신할 수 있을 때만 넣는다.
+ */
+describe("requiredItems 동기화", () => {
+  function poopBag(
+    status: "REQUIRED" | "NOT_REQUIRED" | "RECOMMENDED",
+    mode: "ALL_OF" | "ANY_OF" = "ALL_OF",
+    extra: PreparationItem[] = [],
+  ): PolicyDetails {
+    return details([
+      {
+        mode,
+        items: [
+          ["POOP_BAG", status],
+          ...extra.map((item) => [item, status] as [PreparationItem, typeof status]),
+        ],
+      },
+    ]);
+  }
+
+  it("필수면 목록에 넣는다", () => {
+    expect(reconcileRequiredItems(poopBag("REQUIRED"), [])).toEqual(["POOP_BAG"]);
+  });
+
+  it("필요 없다고 확인했으면 목록에서 뺀다", () => {
+    expect(reconcileRequiredItems(poopBag("NOT_REQUIRED"), ["POOP_BAG"])).toEqual([]);
+  });
+
+  it("권장은 필수가 아니라 목록에서 뺀다", () => {
+    expect(reconcileRequiredItems(poopBag("RECOMMENDED"), ["POOP_BAG"])).toEqual([]);
+  });
+
+  // "배변봉투 또는 물티슈"는 배변봉투를 반드시 챙겨야 한다는 뜻이 아니다.
+  it("택일 관계면 단언하지 않고 목록에서 뺀다", () => {
+    const alternative = poopBag("REQUIRED", "ANY_OF", ["CARRIER"]);
+
+    expect(reconcileRequiredItems(alternative, ["POOP_BAG"])).toEqual([]);
+  });
+
+  it("언급이 없으면 관리자가 고른 값을 그대로 둔다", () => {
+    expect(reconcileRequiredItems(EMPTY_POLICY_DETAILS, ["POOP_BAG"])).toEqual([
+      "POOP_BAG",
+    ]);
+    expect(reconcileRequiredItems(null, ["POOP_BAG"])).toEqual(["POOP_BAG"]);
+  });
+
+  // 상세 조건은 배변봉투 말고 다른 항목에 대해 아무 말도 하지 않는다.
+  it("배변봉투 외의 항목은 건드리지 않는다", () => {
+    expect(reconcileRequiredItems(poopBag("NOT_REQUIRED"), ["MAT", "POOP_BAG"])).toEqual([
+      "MAT",
+    ]);
+    expect(reconcileRequiredItems(poopBag("REQUIRED"), ["MAT"])).toEqual([
+      "MAT",
+      "POOP_BAG",
+    ]);
+  });
+
+  it("잠글지 열어 둘지는 derivedPoopBagRequired가 정한다", () => {
+    expect(derivedPoopBagRequired(poopBag("REQUIRED"))).toBe(true);
+    expect(derivedPoopBagRequired(poopBag("NOT_REQUIRED"))).toBe(false);
+    expect(derivedPoopBagRequired(EMPTY_POLICY_DETAILS)).toBeNull();
   });
 });

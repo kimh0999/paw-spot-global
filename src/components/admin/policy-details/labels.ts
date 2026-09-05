@@ -1,5 +1,3 @@
-import { PREPARATION_ITEMS, type PreparationItem } from "@/lib/places/policy-details";
-
 /**
  * 관리자 폼에 쓰는 한국어 라벨.
  *
@@ -31,17 +29,6 @@ export const PREPARATION_ITEM_LABELS: Record<string, string> = {
   VACCINATION_PROOF: "예방접종 증빙",
   POOP_BAG: "배변봉투",
 };
-
-/**
- * 새로 체크할 수 있는 준비물.
- *
- * 배변봉투는 위쪽 "필요 준비물" 체크박스(`requiredItems`)가 이미 관리하는데
- * 두 값을 맞춰 주는 정합성 규칙이 없다. 새 데이터에서 어긋나지 않도록 여기서는 제외한다.
- * 이미 저장된 값에는 그대로 보이며 해제할 수 있다.
- */
-export const SELECTABLE_PREPARATION_ITEMS: PreparationItem[] = PREPARATION_ITEMS.filter(
-  (item) => item !== "POOP_BAG",
-);
 
 export const PREPARATION_STATUS_LABELS: Record<string, string> = {
   REQUIRED: "반드시 챙겨야 함",
@@ -75,6 +62,62 @@ export const HANDLING_STATUS_LABELS: Record<string, string> = {
   PROHIBITED: "하면 안 됨",
   CONDITIONAL: "상황에 따라",
   UNKNOWN: "확인 필요",
+};
+
+export const SPACE_AREA_LABELS: Record<string, string> = {
+  INDOOR: "실내",
+  OUTDOOR: "실외",
+  TERRACE: "테라스",
+  FLOOR: "특정 층",
+  OTHER: "그 밖의 구역",
+};
+
+export const SPACE_ACCESS_LABELS: Record<string, string> = {
+  ALLOWED: "출입 가능",
+  NOT_ALLOWED: "출입 불가",
+  UNKNOWN: "확인 필요",
+};
+
+/** 공간 예외·요금이 어떤 크기의 반려견에 적용되는지. */
+export const SIZE_SCOPE_LABELS: Record<string, string> = {
+  ALL: "크기 무관",
+  SMALL: "소형견",
+  MEDIUM: "중형견",
+  LARGE: "대형견",
+};
+
+export const BEHAVIOR_TRIGGER_LABELS: Record<string, string> = {
+  BARKING: "짖음",
+  AGGRESSION: "공격성",
+  UNCONTROLLED: "통제가 어려움",
+  DISTURBING_OTHERS: "다른 손님에게 방해",
+};
+
+/** "현장 제한 가능"과 "입장 자체 불가"는 방문자에게 전혀 다른 뜻이라 합치지 않는다. */
+export const BEHAVIOR_OUTCOME_LABELS: Record<string, string> = {
+  MAY_RESTRICT: "현장에서 이용이 제한될 수 있음",
+  NO_ENTRY: "입장 불가",
+  UNKNOWN: "확인 필요",
+};
+
+export const FEE_POLICY_LABELS: Record<string, string> = {
+  FREE: "무료",
+  PAID: "유료",
+  UNKNOWN: "확인 필요",
+};
+
+export const FEE_PERIOD_LABELS: Record<string, string> = {
+  ALL: "상시",
+  WEEKDAY: "평일",
+  WEEKEND_HOLIDAY: "주말·공휴일",
+};
+
+export const HYGIENE_RULE_LABELS: Record<string, string> = {
+  POOP_OWNER_HANDLES: "배변은 보호자가 치우기",
+  POOP_DESIGNATED_DISPOSAL: "지정된 곳에만 배변 처리하기",
+  PET_DISHES_ONLY: "반려견 전용 식기만 사용하기",
+  SUPERVISION_REQUIRED: "보호자가 항상 함께 있기",
+  OWNER_LIABILITY: "사고 발생 시 보호자 책임",
 };
 
 export const UNCERTAINTY_TARGET_LABELS: Record<string, string> = {
