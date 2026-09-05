@@ -18,7 +18,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import BeforeYouGoCard from "@/components/places/BeforeYouGoCard";
 import DogMatchBadge from "@/components/places/DogMatchBadge";
-import KoreanInquiryBox from "@/components/places/KoreanInquiryBox";
 import { Link } from "@/i18n/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { matchDogsToPlace } from "@/lib/dogs/matching";
@@ -251,9 +250,6 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
             )}
           </div>
         </div>
-
-        {/* Korean Inquiry Box — EN locale only */}
-        {safeLocale === "en" && <KoreanInquiryBox />}
 
         <div className="h-4" />
       </div>

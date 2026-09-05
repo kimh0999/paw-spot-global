@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
+import { showsVaccinationRow } from "@/lib/places/display";
 import { toPolicyDisplay } from "@/lib/places/policy-display";
 import {
   buildAdmissionSentences,
@@ -122,10 +123,13 @@ export default async function BeforeYouGoCard({ condition, locale }: Props) {
       required: { value: t("vaccination.required"), status: "warning" },
       not_required: { value: t("vaccination.not_required"), status: "good" },
     };
-    conditionRows.push({
-      label: t("vaccination.label"),
-      ...(vaccinationMap[condition.vaccinationCertificatePolicy ?? ""] ?? none),
-    });
+    // 확인되지 않은 증빙 조건은 행 자체를 만들지 않는다.
+    if (showsVaccinationRow(condition.vaccinationCertificatePolicy)) {
+      conditionRows.push({
+        label: t("vaccination.label"),
+        ...(vaccinationMap[condition.vaccinationCertificatePolicy ?? ""] ?? none),
+      });
+    }
   }
 
   return (
