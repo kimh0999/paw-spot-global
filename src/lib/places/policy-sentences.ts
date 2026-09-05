@@ -1,8 +1,12 @@
 import { comitativeParticle, objectParticle } from "@/lib/i18n/korean-particle";
 import type {
+  PolicyAdmissionDisplay,
+  PolicyBehaviorLine,
   PolicyHandlingLine,
+  PolicyHygieneLine,
   PolicyPreparationLine,
   PolicyRelation,
+  PolicySpaceLine,
   PolicyUncertaintyLine,
 } from "@/lib/places/policy-display";
 
@@ -193,4 +197,107 @@ export function buildUncertaintySentence(
   t: Translate,
 ): string {
   return t("uncertainty.default", { target: t(`targets.${line.targetKey}`) });
+}
+
+/**
+ * 구역 이름.
+ *
+ * 관리자가 적은 구역 이름(`OTHER`)은 한 언어로만 쓰여 있지만 그 장소의 고유 이름이라
+ * 그대로 쓴다 — 번역할 수도, 대신 지어낼 수도 없다.
+ */
+function spaceAreaName(line: PolicySpaceLine, t: Translate): string {
+  if (line.area === "FLOOR") {
+    const floor = line.floor ?? 0;
+    return floor < 0
+      ? t("space.basementFloor", { floor: String(Math.abs(floor)) })
+      : t("space.floor", { floor: String(floor) });
+  }
+
+  if (line.area === "OTHER") return line.label ?? "";
+
+  return t(`space.areas.${line.area}`);
+}
+
+/**
+ * 층·구역 예외 한 줄.
+ * 크기 조건은 있을 때만 문장에 넣는다. `UNKNOWN`은 가능·불가 어느 쪽으로도 옮기지 않는다.
+ */
+export function buildSpaceSentence(line: PolicySpaceLine, t: Translate): string {
+  const area = spaceAreaName(line, t);
+
+  return line.sizeKey === null
+    ? t(`space.access.${line.access}`, { area })
+    : t(`space.accessBySize.${line.access}`, {
+        area,
+        size: t(`dogSizes.${line.sizeKey}`),
+      });
+}
+
+/**
+ * 행동 제한 한 줄.
+ * 저장된 결과보다 세게도 약하게도 말하지 않는다 — `MAY_RESTRICT`는 가능성이고
+ * `NO_ENTRY`만 단정이며, `UNKNOWN`은 매장에 확인하라고 한다.
+ */
+export function buildBehaviorSentence(line: PolicyBehaviorLine, t: Translate): string {
+  return t(`behavior.${line.outcome}`, {
+    trigger: t(`behaviorTriggers.${line.triggerKey}`),
+  });
+}
+
+/** 통화는 스키마가 정한 원화(`amountKrw`)뿐이다. 숫자 형식은 locale을 따르고 단위는 메시지에 둔다. */
+function formatAmount(amountKrw: number, t: Translate, locale: string): string {
+  return t("admission.amount", {
+    value: new Intl.NumberFormat(locale).format(amountKrw),
+  });
+}
+
+/**
+ * 입장료. 요금 한 줄에 포함 서비스 한 줄을 더한 목록을 돌려준다.
+ *
+ * 금액이 0이라고 무료라고 하지 않는다 — 무료는 `feePolicy`가 말하는 것이고, 0원 요금은
+ * 조건부 무료처럼 매장이 요금표에 적어 둔 값일 수 있다.
+ */
+export function buildAdmissionSentences(
+  admission: PolicyAdmissionDisplay,
+  t: Translate,
+  locale: string,
+): string[] {
+  const lines: string[] = [];
+
+  if (admission.feePolicy === "FREE") {
+    lines.push(t("admission.FREE"));
+  } else if (admission.feePolicy === "UNKNOWN") {
+    lines.push(t("admission.UNKNOWN"));
+  } else if (admission.rates.length === 0) {
+    // 유료인 것은 확인됐지만 금액은 적혀 있지 않다. 둘을 뭉뚱그리지 않는다.
+    lines.push(t("admission.paidAmountUnknown"));
+  } else {
+    for (const rate of admission.rates) {
+      const scope = [
+        rate.periodKey ? t(`feePeriods.${rate.periodKey}`) : null,
+        rate.sizeKey ? t(`dogSizes.${rate.sizeKey}`) : null,
+      ].filter((part): part is string => part !== null);
+
+      const amount = formatAmount(rate.amountKrw, t, locale);
+      lines.push(
+        scope.length === 0
+          ? t("admission.rate", { amount })
+          : t("admission.rateWithScope", {
+              scope: scope.join(locale === "ko" ? " " : ", "),
+              amount,
+            }),
+      );
+    }
+  }
+
+  if (admission.includedServices.length > 0) {
+    lines.push(t("admission.included", { services: admission.includedServices.join(", ") }));
+  }
+
+  return lines;
+}
+
+/** 위생·책임 한 줄. 표시할 문구가 있는 코드만 여기 들어온다(policy-display.ts에서 거른다). */
+export function buildHygieneSentence(line: PolicyHygieneLine, t: Translate): string {
+  return t(`hygiene.rules.${line.ruleKey}`);
 }

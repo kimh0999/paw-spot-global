@@ -427,6 +427,67 @@
         "uncertainty": {
           "default": "{target} 조건을 매장에 확인해 주세요"
         },
+        "spaceTitle": "구역별 이용",
+        "behaviorTitle": "행동 관련 제한",
+        "admissionTitle": "입장료",
+        "hygieneTitle": "위생·책임",
+        "dogSizes": {
+          "SMALL": "소형견",
+          "MEDIUM": "중형견",
+          "LARGE": "대형견"
+        },
+        "feePeriods": {
+          "WEEKDAY": "평일",
+          "WEEKEND_HOLIDAY": "주말·공휴일"
+        },
+        "space": {
+          "areas": {
+            "INDOOR": "실내",
+            "OUTDOOR": "실외",
+            "TERRACE": "테라스"
+          },
+          "floor": "{floor}층",
+          "basementFloor": "지하 {floor}층",
+          "access": {
+            "ALLOWED": "{area}에 들어갈 수 있습니다",
+            "NOT_ALLOWED": "{area}에는 들어갈 수 없습니다",
+            "UNKNOWN": "{area}에 들어갈 수 있는지 매장에 확인해 주세요"
+          },
+          "accessBySize": {
+            "ALLOWED": "{area}에는 {size}이 들어갈 수 있습니다",
+            "NOT_ALLOWED": "{area}에는 {size}이 들어갈 수 없습니다",
+            "UNKNOWN": "{area}에 {size}이 들어갈 수 있는지 매장에 확인해 주세요"
+          }
+        },
+        "behaviorTriggers": {
+          "BARKING": "짖는 경우",
+          "AGGRESSION": "공격성을 보이는 경우",
+          "UNCONTROLLED": "통제가 어려운 경우",
+          "DISTURBING_OTHERS": "다른 손님에게 방해가 되는 경우"
+        },
+        "behavior": {
+          "MAY_RESTRICT": "{trigger} 현장에서 이용이 제한될 수 있습니다",
+          "NO_ENTRY": "{trigger} 입장할 수 없습니다",
+          "UNKNOWN": "{trigger} 어떻게 되는지 매장에 확인해 주세요"
+        },
+        "admission": {
+          "FREE": "입장료가 없습니다",
+          "UNKNOWN": "입장료가 있는지 매장에 확인해 주세요",
+          "paidAmountUnknown": "입장료가 있습니다. 금액은 매장에 확인해 주세요",
+          "rate": "입장료 {amount}",
+          "rateWithScope": "{scope} 입장료 {amount}",
+          "amount": "{value}원",
+          "included": "입장료에 포함: {services}"
+        },
+        "hygiene": {
+          "rules": {
+            "POOP_OWNER_HANDLES": "배변은 보호자가 치워야 합니다",
+            "POOP_DESIGNATED_DISPOSAL": "배변은 지정된 곳에 버려야 합니다",
+            "PET_DISHES_ONLY": "반려견에게는 전용 식기만 쓸 수 있습니다",
+            "SUPERVISION_REQUIRED": "보호자가 항상 반려견 곁에 있어야 합니다",
+            "OWNER_LIABILITY": "사고가 나면 보호자가 책임집니다"
+          }
+        },
         "indoorOnly": "실내 동반 시 {text}",
         "outdoorOnly": "실외 동반 시 {text}",
         "scopeUnknownNote": "{text} (언제 적용되는지는 매장에 확인해 주세요)"

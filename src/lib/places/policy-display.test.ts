@@ -368,3 +368,214 @@ describe("toPolicyDisplay — 확인되지 않은 값", () => {
     expect(display?.preparation[0].status).not.toBe("ALLOWED");
   });
 });
+
+describe("toPolicyDisplay — 층·구역 예외", () => {
+  it("구역 유형에 필요한 값만 남긴다", () => {
+    const display = toPolicyDisplay(
+      details({
+        spaceExceptions: [
+          { area: "FLOOR", floor: -1, appliesToSize: "ALL", access: "NOT_ALLOWED" },
+          { area: "OTHER", label: " 루프탑 ", appliesToSize: "SMALL", access: "ALLOWED" },
+          { area: "TERRACE", appliesToSize: "ALL", access: "UNKNOWN" },
+        ],
+      }),
+    );
+
+    expect(display?.spaceExceptions).toEqual([
+      { area: "FLOOR", floor: -1, label: null, sizeKey: null, access: "NOT_ALLOWED" },
+      { area: "OTHER", floor: null, label: "루프탑", sizeKey: "SMALL", access: "ALLOWED" },
+      { area: "TERRACE", floor: null, label: null, sizeKey: null, access: "UNKNOWN" },
+    ]);
+  });
+
+  // 층을 0으로 채우거나 "어떤 구역"이라고 얼버무리면 없는 사실이 생긴다.
+  it("가리킬 구역이 없는 줄은 만들지 않는다", () => {
+    const display = toPolicyDisplay(
+      details({
+        spaceExceptions: [
+          { area: "FLOOR", appliesToSize: "ALL", access: "ALLOWED" },
+          { area: "OTHER", label: "  ", appliesToSize: "ALL", access: "ALLOWED" },
+        ],
+      }),
+    );
+
+    expect(display).toBeNull();
+  });
+
+  it("완전히 같은 줄은 한 번만 보여준다", () => {
+    const display = toPolicyDisplay(
+      details({
+        spaceExceptions: [
+          { area: "TERRACE", appliesToSize: "ALL", access: "ALLOWED" },
+          { area: "TERRACE", appliesToSize: "ALL", access: "ALLOWED" },
+        ],
+      }),
+    );
+
+    expect(display?.spaceExceptions).toHaveLength(1);
+  });
+
+  it("크기가 다르면 각각 보여준다", () => {
+    const display = toPolicyDisplay(
+      details({
+        spaceExceptions: [
+          { area: "TERRACE", appliesToSize: "SMALL", access: "ALLOWED" },
+          { area: "TERRACE", appliesToSize: "LARGE", access: "NOT_ALLOWED" },
+        ],
+      }),
+    );
+
+    expect(display?.spaceExceptions.map((line) => line.sizeKey)).toEqual([
+      "SMALL",
+      "LARGE",
+    ]);
+  });
+});
+
+describe("toPolicyDisplay — 행동 제한과 위생", () => {
+  it("상황과 결과를 그대로 옮긴다", () => {
+    const display = toPolicyDisplay(
+      details({
+        behaviorRestrictions: [
+          { trigger: "BARKING", outcome: "MAY_RESTRICT" },
+          { trigger: "AGGRESSION", outcome: "UNKNOWN" },
+        ],
+      }),
+    );
+
+    expect(display?.behaviorRestrictions).toEqual([
+      { triggerKey: "BARKING", outcome: "MAY_RESTRICT" },
+      { triggerKey: "AGGRESSION", outcome: "UNKNOWN" },
+    ]);
+  });
+
+  it("문구가 없는 위생 코드는 화면에 내보내지 않는다", () => {
+    const display = toPolicyDisplay(
+      details({
+        hygiene: ["OWNER_LIABILITY", "WASH_PAWS", "OWNER_LIABILITY"] as PolicyDetails["hygiene"],
+      }),
+    );
+
+    expect(display?.hygiene).toEqual([{ ruleKey: "OWNER_LIABILITY" }]);
+  });
+});
+
+describe("toPolicyDisplay — 입장료", () => {
+  it("다루지 않은 입장료는 null로 남긴다 (무료가 아니다)", () => {
+    expect(toPolicyDisplay(details({ admission: null }))).toBeNull();
+  });
+
+  it("상시·크기 무관 요금은 조건 없이 금액만 남긴다", () => {
+    const display = toPolicyDisplay(
+      details({
+        admission: {
+          feePolicy: "PAID",
+          rates: [
+            { period: "ALL", amountKrw: 10000, dogSize: "ALL" },
+            { period: "WEEKEND_HOLIDAY", amountKrw: 15000, dogSize: "SMALL" },
+          ],
+          includedServices: ["음료 1잔"],
+        },
+      }),
+    );
+
+    expect(display?.admission).toEqual({
+      feePolicy: "PAID",
+      rates: [
+        { periodKey: null, sizeKey: null, amountKrw: 10000 },
+        { periodKey: "WEEKEND_HOLIDAY", sizeKey: "SMALL", amountKrw: 15000 },
+      ],
+      includedServices: ["음료 1잔"],
+    });
+  });
+
+  // 어느 쪽이 사실인지 알 수 없으므로 금액도 무료도 단정하지 않는다.
+  it("요금이 있는데 유료가 아니면 금액을 감추고 확인 필요로 낮춘다", () => {
+    const display = toPolicyDisplay(
+      details({
+        admission: {
+          feePolicy: "FREE",
+          rates: [{ period: "ALL", amountKrw: 5000, dogSize: "ALL" }],
+          includedServices: ["음료 1잔"],
+        },
+      }),
+    );
+
+    expect(display?.admission).toEqual({
+      feePolicy: "UNKNOWN",
+      rates: [],
+      includedServices: ["음료 1잔"],
+    });
+  });
+
+  it("유료인데 금액이 없으면 그대로 둔다", () => {
+    const display = toPolicyDisplay(
+      details({
+        admission: { feePolicy: "PAID", rates: [], includedServices: [] },
+      }),
+    );
+
+    expect(display?.admission).toEqual({
+      feePolicy: "PAID",
+      rates: [],
+      includedServices: [],
+    });
+  });
+});
+
+/**
+ * 저장 시 `reconcileRequiredItems`가 배변봉투를 `requiredItems`에도 넣는다.
+ * 카드가 그 목록을 이미 보여주므로 문장으로 다시 말하지 않는다.
+ */
+describe("toPolicyDisplay — 배변봉투 중복", () => {
+  const poopBag = (status: "REQUIRED" | "NOT_REQUIRED"): PolicyDetails =>
+    details({
+      preparation: [
+        { mode: "ALL_OF", scope: "ALWAYS", items: [{ item: "POOP_BAG", status }] },
+      ],
+    });
+
+  it("필요 준비물 줄에 이미 있으면 문장을 만들지 않는다", () => {
+    const display = toPolicyDisplay(poopBag("REQUIRED"), {
+      requiredItems: ["POOP_BAG"],
+    });
+
+    expect(display).toBeNull();
+  });
+
+  // 동기화 이전에 저장된 데이터라면 이 그룹이 유일한 정보원이다.
+  it("목록에 없으면 그대로 보여준다", () => {
+    const display = toPolicyDisplay(poopBag("REQUIRED"), { requiredItems: [] });
+
+    expect(display?.preparation).toHaveLength(1);
+  });
+
+  // 목록은 "안 챙겨도 된다"를 담지 못한다.
+  it("안 챙겨도 되는 경우는 목록과 무관하게 보여준다", () => {
+    const display = toPolicyDisplay(poopBag("NOT_REQUIRED"), {
+      requiredItems: ["POOP_BAG"],
+    });
+
+    expect(display?.preparation[0].status).toBe("NOT_REQUIRED");
+  });
+
+  it("택일 묶음은 목록이 담지 못하므로 그대로 보여준다", () => {
+    const display = toPolicyDisplay(
+      details({
+        preparation: [
+          {
+            mode: "ANY_OF",
+            scope: "ALWAYS",
+            items: [
+              { item: "POOP_BAG", status: "REQUIRED" },
+              { item: "CARRIER", status: "REQUIRED" },
+            ],
+          },
+        ],
+      }),
+      { requiredItems: ["POOP_BAG"] },
+    );
+
+    expect(display?.preparation).toHaveLength(1);
+  });
+});

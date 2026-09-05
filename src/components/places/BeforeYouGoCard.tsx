@@ -2,8 +2,12 @@ import { getTranslations } from "next-intl/server";
 
 import { toPolicyDisplay } from "@/lib/places/policy-display";
 import {
+  buildAdmissionSentences,
+  buildBehaviorSentence,
   buildHandlingSentence,
+  buildHygieneSentence,
   buildPreparationSentence,
+  buildSpaceSentence,
   buildUncertaintySentence,
   type Translate,
 } from "@/lib/places/policy-sentences";
@@ -22,7 +26,7 @@ function PolicyBlock({ title, lines }: { title: string; lines: string[] }) {
 
   return (
     <div className="mt-4 pt-4 border-t">
-      <p className="text-xs font-semibold text-content-secondary">{title}</p>
+      <h3 className="text-xs font-semibold text-content-secondary">{title}</h3>
       <ul className="mt-2 space-y-1.5">
         {lines.map((line) => (
           <li key={line} className="flex gap-2 text-sm text-content-secondary">
@@ -50,7 +54,10 @@ export default async function BeforeYouGoCard({ condition, locale }: Props) {
   const translate: Translate = (key, values) => tp(key, values);
 
   // 구조화되지 않았거나 형식이 깨진 장소는 null이라 기존 조건 6행만 그대로 보인다.
-  const policy = toPolicyDisplay(condition?.policyDetails ?? null);
+  // 필요 준비물 줄이 이미 보여주는 항목은 문장으로 반복하지 않도록 함께 넘긴다.
+  const policy = toPolicyDisplay(condition?.policyDetails ?? null, {
+    requiredItems: condition?.requiredItems ?? [],
+  });
 
   const none: { value: string; status: ConditionStatus } = {
     value: t("checkWithStore"),
@@ -203,6 +210,30 @@ export default async function BeforeYouGoCard({ condition, locale }: Props) {
                 lines={policy.handling.map((line) =>
                   buildHandlingSentence(line, translate, locale),
                 )}
+              />
+              <PolicyBlock
+                title={tp("spaceTitle")}
+                lines={policy.spaceExceptions.map((line) =>
+                  buildSpaceSentence(line, translate),
+                )}
+              />
+              <PolicyBlock
+                title={tp("behaviorTitle")}
+                lines={policy.behaviorRestrictions.map((line) =>
+                  buildBehaviorSentence(line, translate),
+                )}
+              />
+              <PolicyBlock
+                title={tp("admissionTitle")}
+                lines={
+                  policy.admission
+                    ? buildAdmissionSentences(policy.admission, translate, locale)
+                    : []
+                }
+              />
+              <PolicyBlock
+                title={tp("hygieneTitle")}
+                lines={policy.hygiene.map((line) => buildHygieneSentence(line, translate))}
               />
               <PolicyBlock
                 title={tp("uncertaintyTitle")}

@@ -427,6 +427,67 @@
         "uncertainty": {
           "default": "Check {target} with the place"
         },
+        "spaceTitle": "Areas you can use",
+        "behaviorTitle": "Behavior rules",
+        "admissionTitle": "Entry fee",
+        "hygieneTitle": "Hygiene and liability",
+        "dogSizes": {
+          "SMALL": "small dogs",
+          "MEDIUM": "medium-sized dogs",
+          "LARGE": "large dogs"
+        },
+        "feePeriods": {
+          "WEEKDAY": "weekdays",
+          "WEEKEND_HOLIDAY": "weekends and holidays"
+        },
+        "space": {
+          "areas": {
+            "INDOOR": "the indoor area",
+            "OUTDOOR": "the outdoor area",
+            "TERRACE": "the terrace area"
+          },
+          "floor": "the {floor}F",
+          "basementFloor": "the B{floor}",
+          "access": {
+            "ALLOWED": "Dogs are allowed in {area}",
+            "NOT_ALLOWED": "Dogs are not allowed in {area}",
+            "UNKNOWN": "Check with the place whether dogs are allowed in {area}"
+          },
+          "accessBySize": {
+            "ALLOWED": "In {area}, {size} are allowed",
+            "NOT_ALLOWED": "In {area}, {size} are not allowed",
+            "UNKNOWN": "Check with the place whether {size} are allowed in {area}"
+          }
+        },
+        "behaviorTriggers": {
+          "BARKING": "If your dog barks,",
+          "AGGRESSION": "If your dog shows aggression,",
+          "UNCONTROLLED": "If your dog cannot be kept under control,",
+          "DISTURBING_OTHERS": "If your dog disturbs other guests,"
+        },
+        "behavior": {
+          "MAY_RESTRICT": "{trigger} your visit may be restricted on site",
+          "NO_ENTRY": "{trigger} your dog cannot enter",
+          "UNKNOWN": "{trigger} check with the place what happens"
+        },
+        "admission": {
+          "FREE": "There is no entry fee",
+          "UNKNOWN": "Check with the place whether there is an entry fee",
+          "paidAmountUnknown": "There is an entry fee, but the amount is unconfirmed - check with the place",
+          "rate": "Entry fee: {amount}",
+          "rateWithScope": "Entry fee for {scope}: {amount}",
+          "amount": "₩{value}",
+          "included": "Included with the fee: {services}"
+        },
+        "hygiene": {
+          "rules": {
+            "POOP_OWNER_HANDLES": "You must clean up after your dog",
+            "POOP_DESIGNATED_DISPOSAL": "Dog waste must go in the designated bin",
+            "PET_DISHES_ONLY": "Your dog may only eat from pet dishes",
+            "SUPERVISION_REQUIRED": "Your dog must stay with you at all times",
+            "OWNER_LIABILITY": "You are responsible for anything your dog causes"
+          }
+        },
         "indoorOnly": "When indoors: {text}",
         "outdoorOnly": "When outdoors: {text}",
         "scopeUnknownNote": "{text} (check when this applies)"

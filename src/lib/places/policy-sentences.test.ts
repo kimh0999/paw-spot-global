@@ -7,12 +7,26 @@ import {
   toPolicyDisplay,
   type PolicyHandlingLine,
   type PolicyPreparationLine,
+  type PolicySpaceLine,
 } from "@/lib/places/policy-display";
-import { EMPTY_POLICY_DETAILS, type PolicyDetails } from "@/lib/places/policy-details";
+import {
+  BEHAVIOR_OUTCOMES,
+  BEHAVIOR_TRIGGERS,
+  EMPTY_POLICY_DETAILS,
+  FEE_PERIODS,
+  HYGIENE_RULES,
+  SIZE_SCOPES,
+  SPACE_ACCESS,
+  type PolicyDetails,
+} from "@/lib/places/policy-details";
 import {
   appendObjectParticle,
+  buildAdmissionSentences,
+  buildBehaviorSentence,
   buildHandlingSentence,
+  buildHygieneSentence,
   buildPreparationSentence,
+  buildSpaceSentence,
   buildUncertaintySentence,
   joinHandlingClauses,
   joinPolicyItems,
@@ -630,5 +644,245 @@ describe("확인 필요 항목 — 자유문자열이 반대 언어로 새지 �
       expect(text).not.toContain("안내문 원문 조각");
       expect(text).not.toContain(koreanQuestion);
     }
+  });
+});
+
+describe("문장 조합 — 층·구역 예외", () => {
+  function line(overrides: Partial<PolicySpaceLine> = {}): PolicySpaceLine {
+    return {
+      area: "TERRACE",
+      floor: null,
+      label: null,
+      sizeKey: null,
+      access: "ALLOWED",
+      ...overrides,
+    };
+  }
+
+  it("지하는 음수 층을 지하로 읽는다", () => {
+    expect(buildSpaceSentence(line({ area: "FLOOR", floor: -1 }), translator("ko"))).toBe(
+      "지하 1층에 들어갈 수 있습니다",
+    );
+    expect(buildSpaceSentence(line({ area: "FLOOR", floor: -1 }), translator("en"))).toBe(
+      "Dogs are allowed in the B1",
+    );
+  });
+
+  it("지상 층은 층 번호를 그대로 쓴다", () => {
+    expect(
+      buildSpaceSentence(line({ area: "FLOOR", floor: 2, access: "NOT_ALLOWED" }), translator("ko")),
+    ).toBe("2층에는 들어갈 수 없습니다");
+  });
+
+  // 관리자가 적은 구역 이름은 그 장소의 고유 이름이라 번역하지 않는다.
+  it("기타 구역은 저장된 이름을 그대로 쓴다", () => {
+    expect(
+      buildSpaceSentence(line({ area: "OTHER", label: "루프탑" }), translator("en")),
+    ).toBe("Dogs are allowed in 루프탑");
+  });
+
+  it("크기 조건은 있을 때만 문장에 넣는다", () => {
+    expect(buildSpaceSentence(line({ sizeKey: "SMALL" }), translator("ko"))).toBe(
+      "테라스에는 소형견이 들어갈 수 있습니다",
+    );
+    expect(buildSpaceSentence(line({ sizeKey: "SMALL" }), translator("en"))).toBe(
+      "In the terrace area, small dogs are allowed",
+    );
+    expect(buildSpaceSentence(line(), translator("ko"))).toBe("테라스에 들어갈 수 있습니다");
+  });
+
+  // 확인되지 않은 것을 가능·불가 어느 쪽으로도 옮기지 않는다.
+  it("확인되지 않은 출입은 두 언어 모두 확인을 요청한다", () => {
+    const ko = buildSpaceSentence(line({ access: "UNKNOWN" }), translator("ko"));
+    const en = buildSpaceSentence(line({ access: "UNKNOWN" }), translator("en"));
+
+    expect(ko).toContain("매장에 확인해 주세요");
+    expect(ko).not.toContain("들어갈 수 있습니다");
+    expect(en).toMatch(/^Check with the place/);
+    expect(en).not.toMatch(/^Dogs are/);
+  });
+
+  it("크기 조건이 있어도 확인 필요를 유지한다", () => {
+    const en = buildSpaceSentence(
+      line({ sizeKey: "LARGE", access: "UNKNOWN" }),
+      translator("en"),
+    );
+
+    expect(en).toBe("Check with the place whether large dogs are allowed in the terrace area");
+  });
+});
+
+describe("문장 조합 — 행동 제한", () => {
+  it("제한 가능성과 입장 불가를 구분한다", () => {
+    expect(
+      buildBehaviorSentence({ triggerKey: "BARKING", outcome: "MAY_RESTRICT" }, translator("ko")),
+    ).toBe("짖는 경우 현장에서 이용이 제한될 수 있습니다");
+    expect(
+      buildBehaviorSentence({ triggerKey: "AGGRESSION", outcome: "NO_ENTRY" }, translator("ko")),
+    ).toBe("공격성을 보이는 경우 입장할 수 없습니다");
+  });
+
+  it("영어도 가능성과 단정을 구분한다", () => {
+    expect(
+      buildBehaviorSentence({ triggerKey: "BARKING", outcome: "MAY_RESTRICT" }, translator("en")),
+    ).toBe("If your dog barks, your visit may be restricted on site");
+    expect(
+      buildBehaviorSentence(
+        { triggerKey: "DISTURBING_OTHERS", outcome: "NO_ENTRY" },
+        translator("en"),
+      ),
+    ).toBe("If your dog disturbs other guests, your dog cannot enter");
+  });
+
+  // 결과가 확인되지 않은 것을 입장 불가로 바꾸지 않는다.
+  it("결과 미상은 확인 요청으로만 말한다", () => {
+    const ko = buildBehaviorSentence(
+      { triggerKey: "UNCONTROLLED", outcome: "UNKNOWN" },
+      translator("ko"),
+    );
+
+    expect(ko).toContain("매장에 확인해 주세요");
+    expect(ko).not.toContain("입장할 수 없습니다");
+  });
+});
+
+describe("문장 조합 — 입장료", () => {
+  const paid = (rates: Array<{ periodKey: null | "WEEKDAY" | "WEEKEND_HOLIDAY"; sizeKey: null | "SMALL"; amountKrw: number }>) => ({
+    feePolicy: "PAID" as const,
+    rates,
+    includedServices: [],
+  });
+
+  it("무료와 확인 필요를 구분한다", () => {
+    expect(
+      buildAdmissionSentences(
+        { feePolicy: "FREE", rates: [], includedServices: [] },
+        translator("ko"),
+        "ko",
+      ),
+    ).toEqual(["입장료가 없습니다"]);
+
+    const unknown = buildAdmissionSentences(
+      { feePolicy: "UNKNOWN", rates: [], includedServices: [] },
+      translator("ko"),
+      "ko",
+    );
+    expect(unknown[0]).toContain("매장에 확인해 주세요");
+    expect(unknown[0]).not.toContain("없습니다");
+  });
+
+  it("금액을 locale 형식으로 쓴다", () => {
+    expect(
+      buildAdmissionSentences(
+        paid([{ periodKey: null, sizeKey: null, amountKrw: 10000 }]),
+        translator("ko"),
+        "ko",
+      ),
+    ).toEqual(["입장료 10,000원"]);
+
+    expect(
+      buildAdmissionSentences(
+        paid([{ periodKey: null, sizeKey: null, amountKrw: 10000 }]),
+        translator("en"),
+        "en",
+      ),
+    ).toEqual(["Entry fee: ₩10,000"]);
+  });
+
+  it("기간·크기 조건은 있을 때만 붙인다", () => {
+    expect(
+      buildAdmissionSentences(
+        paid([
+          { periodKey: "WEEKDAY", sizeKey: null, amountKrw: 8000 },
+          { periodKey: "WEEKEND_HOLIDAY", sizeKey: "SMALL", amountKrw: 12000 },
+        ]),
+        translator("ko"),
+        "ko",
+      ),
+    ).toEqual(["평일 입장료 8,000원", "주말·공휴일 소형견 입장료 12,000원"]);
+
+    expect(
+      buildAdmissionSentences(
+        paid([{ periodKey: "WEEKDAY", sizeKey: "SMALL", amountKrw: 8000 }]),
+        translator("en"),
+        "en",
+      ),
+    ).toEqual(["Entry fee for weekdays, small dogs: ₩8,000"]);
+  });
+
+  // 유료인 것과 금액을 아는 것은 다른 사실이다.
+  it("유료인데 금액이 없으면 금액만 확인을 요청한다", () => {
+    const ko = buildAdmissionSentences(paid([]), translator("ko"), "ko");
+
+    expect(ko[0]).toContain("입장료가 있습니다");
+    expect(ko[0]).toContain("금액은 매장에 확인해 주세요");
+  });
+
+  it("포함 서비스는 요금과 다른 줄로 보여준다", () => {
+    const lines = buildAdmissionSentences(
+      {
+        feePolicy: "PAID",
+        rates: [{ periodKey: null, sizeKey: null, amountKrw: 10000 }],
+        includedServices: ["음료 1잔", "간식"],
+      },
+      translator("ko"),
+      "ko",
+    );
+
+    expect(lines).toHaveLength(2);
+    expect(lines[1]).toBe("입장료에 포함: 음료 1잔, 간식");
+  });
+
+  // 0원은 무료 선언이 아니라 요금표에 적힌 값이다.
+  it("0원 요금을 무료라고 바꾸지 않는다", () => {
+    const ko = buildAdmissionSentences(
+      paid([{ periodKey: null, sizeKey: null, amountKrw: 0 }]),
+      translator("ko"),
+      "ko",
+    );
+
+    expect(ko).toEqual(["입장료 0원"]);
+  });
+});
+
+describe("문장 조합 — 위생·책임", () => {
+  it("두 언어 모두 완결된 안내 문장을 만든다", () => {
+    expect(buildHygieneSentence({ ruleKey: "POOP_OWNER_HANDLES" }, translator("ko"))).toBe(
+      "배변은 보호자가 치워야 합니다",
+    );
+    expect(buildHygieneSentence({ ruleKey: "OWNER_LIABILITY" }, translator("en"))).toBe(
+      "You are responsible for anything your dog causes",
+    );
+  });
+});
+
+/**
+ * 저장할 수 있는 코드에 문구가 없으면 화면에 키가 그대로 나간다.
+ * 관리자 라벨과 같은 방식으로 사용자 문구도 계약을 고정한다.
+ */
+describe("표시용 메시지 키", () => {
+  const CODE_SETS: Array<[string, readonly string[]]> = [
+    ["space.access", SPACE_ACCESS],
+    ["space.accessBySize", SPACE_ACCESS],
+    ["behavior", BEHAVIOR_OUTCOMES],
+    ["behaviorTriggers", BEHAVIOR_TRIGGERS],
+    ["hygiene.rules", HYGIENE_RULES],
+    // ALL은 "조건 없음"이라 문장에 넣을 말이 없다 — 표시 계층에서 null로 지운다.
+    ["dogSizes", SIZE_SCOPES.filter((size) => size !== "ALL")],
+    ["feePeriods", FEE_PERIODS.filter((period) => period !== "ALL")],
+  ];
+
+  it.each(["ko", "en"] as const)("%s에 모든 코드의 문구가 있다", (locale) => {
+    const t = translator(locale);
+
+    for (const [prefix, codes] of CODE_SETS) {
+      for (const code of codes) {
+        expect(t(`${prefix}.${code}`).trim(), `${locale}.${prefix}.${code}`).toBeTruthy();
+      }
+    }
+  });
+
+  it.each(["ko", "en"] as const)("%s에 크기 무관 문구를 두지 않는다", (locale) => {
+    expect(() => translator(locale)("dogSizes.ALL")).toThrow();
   });
 });
