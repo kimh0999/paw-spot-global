@@ -5,17 +5,11 @@ import CategorySection from "@/components/home/CategorySection";
 import InfoSection from "@/components/home/InfoSection";
 import RecentPlacesSection from "@/components/home/RecentPlacesSection";
 import { getHomePlaces } from "@/lib/places/queries";
-import type { HomePlaceItem } from "@/types/place";
 
 export default async function Home() {
   const t = await getTranslations("home");
-  let homePlaces: HomePlaceItem[] = [];
-
-  try {
-    homePlaces = await getHomePlaces();
-  } catch (error) {
-    console.error("[Home] Failed to load visible places", error);
-  }
+  // 실패를 삼키면 "장소가 없음"과 구별되지 않는다. 오류 경계가 받아 다시 시도를 준다.
+  const homePlaces = await getHomePlaces();
 
   return (
     <>

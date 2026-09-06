@@ -594,6 +594,17 @@
     }
   },
   "common": {
+    "errorPage": {
+      "title": "This page could not be loaded",
+      "description": "This may be temporary. If it keeps happening, please try again in a little while.",
+      "backHome": "Go home"
+    },
+    "notFound": {
+      "title": "Page not found",
+      "description": "The address may have changed, or the place may have been removed.",
+      "backHome": "Go home",
+      "browsePlaces": "Browse places"
+    },
     "loading": "Loading...",
     "error": "Something went wrong.",
     "retry": "Retry",
@@ -624,6 +635,11 @@
     }
   },
   "admin": {
+    "error": {
+      "title": "This admin page could not be loaded",
+      "description": "Nothing you saved has changed. Try again or go back to the list.",
+      "backToList": "Back to place list"
+    },
     "places": {
       "title": "Places",
       "description": "Manage all registered dog-friendly places.",
