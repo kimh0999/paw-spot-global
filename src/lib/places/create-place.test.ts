@@ -48,6 +48,8 @@ function input(condition: Partial<PlaceInput["condition"]> = {}): PlaceInput {
     category: "CAFE",
     address: "서울시 어딘가",
     location: { lat: 37.5, lng: 127.0 },
+    hours: null,
+    hoursNote: null,
     phone: null,
     website: null,
     instagram: null,

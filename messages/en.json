@@ -310,6 +310,15 @@
     },
     "detail": {
       "back": "Back to places",
+      "hours": {
+        "title": "Hours",
+        "closed": "Closed",
+        "notProvided": "Opening hours have not been added yet.",
+        "days": {
+          "mon": "Mon", "tue": "Tue", "wed": "Wed", "thu": "Thu",
+          "fri": "Fri", "sat": "Sat", "sun": "Sun"
+        }
+      },
       "actions": {
         "directions": "Directions",
         "call": "Call",
@@ -763,6 +772,8 @@
           "HIDDEN": "Hidden"
         },
         "validation": {
+          "hoursIncompleteDay": "Enter both the opening and closing time, or leave both empty for a closed day.",
+          "invalidHours": "Check the opening hours. Use HH:MM and make sure the closing time is later than the opening time.",
           "required": "This field is required.",
           "invalidLatitude": "Latitude must be between 33 and 43 (South Korea range).",
           "invalidLongitude": "Longitude must be between 124 and 132 (South Korea range).",

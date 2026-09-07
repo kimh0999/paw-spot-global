@@ -12,6 +12,12 @@ import {
   SUPPORTED_LOCALES,
   VACCINATION_CERTIFICATE_POLICIES,
 } from "@/lib/constants";
+import {
+  DAY_KEYS,
+  HOURS_NOTE_MAX_LENGTH,
+  operatingHoursSchema,
+  type OperatingHours,
+} from "@/lib/places/operating-hours";
 
 // @handle, handle, or instagram.com URL
 const INSTAGRAM_REGEX =
@@ -21,6 +27,55 @@ const INSTAGRAM_REGEX =
 const PHONE_REGEX = /^[\d\s\-()+]+$/;
 
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+/**
+ * 요일별 입력 원문 → `OperatingHours`.
+ *
+ * 양쪽이 비면 그날은 **휴무**(`null`)다. 한쪽만 채우면 오류다 — 여는 시각만 있고 닫는
+ * 시각이 없으면 화면에 무엇을 보여줄지 정할 수 없다.
+ * 전 요일이 비어 있으면 `null`을 준다. "아직 입력하지 않음"과 "전 요일 휴무"는 다르다.
+ */
+const hoursFormSchema = z
+  .record(z.string(), z.object({ open: z.string(), close: z.string() }))
+  // 운영시간을 다루지 않는 호출부(기존 테스트 등)는 키를 보내지 않는다. 그 경우도
+  // "아직 입력하지 않음"(null)으로 떨어져야 한다.
+  .default({})
+  .transform((input, ctx) => {
+    const draft: Record<string, { open: string; close: string } | null> = {};
+    let anyFilled = false;
+
+    for (const day of DAY_KEYS) {
+      const entry = input[day] ?? { open: "", close: "" };
+      const open = entry.open.trim();
+      const close = entry.close.trim();
+
+      if (open === "" && close === "") {
+        draft[day] = null;
+        continue;
+      }
+      if (open === "" || close === "") {
+        ctx.addIssue({
+          code: "custom",
+          message: "hoursIncompleteDay",
+          path: [day],
+        });
+        return z.NEVER;
+      }
+      draft[day] = { open, close };
+      anyFilled = true;
+    }
+
+    if (!anyFilled) return null;
+
+    const parsed = operatingHoursSchema.safeParse(draft);
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        ctx.addIssue({ code: "custom", message: "invalidHours", path: issue.path });
+      }
+      return z.NEVER;
+    }
+    return parsed.data as OperatingHours;
+  });
 
 function isNotFutureKST(date: Date): boolean {
   const nowKST = new Date(Date.now() + KST_OFFSET_MS);
@@ -52,6 +107,8 @@ const placeBaseSchema = z.object({
   thumbnailUrl: z.string().url().nullish(),
   tourApiId: z.string().nullish(),
   visibility: z.enum(PLACE_VISIBILITY).default("DRAFT"),
+  hours: hoursFormSchema,
+  hoursNote: z.string().max(HOURS_NOTE_MAX_LENGTH).nullish(),
 
   condition: z.object({
     indoor: z.enum(INDOOR_POLICIES),

@@ -29,7 +29,7 @@ export async function createPlaceRecord(
       INSERT INTO "Place"
         (id, "tourApiId", "nameKr", "nameEn", category,
          address, location, phone, website, instagram,
-         "thumbnailUrl", visibility,
+         "thumbnailUrl", hours, "hoursNote", visibility,
          "createdAt", "updatedAt")
       VALUES
         (${id},
@@ -43,6 +43,8 @@ export async function createPlaceRecord(
          ${placeData.website ?? null},
          ${placeData.instagram ?? null},
          ${placeData.thumbnailUrl ?? null},
+         ${placeData.hours ? JSON.stringify(placeData.hours) : null}::jsonb,
+         ${placeData.hoursNote ?? null},
          ${placeData.visibility}::"PlaceVisibility",
          now(),
          now())

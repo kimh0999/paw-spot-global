@@ -11,6 +11,7 @@ import {
   Phone,
   Globe,
   Camera,
+  Clock,
   Navigation,
   History,
   type LucideIcon,
@@ -30,6 +31,7 @@ import { formatDistance, haversineDistance } from "@/lib/geo/distance";
 import { displayPlaceName, isSupportedLocale } from "@/lib/i18n/locale";
 import { getFavoritePlaceIds } from "@/lib/favorites/queries";
 import { needsRecheck } from "@/lib/places/display";
+import { groupConsecutiveDays } from "@/lib/places/operating-hours";
 import { getPlaceById } from "@/lib/places/queries";
 import type { PlaceListItem } from "@/types/place";
 
@@ -245,6 +247,37 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
             <h2 className="text-sm font-semibold text-content">{t("info.title")}</h2>
           </div>
           <div className="px-5 py-4 space-y-3">
+            {/* 운영시간 (DESIGN.md §6 표시 순서 6). 이어지는 같은 시간대는 묶어서 줄인다. */}
+            <div className="flex items-start gap-2">
+              <Clock className="w-4 h-4 shrink-0 mt-0.5 text-content-muted" strokeWidth={1.5} aria-hidden="true" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-content">{t("hours.title")}</p>
+                {place.hours ? (
+                  <dl className="mt-1 space-y-0.5">
+                    {groupConsecutiveDays(place.hours).map((group) => (
+                      <div key={group.days.join("-")} className="flex gap-2 text-sm">
+                        <dt className="w-24 shrink-0 text-content-muted">
+                          {group.days.length > 1
+                            ? `${t(`hours.days.${group.days[0]}`)}–${t(`hours.days.${group.days[group.days.length - 1]}`)}`
+                            : t(`hours.days.${group.days[0]}`)}
+                        </dt>
+                        <dd className="text-content-secondary">
+                          {group.hours
+                            ? `${group.hours.open}–${group.hours.close}`
+                            : t("hours.closed")}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : (
+                  <p className="mt-1 text-sm text-content-muted">{t("hours.notProvided")}</p>
+                )}
+                {place.hoursNote && (
+                  <p className="mt-1.5 text-sm text-content-secondary">{place.hoursNote}</p>
+                )}
+              </div>
+            </div>
+
             {place.phone && (
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 shrink-0 mt-0.5 text-content-muted" strokeWidth={1.5} aria-hidden="true" />

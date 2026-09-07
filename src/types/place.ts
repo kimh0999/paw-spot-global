@@ -1,3 +1,4 @@
+import type { OperatingHours } from "@/lib/places/operating-hours";
 import type { PolicyDetails } from "@/lib/places/policy-details";
 
 export type ConditionStatus = "good" | "warning" | "bad" | "neutral";
@@ -57,6 +58,9 @@ export interface PlaceDetail {
   instagram: string | null;
   thumbnailUrl: string | null;
   location: { lat: number; lng: number } | null;
+  /** 형식이 깨졌거나 아직 입력되지 않은 장소는 null이다(결정 D-04). */
+  hours: OperatingHours | null;
+  hoursNote: string | null;
   condition: {
     indoor: PlaceListItem["indoor"];
     carrierStrollerPolicy: PlaceListItem["carrierStrollerPolicy"];

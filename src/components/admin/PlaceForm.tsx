@@ -17,6 +17,7 @@ import {
   SUPPORTED_LOCALES,
   VACCINATION_CERTIFICATE_POLICIES,
 } from "@/lib/constants";
+import { DAY_KEYS, type OperatingHours } from "@/lib/places/operating-hours";
 import { cn } from "@/lib/utils";
 import {
   derivedColumns,
@@ -48,6 +49,9 @@ export type PlaceFormInitialValues = {
   website?: string | null;
   instagram?: string | null;
   thumbnailUrl?: string | null;
+  /** 저장된 요일별 운영시간. 형식이 깨졌으면 null로 받아 빈 칸으로 시작한다. */
+  hours?: OperatingHours | null;
+  hoursNote?: string | null;
   tourApiId?: string | null;
   visibility?: string;
   condition?: {
@@ -129,6 +133,11 @@ const VACCINATION_LABELS: Record<string, string> = {
   UNKNOWN: "확인 필요",
 };
 
+/** 관리자 폼은 전체가 한국어라 요일 라벨도 여기서 고정한다. 사용자 화면은 i18n을 쓴다. */
+const DAY_LABELS: Record<(typeof DAY_KEYS)[number], string> = {
+  mon: "월", tue: "화", wed: "수", thu: "목", fri: "금", sat: "토", sun: "일",
+};
+
 const REQUIRED_ITEM_LABELS: Record<string, string> = {
   POOP_BAG: "배변봉투",
 };
@@ -196,6 +205,11 @@ export function PlaceForm({
   // Merge server-side field errors (state.fieldErrors) with client-side errors.
   // Client-side errors take precedence for fields the user has corrected.
   const allFieldErrors: FieldErrors = { ...(state.fieldErrors ?? {}), ...fieldErrors };
+
+  // zod가 요일 단위로 오류를 내면 path가 `hours.mon`이 된다. 접두사로 찾는다.
+  const hoursError = Object.entries(allFieldErrors).find(
+    ([key]) => key === "hours" || key.startsWith("hours."),
+  )?.[1];
 
   const parsedLat = parseFloat(lat);
   const parsedLng = parseFloat(lng);
@@ -631,6 +645,66 @@ export function PlaceForm({
             <p id="thumbnailUrl-error" className="text-sm text-destructive">
               {allFieldErrors["thumbnailUrl"]}
             </p>
+          )}
+        </div>
+
+        {/* 운영시간 (결정 D-04). 요일별 시작·종료 7행 + 메모 1줄.
+            자유 텍스트 단독 저장을 금지한다 — 한국어로 적으면 영어 UI에서 읽히지 않는다. */}
+        <fieldset className="flex flex-col gap-2 rounded border p-3">
+          <legend className="px-1 text-sm font-medium">운영시간</legend>
+          <p className="text-xs text-muted-foreground">
+            비워 두면 그 요일은 휴무로 저장됩니다. 전부 비우면 &quot;미입력&quot;입니다.
+            자정을 넘겨 영업하면 종료를 23:59로 두고 아래 메모에 실제 마감을 적으세요.
+          </p>
+          {DAY_KEYS.map((day) => (
+            <div key={day} className="flex items-center gap-2">
+              <span className="w-10 shrink-0 text-sm text-muted-foreground">
+                {DAY_LABELS[day]}
+              </span>
+              <input
+                name={`hours.${day}.open`}
+                type="time"
+                defaultValue={iv?.hours?.[day]?.open ?? ""}
+                aria-label={`${DAY_LABELS[day]} 시작`}
+                className="rounded border px-2 py-1.5 text-sm"
+                onChange={() => clearError("hours")}
+              />
+              <span className="text-sm text-muted-foreground">–</span>
+              <input
+                name={`hours.${day}.close`}
+                type="time"
+                defaultValue={iv?.hours?.[day]?.close ?? ""}
+                aria-label={`${DAY_LABELS[day]} 종료`}
+                className="rounded border px-2 py-1.5 text-sm"
+                onChange={() => clearError("hours")}
+              />
+            </div>
+          ))}
+          {hoursError && <p className="text-sm text-destructive">{hoursError}</p>}
+        </fieldset>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="hoursNote" className="text-sm font-medium">
+            운영시간 메모 (선택)
+          </label>
+          <input
+            id="hoursNote"
+            name="hoursNote"
+            maxLength={100}
+            defaultValue={iv?.hoursNote ?? ""}
+            placeholder="예: Break 15:00-17:00 / Closed on public holidays"
+            className={cn(
+              "rounded border px-3 py-2",
+              allFieldErrors["hoursNote"] && "border-destructive",
+            )}
+            aria-invalid={!!allFieldErrors["hoursNote"]}
+            onChange={() => clearError("hoursNote")}
+          />
+          <p className="text-xs text-muted-foreground">
+            사용자 화면에 그대로 노출됩니다. **영어로** 적어 주세요. 최대 100자.
+          </p>
+          {allFieldErrors["hoursNote"] && (
+            <p className="text-sm text-destructive">{allFieldErrors["hoursNote"]}</p>
           )}
         </div>
       </section>

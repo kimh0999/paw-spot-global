@@ -310,6 +310,15 @@
     },
     "detail": {
       "back": "장소 목록으로",
+      "hours": {
+        "title": "운영시간",
+        "closed": "휴무",
+        "notProvided": "운영시간이 아직 등록되지 않았습니다.",
+        "days": {
+          "mon": "월", "tue": "화", "wed": "수", "thu": "목",
+          "fri": "금", "sat": "토", "sun": "일"
+        }
+      },
       "actions": {
         "directions": "길찾기",
         "call": "전화",
@@ -763,6 +772,8 @@
           "HIDDEN": "숨김"
         },
         "validation": {
+          "hoursIncompleteDay": "시작과 종료를 모두 입력하거나, 휴무면 둘 다 비워 주세요.",
+          "invalidHours": "운영시간을 확인해 주세요. HH:MM 형식이어야 하고 종료가 시작보다 늦어야 합니다.",
           "required": "필수 입력 항목입니다.",
           "invalidLatitude": "위도는 33 이상 43 이하여야 합니다 (한국 범위).",
           "invalidLongitude": "경도는 124 이상 132 이하여야 합니다 (한국 범위).",

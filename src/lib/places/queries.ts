@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
 import { HOME_CATEGORY_PLACE_LIMIT, MVP_PLACE_CATEGORIES } from "@/lib/places/constants";
+import { readOperatingHours, type OperatingHours } from "@/lib/places/operating-hours";
 import { readPolicyDetails, type PolicyDetailsRead } from "@/lib/places/policy-details";
 import type {
   CategoryFilterValue,
@@ -300,6 +301,8 @@ export async function getPlaceById(id: string): Promise<PlaceDetail | null> {
       website: true,
       instagram: true,
       thumbnailUrl: true,
+      hours: true,
+      hoursNote: true,
       visibility: true,
       condition: {
         select: {
@@ -365,6 +368,10 @@ export async function getPlaceById(id: string): Promise<PlaceDetail | null> {
     instagram: place.instagram ?? null,
     thumbnailUrl: place.thumbnailUrl ?? null,
     location: lat != null && lng != null ? { lat, lng } : null,
+    // 형식이 깨진 값은 null로 내린다. 화면에서 "입력 없음"과 같이 보이지만, 깨진 값을
+    // 억지로 렌더해 잘못된 영업시간을 보여주는 것보다 낫다.
+    hours: readOperatingHours(place.hours).value,
+    hoursNote: place.hoursNote ?? null,
     condition: place.condition
       ? {
           indoor: mapIndoorPolicy(String(place.condition.indoor)),
@@ -457,6 +464,9 @@ export interface AdminPlaceDetail {
   website: string | null;
   instagram: string | null;
   thumbnailUrl: string | null;
+  /** 형식이 깨졌으면 null. 편집기가 깨진 값을 조용히 덮어쓰지 않도록 읽기에서 걸러 낸다. */
+  hours: OperatingHours | null;
+  hoursNote: string | null;
   tourApiId: string | null;
   visibility: string;
   createdAt: Date;
@@ -502,6 +512,8 @@ export async function getAdminPlaceById(id: string): Promise<AdminPlaceDetail | 
       website: true,
       instagram: true,
       thumbnailUrl: true,
+      hours: true,
+      hoursNote: true,
       tourApiId: true,
       visibility: true,
       createdAt: true,
@@ -564,6 +576,8 @@ export async function getAdminPlaceById(id: string): Promise<AdminPlaceDetail | 
     website: place.website ?? null,
     instagram: place.instagram ?? null,
     thumbnailUrl: place.thumbnailUrl ?? null,
+    hours: readOperatingHours(place.hours).value,
+    hoursNote: place.hoursNote ?? null,
     tourApiId: place.tourApiId ?? null,
     visibility: String(place.visibility),
     createdAt: place.createdAt,

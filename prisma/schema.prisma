@@ -117,6 +117,13 @@ model Place {
   instagram    String?
   thumbnailUrl String?
 
+  // 요일별 영업시간 (결정 D-04). 형식은 src/lib/places/operating-hours.ts의
+  // operatingHoursSchema가 강제한다. 요일 값이 null이면 그날은 휴무다.
+  // 자유 텍스트 단독 저장을 금지한다 — 한국어로 적으면 영어 UI에서 읽히지 않는다.
+  hours        Json?
+  // 브레이크타임·정기휴무 같은 짧은 보조 정보 1줄. 운영시간 본체를 대신하지 않는다.
+  hoursNote    String?
+
   visibility   PlaceVisibility @default(DRAFT)
 
   condition     PlaceCondition?

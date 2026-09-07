@@ -42,6 +42,8 @@ function mapZodIssuesToFieldErrors(
         "futureVerifiedAt",
         "verificationIncomplete",
         "snapshotWithoutVerification",
+        "hoursIncompleteDay",
+        "invalidHours",
       ] as const;
       if ((knownKeys as readonly string[]).includes(issue.message)) {
         result[field] = t(issue.message as (typeof knownKeys)[number]);

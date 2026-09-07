@@ -1,3 +1,8 @@
+import { DAY_KEYS } from "@/lib/places/operating-hours";
+
+/** 요일별 입력 원문. 양쪽이 비면 그날은 휴무로 본다. */
+export type HoursFormInput = Record<string, { open: string; close: string }>;
+
 export type ParsedPlaceFormData = {
   nameKr: string;
   nameEn: string | null;
@@ -13,6 +18,8 @@ export type ParsedPlaceFormData = {
   thumbnailUrl: string | null;
   tourApiId: string | null;
   visibility: string;
+  hours: HoursFormInput;
+  hoursNote: string | null;
   condition: {
     indoor: string;
     carrierStrollerPolicy: string;
@@ -67,6 +74,16 @@ export function parsePlaceFormData(formData: FormData): ParsedPlaceFormData {
     thumbnailUrl: nullIfEmpty(formData.get("thumbnailUrl")),
     tourApiId: nullIfEmpty(formData.get("tourApiId")),
     visibility: String(formData.get("visibility") ?? "DRAFT"),
+    hours: Object.fromEntries(
+      DAY_KEYS.map((day) => [
+        day,
+        {
+          open: trimmedString(formData.get(`hours.${day}.open`)),
+          close: trimmedString(formData.get(`hours.${day}.close`)),
+        },
+      ]),
+    ),
+    hoursNote: nullIfEmpty(formData.get("hoursNote")),
     condition: {
       indoor: String(formData.get("condition.indoor") ?? ""),
       carrierStrollerPolicy: String(

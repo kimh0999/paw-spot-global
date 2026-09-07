@@ -33,6 +33,8 @@ export default async function AdminPlaceEditPage({ params }: Props) {
     website: place.website ?? undefined,
     instagram: place.instagram ?? undefined,
     thumbnailUrl: place.thumbnailUrl ?? undefined,
+    hours: place.hours,
+    hoursNote: place.hoursNote,
     tourApiId: place.tourApiId ?? undefined,
     visibility: place.visibility,
     condition: place.condition ?? {

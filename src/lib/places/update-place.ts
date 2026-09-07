@@ -89,6 +89,8 @@ export async function updatePlaceRecord(
         website        = ${placeData.website ?? null},
         instagram      = ${placeData.instagram ?? null},
         "thumbnailUrl" = ${placeData.thumbnailUrl ?? null},
+        hours          = ${placeData.hours ? JSON.stringify(placeData.hours) : null}::jsonb,
+        "hoursNote"    = ${placeData.hoursNote ?? null},
         visibility     = ${placeData.visibility}::"PlaceVisibility",
         "updatedAt"    = now()
       WHERE id = ${id}
