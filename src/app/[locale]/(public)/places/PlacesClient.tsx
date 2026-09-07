@@ -180,12 +180,8 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
       ? "results"
       : "peek";
 
-  // 범위 판정은 **필터를 거치지 않은** 전체 공개 장소로 한다. 필터로 0건이 된 것과
-  // 사용자가 서비스 지역 밖에 있는 것은 다른 상태다 (D-11).
-  const outOfServiceArea = useMemo(
-    () => isOutsideServiceArea(initialPlaces),
-    [initialPlaces],
-  );
+  // 판정 기준은 서비스 지역 중심이다. 공개된 장소가 어디에 있든 범위는 움직이지 않는다.
+  const outOfServiceArea = isOutsideServiceArea(userLocation);
 
   // 결과 수를 줄이는 조건. 정렬·위치는 결과 수를 바꾸지 않으므로 세지 않는다.
   const hasNarrowedConditions =

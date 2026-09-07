@@ -1,3 +1,5 @@
+import { haversineDistance } from "@/lib/geo/distance";
+
 /**
  * 1단계 서비스 지역 — 대전 (기획서 v3 §9, 결정 D-08·D-11).
  *
@@ -16,38 +18,33 @@ export const SERVICE_AREA_CENTER = { lat: 36.3504, lng: 127.3845 } as const;
  */
 export const SERVICE_AREA_ZOOM = 12;
 
-/**
- * 서비스 범위 밖 판정 임계 거리 (개발명세서 v2 §7-2 권장값).
- *
- * 대전 경계가 아니라 **공개 장소까지의 거리**로 잰다. 장소가 대전 밖으로 확장돼도
- * 이 판정은 그대로 따라온다.
- */
+/** 서비스 범위 반경. 임계값 자체는 개발명세서 v2 §7-2의 권장값을 그대로 쓴다. */
 export const SERVICE_AREA_RADIUS_METERS = 50_000;
-
-type WithDistance = { distanceMeters: number | null };
 
 /**
  * 사용자가 서비스 범위 밖에 있는가.
  *
- * `distanceMeters`는 사용자 위치가 있을 때만 서버가 채운다(PostGIS). 그래서 위치를 모르면
- * 자연히 `false`가 되고, 별도로 위치 유무를 받지 않는다.
+ * 기준은 **`SERVICE_AREA_CENTER`로부터의 거리**다. 명세서 §7-2는 "공개 장소 중 최단 거리"로
+ * 적고 있으나 그 방식은 채택하지 않았다 — 대전 밖 장소가 실수로 공개되면 그 장소를 기준으로
+ * 서비스 범위가 조용히 넓어진다. 실제로 공개 장소 하나가 대전시청에서 341km 떨어진 좌표를
+ * 갖고 있었다. 범위는 데이터 상태와 무관하게 고정돼야 한다.
  *
- * **필터를 거치지 않은 전체 공개 장소**를 넘겨야 한다. 필터로 결과가 0건이 된 것은
- * 사용자가 범위 밖으로 나간 것이 아니다.
- *
- * 거리를 아는 장소가 하나도 없으면 판정하지 않는다(`false`). 공개 장소가 0건인 상태는
- * "사용자가 멀리 있다"가 아니라 "보여줄 데이터가 없다"이고, 안내 문구가 달라야 한다.
+ * 위치를 모르면 판정하지 않는다(`false`). 위치 권한이 없는 것과 멀리 있는 것은 다른 상태고,
+ * 화면에서 보여줄 안내도 다르다.
  */
-export function isOutsideServiceArea(places: WithDistance[]): boolean {
-  let nearest = Number.POSITIVE_INFINITY;
+export function isOutsideServiceArea(
+  userLocation: { lat: number; lng: number } | null | undefined,
+): boolean {
+  if (!userLocation) return false;
 
-  for (const place of places) {
-    if (place.distanceMeters == null) continue;
-    if (place.distanceMeters < nearest) nearest = place.distanceMeters;
-  }
+  const distance = haversineDistance(
+    userLocation.lat,
+    userLocation.lng,
+    SERVICE_AREA_CENTER.lat,
+    SERVICE_AREA_CENTER.lng,
+  );
 
-  if (!Number.isFinite(nearest)) return false;
-  return nearest > SERVICE_AREA_RADIUS_METERS;
+  return distance > SERVICE_AREA_RADIUS_METERS;
 }
 
 /** 목록이 비었을 때 화면이 말해야 하는 원인. 원인마다 다음 행동이 다르다. */

@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import { useTranslations } from "next-intl";
 
-const SEOUL_CITY_HALL = { lat: 37.5665, lng: 126.978 };
+import { SERVICE_AREA_CENTER } from "@/lib/places/service-area";
+
 const DEFAULT_ZOOM = 14;
 // TODO(global): expose as a bounds prop when the service expands beyond Korea
 const LAT_MIN = 33;
@@ -56,8 +57,10 @@ export function LocationPickerMap({
   const disabledRef = useRef(disabled ?? false);
   disabledRef.current = disabled ?? false;
 
-  // Computed once at mount — stable initial center, never changes after mount
-  const initialCenterRef = useRef(toValidCoords(lat, lng) ?? SEOUL_CITY_HALL);
+  // Computed once at mount — stable initial center, never changes after mount.
+  // 좌표가 아직 없는 장소는 서비스 지역(대전)에서 시작한다 — 운영자가 검증하는 장소가
+  // 그곳에 있으므로, 매번 지도를 옮기게 하지 않는다.
+  const initialCenterRef = useRef(toValidCoords(lat, lng) ?? SERVICE_AREA_CENTER);
 
   // Tracks the last known marker position to prevent form→map→form feedback loops
   const lastPositionRef = useRef<{ lat: number; lng: number }>(
