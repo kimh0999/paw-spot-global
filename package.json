@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "import:places": "node scripts/import-places.mjs"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",

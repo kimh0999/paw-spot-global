@@ -1,0 +1,26 @@
+[
+  {
+    "tourApiId": "EXAMPLE-0001",
+    "nameKr": "예시 카페",
+    "nameEn": "Example Cafe",
+    "category": "CAFE",
+    "address": "대전 유성구 대학로 99",
+    "lat": 36.3626,
+    "lng": 127.3565,
+    "website": "https://example.com"
+  },
+  {
+    "tourApiId": "EXAMPLE-0002",
+    "nameKr": "좌표 없는 예시",
+    "category": "RESTAURANT",
+    "address": "대전 서구 둔산로 100"
+  },
+  {
+    "tourApiId": "EXAMPLE-0003",
+    "nameKr": "분류가 틀린 예시",
+    "category": "BAKERY",
+    "address": "대전 중구 대종로 100",
+    "lat": 36.3271,
+    "lng": 127.4275
+  }
+]
