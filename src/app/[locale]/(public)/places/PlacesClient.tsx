@@ -247,7 +247,7 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
           aria-label={t("list.title")}
           className={cn(
             "absolute inset-x-0 bottom-0 z-bottom-sheet flex flex-col overflow-hidden rounded-t-2xl border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] shadow-lg",
-            "transition-[height] duration-300 ease-out motion-reduce:transition-none",
+            "transition-[height] duration-standard ease-standard motion-reduce:transition-none",
             SHEET_HEIGHT[sheetState],
             "lg:static lg:z-auto lg:h-auto lg:w-[340px] lg:shrink-0 lg:rounded-none lg:border-r lg:border-t-0 lg:pb-0 lg:shadow-none lg:transition-none",
           )}

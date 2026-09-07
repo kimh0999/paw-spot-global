@@ -40,8 +40,12 @@
     --color-overlay: rgb(17 24 39 / 48%);
 
     /* DESIGN.md §8 Motion */
+    --duration-fast: 150ms;
     --duration-standard: 250ms;
+    --duration-slow: 350ms;
     --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+    --ease-exit: cubic-bezier(0.4, 0, 1, 1);
 
     /* DESIGN.md §4 Z-index */
     --z-map-control: 10;

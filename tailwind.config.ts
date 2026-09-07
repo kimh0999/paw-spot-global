@@ -95,10 +95,14 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       transitionDuration: {
+        fast: "var(--duration-fast)",
         standard: "var(--duration-standard)",
+        slow: "var(--duration-slow)",
       },
       transitionTimingFunction: {
         standard: "var(--ease-standard)",
+        enter: "var(--ease-enter)",
+        exit: "var(--ease-exit)",
       },
       zIndex: {
         "map-control": "var(--z-map-control)",
