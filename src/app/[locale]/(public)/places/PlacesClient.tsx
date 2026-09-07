@@ -573,7 +573,6 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
             selectedPlaceId={selectedPlaceId}
             hoveredPlaceId={hoveredPlaceId}
             onSelectPlace={handleMarkerSelect}
-            placeholder={t("list.mapPlaceholder")}
             userLocation={userLocation}
             onRequestUserLocation={handleMyLocation}
             isLocating={isLocating}

@@ -1,15 +1,14 @@
 "use client"
 
-import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
+// 이 프로젝트는 라이트 모드 단일이다(DESIGN.md §4·§12 — 다크 모드 스타일을 임의로 추가하지
+// 않는다). 테마를 런타임에 고를 이유가 없어 next-themes 의존을 끊고 값을 고정한다.
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
-
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme="light"
       className="toaster group"
       icons={{
         success: (

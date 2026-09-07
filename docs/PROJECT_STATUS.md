@@ -3,7 +3,7 @@
 > **이 문서의 목적**: 기획이 아니라 **실제 개발 진행 상황 추적**이다.
 > 모든 상태는 코드 확인에 근거한다. 확인하지 못한 것은 `확인 필요`로 남기고 추측하지 않는다.
 >
-> **기준일**: 2026-09-07 (P0 #5 · #20 · #7 완결 · 모션 감사 반영) · 직전 **P0 20건 코드 재대조** 2026-09-06 · 직전 전 항목 재확인 2026-08-18 · **브랜치**: `chore/project-foundation`
+> **기준일**: 2026-09-08 (P0 #18 완결) · 직전 P0 #5 · #20 · #7 완결 2026-09-07 · 직전 **P0 20건 코드 재대조** 2026-09-06 · 직전 전 항목 재확인 2026-08-18 · **브랜치**: `chore/project-foundation`
 > **기획 기준**: `docs/Paw_Spot_Global_기획서_v3.md` · **구현 기준**: `docs/Paw_Spot_Global_개발명세서_v2.md` · **디자인 기준**: `DESIGN.md`
 
 **상태 값**: `완료` / `부분 완료` / `미구현` / `확인 필요`
@@ -16,8 +16,8 @@
 
 | 상태 | 개수 |
 |---|---|
-| 완료 | 101 |
-| 부분 완료 | 16 |
+| 완료 | 104 |
+| 부분 완료 | 13 |
 | 미구현 | 39 |
 | 확인 필요 | 4 |
 
@@ -25,9 +25,9 @@
 > 위 수치는 그 12개 행(09-06 8건 + 09-07 4건)의 판정 변경만 반영해 다시 계산한 값이고,
 > 나머지 행은 2026-08-18 판정을 그대로 이어받은 **미검증** 값이다.
 
-**MVP 출시를 차단하는 P0 항목: 20개 중 완료 16 · 미착수 4** (§P0 목록 참조)
+**MVP 출시를 차단하는 P0 항목: 20개 중 완료 17 · 미착수 3** (§P0 목록 참조)
 
-주의: "완료" 101건은 **세부 항목 단위** 집계다. 화면·기능 단위로 보면 탐색 화면의 레이아웃·동기화·판정 로직과 라우트 상태 처리는 완성도가 높은 반면, 상세 페이지의 액션 영역과 데이터 파이프라인(운영시간 · 후보 Import)은 여전히 비어 있다. 절별 분포를 함께 볼 것.
+주의: "완료" 104건은 **세부 항목 단위** 집계다. 화면·기능 단위로 보면 탐색 화면의 레이아웃·동기화·판정 로직과 라우트 상태 처리는 완성도가 높은 반면, 상세 페이지의 액션 영역과 데이터 파이프라인(운영시간 · 후보 Import)은 여전히 비어 있다. 절별 분포를 함께 볼 것.
 
 D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 비대칭"이 `미구현`(수정 대상)으로 확정되었고, 선행 결정 대기 상태였던 4개 항목(신선도 임계 · 운영시간 구조 · 후보 저장 방식 · Import 실행 형태)이 착수 가능해졌다.
 
@@ -128,7 +128,7 @@ P0 20건 재대조 결과, 08-18 시점에 `미구현`으로 적혀 있던 5건�
 | 카드 선택 → 미리보기 + 마커 | 완료 | `selectedPlaceId` 공유, 지도 `panTo` | — | — | `MapPanel.tsx:226-232` |
 | **마커 선택 → 카드 스크롤** | 완료 | 장소 id → `<li>` ref 맵으로 카드를 찾아 `scrollIntoView({block:"nearest"})`. 지도에서 고른 경우에만 동작하도록 `handleMarkerSelect`를 따로 두어 첫 렌더·카드 클릭·평범한 재렌더에서는 스크롤하지 않는다. `prefers-reduced-motion`이면 `behavior:"auto"` | 모바일(시트 `selected` 단계에서 목록이 `hidden`) 동작 미검증 | P0 | `PlacesClient.tsx` |
 | 사용자 위치 마커 | 완료 | 장소 마커와 분리 관리, 위치 변경 시에만 `panTo` | — | — | `MapPanel.tsx:191-238` |
-| 지도 오류·로딩 문구 | 부분 완료 | `no-key` / `error` / `loading` 3상태 분기 존재 | 문구가 영어 하드코딩, 재시도 수단 없음 | P0 | `MapPanel.tsx:240-267` |
+| 지도 오류·로딩 문구 | 완료 (2026-09-08) | `no-key`/`error`/`loading`/`noCoordinates`/`myLocation` 5개 문구를 `places.map.*`로 i18n화. `error` 상태에 재시도 버튼(`common.retry`) 추가 — `loadAttempt` 상태를 올려 초기화 effect를 다시 돌린다. `no-key`는 설정 문제라 다시 시도해도 같으므로 버튼을 주지 않는다 | — | — | `MapPanel.tsx`, `messages/{en,ko}.json` |
 | 마커 API | 부분 완료 | `google.maps.Marker`(deprecated) 사용. `importLibrary("marker")` 호출하나 결과 미사용 | `AdvancedMarkerElement` 마이그레이션 | P2 | `MapPanel.tsx:121-122,164` |
 | Google Maps 키 제한 | 확인 필요 | 코드에서 확인 불가 (콘솔 설정 사항) | Referer 제한 설정 확인 | P1 | — |
 | 지도 기본 중심 | 완료 (2026-09-07) | 중심 결정 순서는 그대로(`사용자 위치 → 선택 장소 → 목록 첫 장소 → fallback`)이고 최종 fallback만 `SERVICE_AREA_CENTER`(대전시청)로 교체했다. 이 단계는 볼 장소가 정해지지 않은 상태라 zoom도 14 → `SERVICE_AREA_ZOOM`(12)로 넓혔다. 공개 장소가 모두 대전이라 실제로는 첫 장소 좌표가 먼저 잡힌다 — 이 상수는 좌표 있는 장소가 0건일 때 쓰인다 | — | — | `src/lib/places/service-area.ts`, `MapPanel.tsx` |
@@ -332,7 +332,7 @@ P0 20건 재대조 결과, 08-18 시점에 `미구현`으로 적혀 있던 5건�
 | z-index 토큰 | 완료 | 8단계 CSS 변수 + Tailwind zIndex 매핑. 임의 z-index 사용 없음 | — | — | `tailwind.config.ts:103-112` |
 | 모션 토큰 | 완료 | `--duration-standard`, `--ease-standard` + Tailwind 매핑 | — | — | `globals.css:42-44` |
 | `border-strong` 클래스 | 완료 | 4개 파일 6회를 전부 `border-border-strong`(= `--color-border-strong`)으로 교체. 잔여 무효 참조 0건. 같은 성격의 컨트롤에 이미 쓰이던 클래스라 선례와 일치한다 | — | — | `FilterModal.tsx`, `SortDropdown.tsx`, `FavoriteButton.tsx`, `HeroActions.tsx` |
-| 다크모드 미사용 | 부분 완료 | `.dark{}` 블록 제거 완료. `next-themes`는 **`ui/sonner.tsx`가 실제로 import 중**이라 패키지만 지우면 빌드가 깨진다 | `sonner.tsx`의 `useTheme` 의존 제거 → 패키지 제거 | P0 | `src/components/ui/sonner.tsx:3`, `package.json:23` |
+| 다크모드 미사용 | 완료 (2026-09-08) | `.dark{}` 블록 제거 완료. `ui/sonner.tsx`의 `useTheme` import를 걷어내고 `theme="light"`로 고정한 뒤 `next-themes` 패키지를 제거했다(`npm uninstall`). 라이트 단일이라 런타임에 테마를 고를 이유가 없다(`DESIGN.md` §4·§12) | — | — | `ui/sonner.tsx`, `package.json` |
 | radius 스케일 | 부분 완료 | `--radius: 0.625rem`(10px) + `rounded-xl`/`rounded-2xl` 혼용 — `DESIGN.md` §4 표(8/12/16px)와 불일치 | 문서·코드 정렬 | P1 | `globals.css:80`, `PlaceCard.tsx:54` |
 
 ---
@@ -348,7 +348,7 @@ P0 20건 재대조 결과, 08-18 시점에 `미구현`으로 적혀 있던 5건�
 | 즐겨찾기 빈 상태 | 완료 | — | — | — | `favorites/page.tsx:37-45` |
 | 관리자 빈 상태 | 완료 | 장소 0건 시 추가 버튼 노출 | — | — | `admin/places/page.tsx:113-119` |
 | 폼 제출 상태 | 완료 | `useFormStatus` + 필드별 인라인 오류 | — | — | `PlaceForm.tsx`, `DogProfileForm.tsx` |
-| 지도 상태 | 부분 완료 | 로딩/오류/키없음 분기 존재 | i18n + 재시도 | P0 | `MapPanel.tsx:240-267` |
+| 지도 상태 | 완료 (2026-09-08) | 로딩/오류/키없음/좌표없음 4분기 전부 i18n. 오류에만 재시도 | — | — | `MapPanel.tsx` |
 
 ---
 
@@ -390,9 +390,9 @@ P0 20건 재대조 결과, 08-18 시점에 `미구현`으로 적혀 있던 5건�
 
 | 상태 | 개수 |
 |---|---|
-| 완료 | 16 |
+| 완료 | 17 |
 | 부분 완료 | 0 |
-| 미착수 | 4 |
+| 미착수 | 3 |
 
 | # | 항목 | 상태 | 근거 (2026-09-06 확인) | 남은 작업 |
 |---|---|---|---|---|
@@ -413,7 +413,7 @@ P0 20건 재대조 결과, 08-18 시점에 `미구현`으로 적혀 있던 5건�
 | 15 | `auth.ts`의 `/en/login` 하드코딩 제거 | **완료** (2026-09-06) | NextAuth 설정은 요청별로 달라질 수 없으므로 `pages`를 `/login`(locale 없음)으로 두고 미들웨어에 협상을 맡겼다. 프로덕션 빌드에서 확인: `Accept-Language: ko` → `/ko/login?error=...`, `en` → `/en/login?error=...`, `NEXT_LOCALE=ko` 쿠키가 `Accept-Language: en`보다 우선, 헤더 없으면 `DEFAULT_LOCALE=en`. 보호 라우트 6개가 각자 locale의 로그인으로 가며 `callbackUrl`을 유지(`/ko/favorites` → `/ko/login?callbackUrl=%2Fko%2Ffavorites`), `/ko` 응답에 `/en/login` 흔적 0건, 리다이렉트 루프 없음. `FavoriteButton`은 `callbackUrl`에 쿼리를 포함하도록 고쳐 목록 필터가 로그인 후에도 남는다 | 실제 Google OAuth 왕복은 미검증(§미검증 항목) |
 | 16 | 필터·정렬·카테고리 URL 반영 | **완료** (2026-09-06) | `place-list-params.ts`가 파싱·직렬화를 맡고 `usePlaceListState`가 `useSearchParams`에서 상태를 파생한다(state 복사 없음 → 양방향 동기화 자체가 불필요). 카테고리·정렬·필터는 `pushState`, 검색어는 300ms 디바운스 `replaceState`. 잘못된 값·중복 파라미터·삭제된 `exclude-unknown`은 기본값으로 흡수. 초기화는 필터 4개만 지운다. 브라우저에서 직접 접속·새로고침·뒤로가기·초기화 전부 확인, 필터 변경 시 서버 요청 0건 | — |
 | 17 | `border-strong` 무효 클래스 수정 | **완료** (2026-09-06) | 6곳 전부 `border-border-strong`으로 교체. 토큰 선택 근거는 이름 유사성이 아니라 (a) `tailwind.config.ts`가 `border.strong`을 `--color-border-strong`으로 매핑한다는 점과 (b) 같은 성격의 컨트롤(칩·아웃라인 버튼·입력)에서 이미 `border-border-strong`을 쓰고 있다는 선례다. 잔여 무효 참조 0건(`bg-border-strong` 1곳은 유효 클래스라 제외). `/ko`·`/en`의 히어로 입력·정렬 드롭다운·필터 칩·초기화 버튼에서 테두리가 보이고 이상 없음 | — |
-| 18 | 지도 문구 i18n + 재시도 / `next-themes` 제거 | 미착수 | `MapPanel.tsx:240-267` 영어 하드코딩 3건(`no-key`·`error`·`loading`), 재시도 버튼 없음. `ui/sonner.tsx:3`이 `next-themes`의 `useTheme` import 중 | 문구 i18n화 + 재시도 추가 · `sonner.tsx` 의존 해제 후 패키지 제거 |
+| 18 | 지도 문구 i18n + 재시도 / `next-themes` 제거 | **완료** (2026-09-08) | 하드코딩 영어 **5건**(계획 시점 3건으로 적었으나 `noCoordinates`·`myLocation` aria-label이 더 있었다)을 `places.map.*`로 옮겼다. `error`에 재시도 버튼 추가. 선언만 되고 쓰이지 않던 `placeholder` prop과 `places.list.mapPlaceholder` 키도 함께 제거했다. `next-themes`는 `sonner.tsx` 의존을 끊고 `npm uninstall` — typecheck·lint·test·클린 빌드 전부 통과. 브라우저에서 `/ko`·`/en`의 `내 위치로 이동`/`Move to my location` 렌더 확인 | `error`·`no-key`·`noCoordinates` 상태는 화면으로 재현하지 못했다(Maps 스크립트 실패나 키 제거가 필요). `route-state-messages.test.ts`가 5개 키를 고정한다 |
 | 19 | 긍정 조건 필터에서 `UNKNOWN` 제외 + `exclude-unknown` 제거 | **완료** (2026-09-06) | `INDOOR_FILTER_MATCH`로 필터값별 확정값 하나만 인정 → 미확인·값 없음이 자연히 빠진다. `dogSize`는 D-03 예외라 그대로. `exclude-unknown`을 타입·필터 분기·모달 옵션·en/ko 키에서 제거(잔여 참조 0건). 테스트 29건이 세 규칙(긍정 조건 제외 / 크기 예외 / 필터 미선택)을 각각 고정. 브라우저에서 `carrier=not-required`가 미확인 2곳을 실제로 제외함을 확인 | — |
 | 20 | 서비스 범위 안내 (대전 중심·범위 배너·빈 상태 2종) | **완료** (2026-09-07) | D-11 네 항목을 모두 구현했다. 임계값은 명세서 권장 50km, 중심은 대전시청, fallback zoom 12. **판정 기준은 명세서 §7-2의 "공개 장소 최단 거리"가 아니라 중심 기준 거리다**(아래 D-11a). 판정은 순수 함수 2개(`isOutsideServiceArea`·`resolveListEmptyReason`)로 빼고 테스트 9건이 경계(정확히 50km는 범위 안)·위치 미상·대전 시내·서울/부산·빈 상태 우선순위를 고정한다. 관리자 좌표 선택 지도(`LocationPickerMap`)의 fallback도 같은 상수를 쓴다 — 프로젝트에 서울 좌표 상수가 남아 있지 않다. 프로덕션 빌드에서 4개 분기를 HTML로 확인했고(위치 없음/대전/서울 140km/부산 200km), 브라우저에서 `대전 장소 보기`를 눌러 주소의 `lat`·`lng`·`sort=distance`가 사라지고 배너·정렬(`거리순`→`최근 확인순`)·거리 표기·지도 중심이 함께 되돌아가는 것을 확인했다 | 모바일 시트 폭에서의 배너 노출은 미검증 |
 
@@ -430,7 +430,7 @@ P0 20건 재대조 결과, 08-18 시점에 `미구현`으로 적혀 있던 5건�
 | 항목 | 미검증 사유 |
 |---|---|
 | #11 운영시간 · #14 Import 스크립트 | 코드가 아예 없어 대조 대상 자체가 부재 (미착수 판정은 확실) |
-| #18 `next-themes` 제거 후 빌드 영향 | 제거를 시도하지 않아 실제 파급 미확인 |
+| #18 지도 `error`·`no-key`·`noCoordinates` 화면 | 상태를 만들려면 Maps 스크립트 로드를 실패시키거나 API 키를 지워야 해서 재현하지 못했다. 문구 키는 `route-state-messages.test.ts`가 고정하고, 재시도 배선은 코드로만 확인 |
 | #20 모바일 시트에서의 범위 배너 | 데스크톱 폭에서만 확인. **팝업 우회 경로**(위 #9 항목 참조)로 재검증 가능하나 아직 하지 않았다 |
 | #20 공개 장소 0건일 때의 대전 fallback 중심 | 좌표 있는 장소가 4건이라 `SERVICE_AREA_CENTER`가 초기 중심으로 쓰이는 경로를 화면으로 재현하지 못했다. 위치를 껐을 때의 되돌리기 경로로만 확인 |
 | #4 카드 카테고리 라벨 | 공개 장소 4건이 전부 `CAFE` — `TRAVEL` 카드가 없어 라벨 렌더 미확인 |

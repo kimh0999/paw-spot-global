@@ -70,12 +70,18 @@
         "outOfRange": "현재 대전 지역만 지원합니다. 내 위치는 서비스 범위 밖입니다.",
         "viewPlaces": "대전 장소 보기"
       },
-      "mapPlaceholder": "지도 영역 (Google Maps 연동 예정)",
       "dogSelection": {
         "single": "{name} 기준으로 조건을 표시합니다",
         "multi": "반려견 {count}마리 기준으로 조건을 표시합니다",
         "clear": "전체 보기"
       }
+    },
+    "map": {
+      "loading": "지도를 불러오는 중...",
+      "error": "지도를 불러오지 못했습니다.",
+      "noKey": "지도를 사용할 수 없습니다. Google Maps API 키를 확인하세요.",
+      "noCoordinates": "지도에 표시할 좌표가 있는 장소가 없습니다.",
+      "myLocation": "내 위치로 이동"
     },
     "filters": {
       "title": "플레이스 필터",

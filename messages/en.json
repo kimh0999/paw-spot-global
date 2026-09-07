@@ -70,12 +70,18 @@
         "outOfRange": "We currently cover Daejeon only. You are outside the service area.",
         "viewPlaces": "View places in Daejeon"
       },
-      "mapPlaceholder": "Map area (Google Maps integration coming soon)",
       "dogSelection": {
         "single": "Showing conditions for {name}",
         "multi": "Showing conditions for {count} dogs",
         "clear": "Show all"
       }
+    },
+    "map": {
+      "loading": "Loading map...",
+      "error": "Map failed to load.",
+      "noKey": "Map unavailable. Please check Google Maps API key.",
+      "noCoordinates": "No places with coordinates to show on the map.",
+      "myLocation": "Move to my location"
     },
     "filters": {
       "title": "Filters",

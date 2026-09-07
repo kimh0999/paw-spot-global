@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
+import { useTranslations } from "next-intl";
 
 import {
   SERVICE_AREA_CENTER,
@@ -14,7 +15,6 @@ interface MapPanelProps {
   selectedPlaceId: string | null;
   hoveredPlaceId?: string | null;
   onSelectPlace: (id: string) => void;
-  placeholder?: string;
   userLocation?: { lat: number; lng: number } | null;
   onRequestUserLocation?: () => void;
   isLocating?: boolean;
@@ -117,7 +117,12 @@ export default function MapPanel({
   onSelectPlaceRef.current = onSelectPlace;
   userLocationRef.current = userLocation;
 
+  const t = useTranslations("places.map");
+  const tCommon = useTranslations("common");
+
   const [mapState, setMapState] = useState<"loading" | "ready" | "error" | "no-key">("loading");
+  // 재시도 버튼이 올리는 값. 초기화 effect가 이 값에 의존해 다시 돈다.
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -158,7 +163,7 @@ export default function MapPanel({
     return () => {
       cancelled = true;
     };
-  }, [apiKey]);
+  }, [apiKey, loadAttempt]);
 
   // Sync place markers whenever the places list changes
   useEffect(() => {
@@ -266,22 +271,29 @@ export default function MapPanel({
     mapRef.current.setZoom(SERVICE_AREA_ZOOM);
   }, [userLocation, mapState]);
 
+  // 키가 없는 것은 설정 문제라 다시 시도해도 결과가 같다. 재시도 버튼을 주지 않는다.
   if (mapState === "no-key") {
     return (
       <div className="w-full h-full bg-surface-subtle flex items-center justify-center p-4">
-        <p className="text-sm text-content-secondary text-center">
-          Map is unavailable. Please check Google Maps API key.
-        </p>
+        <p className="text-sm text-content-secondary text-center">{t("noKey")}</p>
       </div>
     );
   }
 
   if (mapState === "error") {
     return (
-      <div className="w-full h-full bg-surface-subtle flex items-center justify-center p-4">
-        <p className="text-sm text-content-secondary text-center">
-          Map failed to load. Please try again later.
-        </p>
+      <div className="w-full h-full bg-surface-subtle flex flex-col items-center justify-center gap-3 p-4">
+        <p className="text-sm text-content-secondary text-center">{t("error")}</p>
+        <button
+          type="button"
+          onClick={() => {
+            setMapState("loading");
+            setLoadAttempt((attempt) => attempt + 1);
+          }}
+          className="inline-flex h-11 items-center rounded-full border border-border-strong bg-surface px-4 text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {tCommon("retry")}
+        </button>
       </div>
     );
   }
@@ -292,15 +304,13 @@ export default function MapPanel({
     <div className="w-full h-full relative">
       {mapState === "loading" && (
         <div className="absolute inset-0 bg-surface-subtle flex items-center justify-center z-map-control">
-          <p className="text-sm text-content-secondary">Loading map...</p>
+          <p className="text-sm text-content-secondary">{t("loading")}</p>
         </div>
       )}
       {mapState === "ready" && placesWithLocation.length === 0 && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none z-map-control">
           <div className="bg-surface rounded-xl border border-border shadow-sm px-4 py-2.5">
-            <p className="text-sm text-content-secondary">
-              No places with coordinates to show on the map.
-            </p>
+            <p className="text-sm text-content-secondary">{t("noCoordinates")}</p>
           </div>
         </div>
       )}
@@ -311,7 +321,7 @@ export default function MapPanel({
           type="button"
           onClick={onRequestUserLocation}
           disabled={isLocating}
-          aria-label="Move to my location"
+          aria-label={t("myLocation")}
           className="absolute bottom-28 right-2 z-map-control w-11 h-11 flex items-center justify-center bg-surface rounded shadow-md hover:bg-surface-subtle active:bg-surface-subtle transition-colors disabled:opacity-60 disabled:cursor-not-allowed lg:bottom-16"
         >
           {isLocating ? (
