@@ -10,7 +10,7 @@
 | [001](001-motion-tokens.md) | DESIGN.md §8 모션 토큰을 전부 구현 | HIGH | Cohesion & tokens | TODO |
 | [002](002-button-badge-transition-scope.md) | button·badge의 `transition-all` 범위 축소 | MEDIUM | Performance / a11y | TODO |
 | [003](003-filtermodal-drawer-motion.md) | FilterModal 드로어의 지속시간·이징·reduced motion·오버레이 | MEDIUM | Easing / Physicality / a11y | TODO |
-| [004](004-bottom-sheet-height-profiling.md) | Bottom Sheet 높이 전환 프로파일링 (**조사 전용**) | HIGH (미확인) | Performance | TODO |
+| [004](004-bottom-sheet-height-profiling.md) | Bottom Sheet 높이 전환 프로파일링 (**조사 전용**) | HIGH (미확인) | Performance | **BLOCKED** — 실기기 없음 ([결과](004-findings.md)) |
 
 ## 실행 순서
 
