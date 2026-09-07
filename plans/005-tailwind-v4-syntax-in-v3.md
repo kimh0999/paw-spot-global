@@ -179,11 +179,18 @@ focus-visible:ring-2 focus-visible:ring-ring
    focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring [&>svg]:pointer-events-none [&>svg]:!size-3
    ```
 
-4. **v4 문법 잔여 확인.** 두 파일에 대해:
+4. **v4 문법 잔여 확인.** 이 계획이 다루는 것은 `cva()` **기본 문자열**이므로, 검사도 그
+   범위로 한정한다:
    ```bash
-   grep -nE "ring-3|not-aria|rounded-4xl|aria-invalid|has-data-|size-3!|ring-ring/" src/components/ui/button.tsx src/components/ui/badge.tsx
+   sed -n '8p' src/components/ui/button.tsx src/components/ui/badge.tsx      | grep -nE "ring-3|not-aria|rounded-4xl|aria-invalid|size-3!|ring-ring/"
    ```
    기대 결과: **0건.**
+
+   > **주의 — `size` variant는 검사에서 뺀다.** `button.tsx:25-28`의 `size` variant에도
+   > `has-data-[icon=inline-*]`·`in-data-[slot=button-group]` 같은 v4 문법이 남아 있다.
+   > 이 계획의 Boundaries가 `variants`·`size` 객체를 건드리지 말라고 규정하므로 범위 밖이다.
+   > 파일 전체에 grep을 걸면 이 항목들이 잡혀 검증이 실패한 것처럼 보인다.
+   > 아래 "실행 중 발견"에 별도로 적었다.
 
 ## Boundaries
 
@@ -260,6 +267,19 @@ grep -c "ring-3\|not-aria\|rounded-4xl" .next/static/css/*.css   # 0
 - Button 누름 시 `transform`이 1px 이동.
 - Badge `borderRadius`가 `0px`이 아니다.
 - Mechanical 4종 통과.
+
+## 실행 중 발견 (범위 밖)
+
+2026-09-07 실행에서 확인했으나 **이 계획의 Boundaries에 따라 고치지 않은 것**이다.
+
+| 발견 | 위치 | 왜 죽어 있나 |
+|---|---|---|
+| `has-data-[icon=inline-end]:pr-2` 등 (`size` variant 4곳) | `ui/button.tsx:25-28` | v4 `has-*` 축약. 게다가 `data-icon`을 세팅하는 곳이 앱에 0건이라 살려도 실행되지 않는다 |
+| `in-data-[slot=button-group]:rounded-lg` (`xs`·`sm`) | `ui/button.tsx:26-27` | v4 `in-*` variant. `ButtonGroup` 컴포넌트가 이 저장소에 없다 |
+| `rounded-[min(var(--radius-md),10px)]` (`xs`·`sm`) | `ui/button.tsx:26-27` | `--radius-md` CSS 변수가 `globals.css`에 정의돼 있지 않다. Tailwind의 `borderRadius.md` 키와는 다른 것이다 |
+
+세 항목 모두 `size` variant 안에 있고, 앱은 `default`·`lg`·`icon` 크기만 쓴다.
+`variants` 객체 정리는 별도 작업으로 남긴다.
 
 ## Impact and regression risk
 
