@@ -528,7 +528,8 @@ where: {
 - `FilterModal` — 우측 Drawer. 실내(5택) / 이동장(3택) / 크기(4택) / 신선도(30·90일)
 - `SortDropdown` — 4종. 위치 없으면 거리순 `disabled`
 - ❌ 필터·정렬·카테고리 변경이 **URL에 반영되지 않는다.** 초기값만 `searchParams`에서 읽고 이후는 `useState`. `src/CLAUDE.md` §14.3 위반 → **P0**
-- ❌ `FilterModal`에 focus trap / ESC / `role="dialog"` 없음 → **P0** (프로젝트에 `components/ui/sheet.tsx`, `dialog.tsx`가 이미 존재하나 미사용)
+- ✅ `FilterModal`은 Radix `Dialog`(`radix-ui` 패키지 직접 사용)로 구현한다. `role="dialog"` · `aria-labelledby` · ESC · focus trap · 스크롤 잠금 · focus 복귀 · 바깥 콘텐츠 `aria-hidden`을 Radix가 제공한다. 닫히면 DOM에서 사라져 화면 밖 컨트롤이 탭 순서에 남지 않는다 (2026-09-07)
+  - 래퍼 `components/ui/dialog.tsx`·`sheet.tsx`는 **쓰지 않는다.** 두 파일의 클래스가 Tailwind v4 문법이라 v3.4.19인 이 프로젝트에서 CSS가 생성되지 않는다. 정본은 `DogFormDialog.tsx`의 `import { Dialog } from "radix-ui"`다
 
 위치 (`useUserLocationQuery.ts`) ✅
 
@@ -795,11 +796,30 @@ Ask the store in Korean  ← 영어 로케일에서만
 - `motion-reduce:` 대응 (시트 전환, 스피너)
 - 장식 아이콘 `aria-hidden`
 
+**모달 판정 기준 (D-13a · 2026-09-07 확정)**
+
+같은 "시트"라도 **닫히는가**에 따라 다르게 다룬다. 아래 판정이 T-06의 실제 범위다.
+
+| 대상 | 성격 | 적용 |
+|---|---|---|
+| `FilterModal` (우측 Drawer) | **modal** — 오버레이가 화면을 덮고 닫으면 사라진다 | Radix `Dialog`. `role="dialog"` · `aria-labelledby` · ESC · focus trap · 스크롤 잠금 · focus 복귀 |
+| `DogFormDialog` (모바일 하단 시트 / 데스크톱 중앙) | **modal** — 위와 같다 | Radix `Dialog`. 위와 동일 |
+| `DogsManager` 삭제 확인 | **modal** | Radix `Dialog`. 위와 동일 |
+| **탐색 화면 장소 목록 Bottom Sheet** | **non-modal · 지속형** — 1단계(결과 개수)가 항상 떠 있고 지도가 배경에서 계속 조작된다. 닫힌 상태가 없다 | **focus trap 없음 · `aria-modal` 없음 · `role="dialog"` 없음.** 이름 있는 landmark(`<section aria-label>`)로 두고, 3단계(선택)에서 벗어나는 **ESC**와 목록 토글의 `aria-expanded`만 제공한다 |
+
+지속형 시트에 모달 시맨틱을 걸면 지도·헤더·`내 위치` 버튼에 키보드로 도달할 수 없고,
+`aria-modal`은 그것들을 스크린리더에서 영구히 가린다. **명세를 글자대로 따르면 접근성이
+나빠지므로** 이 예외를 둔다. `DESIGN.md` §11의 `Bottom Sheet와 Dialog는 focus trap과
+Escape 닫기를 지원한다`는 **모달로 뜨는** 시트에 적용된다.
+
+`aria-modal` 속성 자체는 Radix가 설정하지 않는다. 대신 바깥 콘텐츠에 `aria-hidden`을 걸어
+같은 결과를 낸다 — 보조기술 지원 폭이 더 넓은 방식이다.
+
 **미준수 / 미구현** ❌
 
 | 항목 | 상태 | 우선순위 |
 |---|---|---|
-| Bottom Sheet · FilterModal의 focus trap / ESC / `role="dialog"` | ❌ | **P0** |
+| 모달 다이얼로그(`FilterModal`·`DogFormDialog`)의 focus trap / ESC / `role="dialog"` | ✅ 2026-09-07 | 완료 |
 | `SortDropdown` — `aria-expanded`, `role="listbox"` 없음. `▲▼` 텍스트 아이콘 | ❌ | P1 |
 | 마커/카드 선택 결과의 `aria-live` 고지 | ❌ | P1 |
 | Skip to content 링크 | ❌ | P1 |
@@ -912,7 +932,7 @@ Ask the store in Korean  ← 영어 로케일에서만
 | **T-03** | 홈 장소 탐색 섹션 단일화 (`RecentPlacesSection`·`HomePlaceCard`·`getHomePlaces` 제거) | 정리 | 기획서 v3 §6-1 |
 | **T-04** | 카테고리 라벨 `Travel Spots` → `Attractions` (i18n 문자열만) | 문구 | 기획서 v3 §6-1 |
 | **T-05** | `loading.tsx` / `error.tsx` / `not-found.tsx` 전면 추가 + 홈 오류 삼킴 제거 | 상태 | §10 |
-| **T-06** | Bottom Sheet · FilterModal에 focus trap / ESC / dialog 시맨틱 (기존 Radix 컴포넌트 활용) | 접근성 | §11 |
+| **T-06** | **모달 다이얼로그에만** focus trap / ESC / dialog 시맨틱 적용 (Radix `Dialog`). 지속형 Bottom Sheet는 non-modal 유지 | 접근성 | §11, D-13a |
 | **T-07** | 미리보기 Primary Action을 `상세 보기`로 반전, 길찾기는 Secondary | 정책 | 기획서 v3 §6-3 |
 | **T-08** | 마커 선택 시 목록 카드 scroll into view | 동기화 | `DESIGN.md` §5 |
 | **T-09** | 상세 페이지에 거리 · 길찾기 · 공유 · 즐겨찾기 액션 추가 | 화면 | `DESIGN.md` §6 |

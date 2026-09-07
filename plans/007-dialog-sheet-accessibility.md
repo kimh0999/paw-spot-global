@@ -150,5 +150,23 @@ aria-expanded={isSheetListOpen}
 > 명세는 `aria-modal`을 지목했지만, 보조기술 지원 폭이 넓은 쪽은 `aria-hidden`이다.
 > 요구된 동작(바깥이 스크린리더에 노출되지 않음)은 충족한다.
 
-**미검증** — 모바일 폭에서의 드로어·시트 동작. 창 리사이즈가 뷰포트에 반영되지 않아
-`lg` 미만 분기를 화면으로 확인하지 못했다.
+**모바일 실측 (2026-09-07)** — `resize_window`는 성공을 반환하고도 뷰포트를 바꾸지 못했다
+(창 최대화 + 페이지 줌 67%). 같은 출처 팝업(`window.open(url, '_blank', 'width=390,height=844')`)을
+열어 `innerWidth 604`(`sm`·`lg` 모두 false)에서 검증했다.
+
+| 확인 | 결과 |
+|---|---|
+| 시트 3단계 전환 | `peek` → 목록 토글 → `results`(`aria-expanded="true"`, 라벨 `지도 보기`) → 카드 선택 → `selected` → **ESC** → `results`(선택 0) |
+| 필터 닫힘 | `[role="dialog"]` 0개, 드로어 컨트롤이 탭 순서에 **0개** (tabbable 22개는 전부 페이지 컨트롤) |
+| 필터 열림 | `role="dialog"` + `aria-labelledby`, focus 내부 이동, 앱 루트 `aria-hidden="true"`, `drawer-in` 재생, **tabbable 16개가 전부 다이얼로그 내부**(focus trap 유효) |
+| ESC | `data-state="closed"` + `drawer-out` 재생 |
+| 키보드 도달성 | 드로어 닫힘 상태에서 헤더 링크 4개 · 지도 `Move to my location` · `내 위치 기준` 칩 · 목록 토글 · 필터 버튼 **모두 도달 가능** — 시트가 focus를 가두지 않음이 실증됐다 |
+
+**reduced motion은 규칙 수준까지만 확인했다.** `@media (prefers-reduced-motion: reduce)` 안에
+`.motion-reduce\:animate-none{animation:none}`과 `.motion-reduce\:transition-none{transition-property:none}`이
+존재하고, 시트는 `motion-reduce:transition-none`, 드로어 콘텐츠·오버레이는 `motion-reduce:animate-none`을
+갖는다. 다만 OS 설정을 켤 수 없어 **동작 자체는 관찰하지 못했다.**
+
+**여전히 미검증** — 팝업이 포커스를 받지 못해(`visibilityState: "hidden"`) 애니메이션이 진행되지
+않는다. 모바일에서 퇴장 애니메이션 **종료 후** 언마운트되는 것은 확인하지 못했다
+(데스크톱 폭에서는 확인함).
