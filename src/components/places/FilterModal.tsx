@@ -1,9 +1,9 @@
 "use client";
 
+import { Dialog } from "radix-ui";
 import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
 
-import { cn } from "@/lib/utils";
 import type {
   PlaceFilters,
   DogSizeFilter,
@@ -66,35 +66,33 @@ export default function FilterModal({
   };
 
   return (
-    <>
-      {/* 오버레이는 항상 마운트해 둔다. 열고 닫을 때 패널과 같은 시간·커브로 함께 사라져야
-          한 덩어리로 읽힌다. 닫힌 동안에는 pointer-events를 꺼서 화면을 막지 않는다. */}
-      <div
-        onClick={onClose}
-        className={cn(
-          "fixed inset-0 z-drawer bg-overlay transition-opacity duration-standard motion-reduce:transition-none",
-          isOpen ? "opacity-100 ease-enter" : "pointer-events-none opacity-0 ease-exit",
-        )}
-      />
+    <Dialog.Root
+      open={isOpen}
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
+    >
+      <Dialog.Portal>
+        {/* Radix가 ESC·바깥 클릭·focus trap·스크롤 잠금을 담당한다. 모션 값은 계획 003에서
+            정한 그대로 — 250ms, 진입/퇴장 커브 분리, reduced motion에서는 전부 제거. */}
+        <Dialog.Overlay className="fixed inset-0 z-drawer bg-overlay data-[state=open]:animate-overlay-in data-[state=closed]:animate-overlay-out motion-reduce:animate-none" />
 
-      <div
-        className={cn(
-          "fixed top-0 right-0 z-drawer flex h-full w-full max-w-sm flex-col bg-surface shadow-2xl",
-          "transition-transform duration-standard motion-reduce:transition-none",
-          isOpen ? "translate-x-0 ease-enter" : "translate-x-full ease-exit",
-        )}
-      >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <h2 className="font-bold text-content text-base">{t("filters.title")}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={tCommon("close")}
-            className="text-content-muted hover:text-content-secondary transition-colors"
-          >
-            <X className="w-5 h-5" strokeWidth={1.5} aria-hidden="true" />
-          </button>
-        </div>
+        <Dialog.Content
+          // 설명 문단이 없는 필터 패널이라 Radix의 aria-describedby 연결을 끈다.
+          aria-describedby={undefined}
+          className="fixed top-0 right-0 z-drawer flex h-full w-full max-w-sm flex-col bg-surface shadow-2xl outline-none data-[state=open]:animate-drawer-in data-[state=closed]:animate-drawer-out motion-reduce:animate-none"
+        >
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+            <Dialog.Title className="font-bold text-content text-base">
+              {t("filters.title")}
+            </Dialog.Title>
+            <Dialog.Close
+              aria-label={tCommon("close")}
+              className="rounded-md text-content-muted outline-none transition-colors hover:text-content-secondary focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <X className="w-5 h-5" strokeWidth={1.5} aria-hidden="true" />
+            </Dialog.Close>
+          </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-5 space-y-7">
           {/* 실내 동반 여부 */}
@@ -181,8 +179,9 @@ export default function FilterModal({
           >
             {t("filters.apply")}
           </button>
-        </div>
-      </div>
-    </>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }

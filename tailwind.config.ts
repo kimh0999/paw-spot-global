@@ -117,6 +117,14 @@ const config: Config = {
           from: { opacity: "1", transform: "translateY(0)" },
           to: { opacity: "0", transform: "translateY(100%)" },
         },
+        "drawer-in": {
+          from: { transform: "translateX(100%)" },
+          to: { transform: "translateX(0)" },
+        },
+        "drawer-out": {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(100%)" },
+        },
         "popover-in": {
           from: { opacity: "0", transform: "scale(0.95)" },
           to: { opacity: "1", transform: "scale(1)" },
@@ -129,6 +137,8 @@ const config: Config = {
         "dialog-out": "dialog-out var(--duration-standard) var(--ease-exit)",
         "sheet-in": "sheet-in var(--duration-standard) var(--ease-enter)",
         "sheet-out": "sheet-out var(--duration-standard) var(--ease-exit)",
+        "drawer-in": "drawer-in var(--duration-standard) var(--ease-enter)",
+        "drawer-out": "drawer-out var(--duration-standard) var(--ease-exit)",
         "popover-in": "popover-in var(--duration-fast) var(--ease-enter)",
       },
       transitionDuration: {

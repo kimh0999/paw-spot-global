@@ -12,14 +12,15 @@
 | [003](003-filtermodal-drawer-motion.md) | FilterModal 드로어의 지속시간·이징·reduced motion·오버레이 | MEDIUM | Easing / Physicality / a11y | **DONE** `d3a9b2d` |
 | [004](004-bottom-sheet-height-profiling.md) | Bottom Sheet 높이 전환 프로파일링 (**조사 전용**) | HIGH (미확인) | Performance | **BLOCKED** — 실기기 없음 ([결과](004-findings.md)) |
 | [005](005-tailwind-v4-syntax-in-v3.md) | v3에서 무효한 v4 문법 클래스 되살리기 (button·badge) | HIGH (a11y) | Correctness | **DONE** `2ea62da` · variants `303ce93` |
-| [006](006-dialog-dropdown-motion.md) | 다이얼로그·드롭다운 진입/퇴장 모션 (감사 #5·#7) | MEDIUM | Missed motion | **DONE** |
+| [006](006-dialog-dropdown-motion.md) | 다이얼로그·드롭다운 진입/퇴장 모션 (감사 #5·#7) | MEDIUM | Missed motion | **DONE** `1ba0022` |
+| [007](007-dialog-sheet-accessibility.md) | FilterModal → Radix Dialog · 시트 키보드 경로 (**P0 #7**) | HIGH | Accessibility | **DONE** |
 
 ## 실행 순서
 
 ```
 001 ──┬── 002 ──> 005
       ├── 003
-      ├── 006
+      ├── 006 ──> 007
       └── 004 ──> (Bottom Sheet 리팩터링: 조사 결과에 따라 작성)
 ```
 
@@ -44,6 +45,7 @@
 | 004 | 001 | 250ms 확정 후 측정해야 수치가 유효 |
 | 005 | 002 | 002가 정한 전환 목록 위에서 동작한다 |
 | 006 | 001 | keyframes가 `--duration-*`·`--ease-*` 토큰을 참조한다 |
+| 007 | 003, 006 | 003의 모션 값을 keyframes로 옮겨 유지한다 |
 | (다음 빈 번호) | 004 | Bottom Sheet 리팩터링. 조사 판정이 `조건부`/`리팩터링 필요`일 때만 작성 |
 
 ## 실행 시 반드시 지킬 것
@@ -74,4 +76,4 @@
 
 **#5·#7은 계획 [006](006-dialog-dropdown-motion.md)에서 처리했다.** 다만 감사의 전제("올바른 처리가 `ui/dialog.tsx`·`ui/dropdown-menu.tsx`에 이미 있다")는 **틀렸다** — 그 파일들의 애니메이션 클래스도 전부 v4 문법이라 무효였다. 프리미티브를 채택하는 대신 사용 중인 컴포넌트에 v3 문법으로 직접 넣었다.
 
-`SortDropdown`의 **퇴장 모션은 여전히 없다**(조건부 언마운트). Radix `DropdownMenu`로 옮겨야 해결되며 P0 #7과 함께 다룬다.
+`SortDropdown`의 **퇴장 모션은 여전히 없다**(조건부 언마운트). Radix `DropdownMenu`로 옮겨야 해결된다. 계획 007(P0 #7)은 `FilterModal`만 다뤘으므로 이 항목은 **남아 있다**.

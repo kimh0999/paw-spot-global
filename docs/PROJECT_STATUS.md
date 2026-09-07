@@ -3,7 +3,7 @@
 > **이 문서의 목적**: 기획이 아니라 **실제 개발 진행 상황 추적**이다.
 > 모든 상태는 코드 확인에 근거한다. 확인하지 못한 것은 `확인 필요`로 남기고 추측하지 않는다.
 >
-> **기준일**: 2026-09-07 (P0 #5 완결 · P0 #20 서비스 범위 안내) · 직전 **P0 20건 코드 재대조** 2026-09-06 · 직전 전 항목 재확인 2026-08-18 · **브랜치**: `chore/project-foundation`
+> **기준일**: 2026-09-07 (P0 #5 · #20 · #7 완결 · 모션 감사 반영) · 직전 **P0 20건 코드 재대조** 2026-09-06 · 직전 전 항목 재확인 2026-08-18 · **브랜치**: `chore/project-foundation`
 > **기획 기준**: `docs/Paw_Spot_Global_기획서_v3.md` · **구현 기준**: `docs/Paw_Spot_Global_개발명세서_v2.md` · **디자인 기준**: `DESIGN.md`
 
 **상태 값**: `완료` / `부분 완료` / `미구현` / `확인 필요`
@@ -16,18 +16,18 @@
 
 | 상태 | 개수 |
 |---|---|
-| 완료 | 98 |
-| 부분 완료 | 17 |
-| 미구현 | 41 |
+| 완료 | 101 |
+| 부분 완료 | 16 |
+| 미구현 | 39 |
 | 확인 필요 | 4 |
 
 > **집계 범위 주의**: 2026-09-06 재대조는 **P0 20건과 그에 직접 대응하는 상태 행만** 코드로 확인했다.
 > 위 수치는 그 12개 행(09-06 8건 + 09-07 4건)의 판정 변경만 반영해 다시 계산한 값이고,
 > 나머지 행은 2026-08-18 판정을 그대로 이어받은 **미검증** 값이다.
 
-**MVP 출시를 차단하는 P0 항목: 20개 중 완료 15 · 미착수 5** (§P0 목록 참조)
+**MVP 출시를 차단하는 P0 항목: 20개 중 완료 16 · 미착수 4** (§P0 목록 참조)
 
-주의: "완료" 98건은 **세부 항목 단위** 집계다. 화면·기능 단위로 보면 탐색 화면의 레이아웃·동기화·판정 로직과 라우트 상태 처리는 완성도가 높은 반면, 상세 페이지의 액션 영역과 데이터 파이프라인(운영시간 · 후보 Import)은 여전히 비어 있다. 절별 분포를 함께 볼 것.
+주의: "완료" 101건은 **세부 항목 단위** 집계다. 화면·기능 단위로 보면 탐색 화면의 레이아웃·동기화·판정 로직과 라우트 상태 처리는 완성도가 높은 반면, 상세 페이지의 액션 영역과 데이터 파이프라인(운영시간 · 후보 Import)은 여전히 비어 있다. 절별 분포를 함께 볼 것.
 
 D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 비대칭"이 `미구현`(수정 대상)으로 확정되었고, 선행 결정 대기 상태였던 4개 항목(신선도 임계 · 운영시간 구조 · 후보 저장 방식 · Import 실행 형태)이 착수 가능해졌다.
 
@@ -106,7 +106,7 @@ P0 20건 재대조 결과, 08-18 시점에 `미구현`으로 적혀 있던 5건�
 | 장소 카드 | 완료 | 이미지 없는 밀도형 카드. 장소명·거리·카테고리·주소·방문가능배너·조건 3개·확인일. `min-h-14`로 높이 고정 | — | — | `src/components/places/PlaceCard.tsx`, `PlaceConditionSummary.tsx` |
 | 방문 가능 여부 판정 | 완료 | `eligibility.ts`가 조건 해석의 단일 출처. `unknown`/`null`을 허용 조건에 넣지 않음. 핵심 3조건 미확인 시 `confirm` 상태 | — | — | `src/lib/places/eligibility.ts` |
 | 조건 미확인 표시 | 완료 | `Needs confirmation` / `Indoor unconfirmed` / `Not checked yet` 문구 | — | — | `messages/en.json` `places.card.*`, `places.preview.status.confirm` |
-| 필터 | 부분 완료 | 우측 Drawer. 실내 **4택**(D-12로 `확인 필요 제외` 삭제) / 이동장 3택 / 크기 4택 / 신선도 30·90일. 선택은 URL에 반영됨 | focus trap·ESC·`role="dialog"` 없음 | P0 | `src/components/places/FilterModal.tsx` |
+| 필터 | 완료 (2026-09-07) | 우측 Drawer. 실내 **4택**(D-12로 `확인 필요 제외` 삭제) / 이동장 3택 / 크기 4택 / 신선도 30·90일. 선택은 URL에 반영됨. Radix `Dialog`로 교체해 `role="dialog"`·`aria-labelledby`·ESC·focus trap·스크롤 잠금·focus 복귀를 갖췄고, **닫히면 DOM에서 사라져** 화면 밖 패널의 버튼 16개가 탭 순서에 남던 문제도 해소됐다 | — | — | `src/components/places/FilterModal.tsx`, `plans/007-dialog-sheet-accessibility.md` |
 | 정렬 | 부분 완료 | 4종(거리·최근확인·실내우선·이동장불필요). 위치 없으면 거리순 `disabled`. 선택은 URL에 반영됨 | 접근성(`aria-expanded`, listbox) / Radix 교체 | P1 | `src/components/places/SortDropdown.tsx` |
 | 필터·정렬 URL 반영 | 완료 | 주소가 단일 출처다. `usePlaceListState`가 `useSearchParams`에서 카테고리·필터·정렬을 파생하고, 검색어만 입력 즉시성을 위해 로컬 state + 300ms 디바운스로 주소에 뒤따른다. 쓰기는 native history API라 서버 재요청이 없다 | — | — | `src/lib/places/place-list-params.ts`, `hooks/usePlaceListState.ts` |
 | 텍스트 검색 | 완료 | `q` 파라미터 + 실시간 클라이언트 필터(nameKr/nameEn/address) | — | — | `src/lib/places/filtering.ts:37-43` |
@@ -143,7 +143,7 @@ P0 20건 재대조 결과, 08-18 시점에 `미구현`으로 적혀 있던 5건�
 | 3단계 시트 | 완료 | `peek`(h-24) / `results`(75vh) / `selected`(h-72). 선택 상태에서 **파생**하므로 요약을 닫으면 직전 단계로 복귀 | — | — | `PlacesClient.tsx:28-35,102-106,125-167` |
 | 목록 ↔ 지도 전환 | 완료 | 단일 토글 버튼(`Show list`/`Show map`). 전환 중 필터·선택 상태 유지 | — | — | `PlacesClient.tsx:150-161` |
 | 시트 전환 모션 | 완료 | `transition-[height] duration-300` + `motion-reduce:transition-none` | — | — | `PlacesClient.tsx:129-131` |
-| 시트 접근성 | 미구현 | focus trap 없음, ESC 닫기 없음, `role="dialog"`/`aria-modal` 없음 | `DESIGN.md` §11 준수. `components/ui/sheet.tsx`(Radix) 활용 가능 | P0 | `PlacesClient.tsx:125-133`, 미사용 `src/components/ui/sheet.tsx` |
+| 시트 접근성 | 완료 (2026-09-07) | **모달 시맨틱을 의도적으로 걸지 않았다**(D-13a). 시트는 1단계가 항상 떠 있고 지도가 배경에서 조작되는 상시 패널이라 focus trap·`aria-modal`을 걸면 지도·헤더·`내 위치`에 키보드로 도달할 수 없다. 대신 3단계(선택)에서 벗어나는 ESC와 목록 토글의 `aria-expanded`를 넣었다. 시트 자체는 이미 이름 있는 landmark(`<section aria-label>`)다 | — | — | `PlacesClient.tsx`, `plans/007-dialog-sheet-accessibility.md` |
 | Safe area | 완료 | `pb-[env(safe-area-inset-bottom)]` | — | — | `PlacesClient.tsx:128` |
 
 ---
@@ -361,7 +361,7 @@ P0 20건 재대조 결과, 08-18 시점에 `미구현`으로 적혀 있던 5건�
 | 포커스 표시 | 완료 | `focus-visible:ring` 일관 적용, `outline-none` 단독 사용 없음 | — | — | 전역 |
 | 터치 타깃 | 완료 | 주요 인터랙션 `h-11`(44px) | — | — | `PlacesClient.tsx`, `PlacePreviewCard.tsx` |
 | `prefers-reduced-motion` | 완료 | 시트 전환·스피너에 `motion-reduce:` 적용 | — | — | `PlacesClient.tsx:130,227` |
-| Dialog·Sheet 접근성 | 미구현 | focus trap·ESC·`role="dialog"` 없음 | Radix 컴포넌트 활용 | P0 | `FilterModal.tsx:68-89`, `PlacesClient.tsx:125-133` |
+| Dialog·Sheet 접근성 | 완료 (2026-09-07) | `FilterModal`은 Radix `Dialog`로 교체. `DogFormDialog`·`DogsManager` 삭제 확인은 이미 Radix `Dialog`였고 진입/퇴장 모션을 추가했다. 탐색 화면의 Bottom Sheet는 상시 패널이라 모달로 만들지 않았다(D-13a) | — | — | `FilterModal.tsx`, `plans/006`·`007` |
 | 드롭다운 접근성 | 미구현 | `aria-expanded`·listbox 역할 없음, `▲▼` 텍스트 아이콘 | Radix `dropdown-menu` 교체 | P1 | `SortDropdown.tsx:31-40` |
 | Skip link | 미구현 | 없음 | 추가 | P1 | `src/app/layout.tsx` |
 | 선택 결과 `aria-live` 고지 | 미구현 | 포커스 이동만 존재 | live region 추가 | P1 | `PlacePreviewCard.tsx:144-148` |
@@ -390,9 +390,9 @@ P0 20건 재대조 결과, 08-18 시점에 `미구현`으로 적혀 있던 5건�
 
 | 상태 | 개수 |
 |---|---|
-| 완료 | 15 |
+| 완료 | 16 |
 | 부분 완료 | 0 |
-| 미착수 | 5 |
+| 미착수 | 4 |
 
 | # | 항목 | 상태 | 근거 (2026-09-06 확인) | 남은 작업 |
 |---|---|---|---|---|
@@ -402,7 +402,7 @@ P0 20건 재대조 결과, 08-18 시점에 `미구현`으로 적혀 있던 5건�
 | 4 | 카테고리 라벨 `Attractions`로 변경 | **완료** (2026-09-06) | en 3개 키 모두 `Attractions`. `/en` 홈 탭과 `/en/places` 필터 칩에서 렌더 확인. enum `TRAVEL`·내부값 `travel`·`admin...category.TRAVEL`·ko `여행지` 미변경 | 카드 라벨(`places.card.category.travel`)은 DB에 TRAVEL 장소가 0건이라 화면 확인 못 함 — 미검증 |
 | 5 | `loading.tsx`/`error.tsx`/`not-found.tsx` 전면 추가 | **완료** (2026-09-07) | 8개 파일이 공개·관리자 전 라우트를 덮는다. 09-06에 비어 있던 두 자리를 채웠다 — `(admin)/admin/loading.tsx`(목록·등록·수정 공통 스켈레톤, 권한 확인 중에도 뜬다)와 `global-error.tsx`. `global-error`는 루트 레이아웃을 **대체**하므로 `<html>`·`<body>`·전역 CSS를 직접 들고 오고, `NextIntlClientProvider`가 없어 문구를 기본 로케일(en)로 고정했다 — 여기서 번역을 부르면 오류 경계가 다시 터진다. 빌드 매니페스트 등록으로 확인했고 실제 렌더는 미검증 | — |
 | 6 | 홈 오류 삼킴 제거 | **완료** | `page.tsx`에 `try/catch` 없음. 조회 실패가 `[locale]/error.tsx`로 전파돼 재시도 버튼 노출 | — |
-| 7 | Bottom Sheet·FilterModal 접근성 | 미착수 | `FilterModal.tsx`에 `role`·`aria-modal`·ESC 핸들러·focus trap 전무. `PlacesClient` 시트도 동일. Radix `ui/sheet.tsx`·`ui/dialog.tsx`는 있으나 미사용 | Radix `Dialog`/`Sheet`로 교체 |
+| 7 | Bottom Sheet·FilterModal 접근성 | **완료** (2026-09-07) | `FilterModal`을 Radix `Dialog`로 교체했다. 브라우저에서 확인 — 닫혔을 때 `[role="dialog"]` 0개, 열면 `role="dialog"`+`aria-labelledby`, focus가 다이얼로그 안으로 이동, 앱 루트에 `aria-hidden="true"`, 스크롤 잠금, ESC로 `data-state="closed"` 전환 후 언마운트. 모션은 계획 003의 값(250ms·진입/퇴장 커브 분리·reduced motion 제거)을 keyframes로 옮겨 유지했다. **Bottom Sheet에는 모달 시맨틱을 걸지 않았다** — 아래 D-13a | `aria-modal`은 Radix가 설정하지 않는다. 대신 바깥 콘텐츠에 `aria-hidden`을 걸어 같은 결과를 낸다 · 모바일 폭 미검증 |
 | 8 | 미리보기 Primary Action을 `상세 보기`로 반전 | **완료** (2026-09-06) | 조건부 `detailsVariant`를 제거해 `상세 보기`는 항상 primary, 길찾기는 `outline`. 두 분기 모두 primary가 정확히 하나다 — 위치가 있으면 [즐겨찾기][길찾기 outline][상세 primary], 없으면 길찾기 버튼을 렌더하지 않는다. `/ko`·`/en` 프로덕션 빌드에서 계산 스타일로 확인(길찾기 `rgb(255,255,255)`+테두리·외부 Maps 링크·`target=_blank`, 상세 `rgb(37,99,235)`·내부 `/{locale}/places/{id}` 링크). 문구·토큰 미변경 |
 | 9 | 마커 선택 → 목록 카드 스크롤 동기화 | **완료** (2026-09-06) | 장소 **id**로 `<li>`를 잡는 ref 맵(언마운트 시 삭제) + `handleMarkerSelect`가 세운 플래그를 보고 `selectedPlaceId` 반영 후 `scrollIntoView({block:"nearest"})`. 인덱스를 쓰지 않아 정렬·필터가 바뀌어도 다른 장소를 가리키지 않고, 목록에서 걸러진 장소는 ref가 없어 무시된다. `prefers-reduced-motion`이면 `behavior:"auto"`. 실제 지도에서 마커 3개를 눌러 각각 몽베르트·화람·테스트 카페 카드로 스크롤됨을 확인했고, 카드 클릭과 첫 렌더에서는 스크롤 호출 0건 | 정렬·필터 변경 **후** 마커 재선택은 미검증(§미검증 항목) · 모바일 미검증 |
 | 10 | 상세에 거리·길찾기·공유·즐겨찾기 액션 | 미착수 | `places/[id]/page.tsx`에 `FavoriteButton`·공유·길찾기·거리 표시 전부 없음 | 액션 영역 신설 |
@@ -483,9 +483,12 @@ P0 20건 재대조 결과, 08-18 시점에 `미구현`으로 적혀 있던 5건�
 | ID | 결정 | 근거 | 날짜 |
 |---|---|---|---|
 | D-11a | 서비스 범위 판정 기준을 **공개 장소 최단 거리 → `SERVICE_AREA_CENTER` 기준 거리**로 바꾼다 | 명세서 v2 §7-2의 원안은 대전 밖 장소가 실수로 공개되면 그 장소를 기준으로 서비스 범위가 조용히 넓어진다. 실제로 공개 장소 `데오`가 대전시청에서 341km 떨어진 좌표를 갖고 있었다. 범위는 데이터 상태와 무관하게 고정돼야 한다 | 2026-09-07 (사용자 확정) |
+| D-13a | 탐색 화면의 Bottom Sheet에는 `role="dialog"`·`aria-modal`·focus trap을 **걸지 않는다** | 기획서 v3 §6-2의 시트는 1단계(결과 개수)가 항상 떠 있고 지도가 배경에서 조작되는 **닫히지 않는 패널**이다. 모달 시맨틱을 걸면 지도·헤더·`내 위치` 버튼이 키보드와 스크린리더에서 잠긴다. 명세(T-06)를 글자대로 따르면 접근성이 나빠진다. 대신 3단계에서 벗어나는 ESC와 토글 `aria-expanded`를 넣었다. `DESIGN.md` §11은 **모달로 뜨는** 시트(`DogFormDialog`)에는 그대로 적용된다 | 2026-09-07 |
 | D-15 | 설문 응답의 `VerificationMethod`는 기존 `DM`을 재사용하지 않고 **`SURVEY`를 새로 추가**한다 | 매장이 직접 답한 것과 운영자가 DM으로 확인한 것은 출처가 다르다. 나중에 바꾸려면 데이터 마이그레이션이 필요하므로 처음부터 나눈다 | 2026-09-07 (사용자 확정) · **enum 마이그레이션 미실행** |
 
-> **명세서 반영 필요**: `개발명세서_v2` §7-2가 아직 "공개 장소 중 최단 거리"로 적혀 있다. D-11a로 대체됐다.
+> **명세서 반영 필요**
+> - `개발명세서_v2` §7-2가 아직 "공개 장소 중 최단 거리"로 적혀 있다. D-11a로 대체됐다.
+> - `개발명세서_v2` T-06과 §11이 Bottom Sheet에도 focus trap·`role="dialog"`를 요구한다. D-13a로 대체됐다.
 
 ---
 

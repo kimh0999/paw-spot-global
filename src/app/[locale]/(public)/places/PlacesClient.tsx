@@ -138,6 +138,27 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
     });
   }, [selectedPlaceId]);
 
+  /**
+   * 선택한 장소를 ESC로 닫는다.
+   *
+   * Bottom Sheet는 **닫히는 패널이 아니다** — 1단계(결과 개수)가 항상 떠 있고 지도가 그
+   * 뒤에서 계속 조작된다. 그래서 `role="dialog"`·`aria-modal`·focus trap을 걸지 않는다.
+   * 걸면 지도·헤더·내 위치 버튼이 키보드와 스크린리더에서 잠긴다.
+   * 대신 3단계(선택)에서 벗어나는 길만 키보드에 열어 둔다 (`DESIGN.md` §11).
+   *
+   * 필터 드로어가 열려 있으면 그쪽 ESC가 우선이므로 아무 것도 하지 않는다.
+   */
+  useEffect(() => {
+    if (!selectedPlaceId || isFilterOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") clearSelectedPlace();
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [selectedPlaceId, isFilterOpen, clearSelectedPlace]);
+
   const dogMatchByPlaceId = useMemo(() => {
     const map = new Map<string, DogMatchResult>();
     if (selectedDogs.length === 0) return map;
@@ -271,6 +292,7 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
             <button
               type="button"
               onClick={() => setIsSheetListOpen((prev) => !prev)}
+              aria-expanded={isSheetListOpen}
               className="flex h-11 items-center gap-1.5 rounded-full border border-border-strong bg-surface px-4 text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring"
             >
               {isSheetListOpen ? (
