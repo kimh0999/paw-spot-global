@@ -11,14 +11,16 @@
 | [002](002-button-badge-transition-scope.md) | button·badge의 `transition-all` 범위 축소 | MEDIUM | Performance / a11y | **DONE** `36505db` |
 | [003](003-filtermodal-drawer-motion.md) | FilterModal 드로어의 지속시간·이징·reduced motion·오버레이 | MEDIUM | Easing / Physicality / a11y | **DONE** `d3a9b2d` |
 | [004](004-bottom-sheet-height-profiling.md) | Bottom Sheet 높이 전환 프로파일링 (**조사 전용**) | HIGH (미확인) | Performance | **BLOCKED** — 실기기 없음 ([결과](004-findings.md)) |
-| [005](005-tailwind-v4-syntax-in-v3.md) | v3에서 무효한 v4 문법 클래스 되살리기 (button·badge) | HIGH (a11y) | Correctness | **DONE** `2ea62da` |
+| [005](005-tailwind-v4-syntax-in-v3.md) | v3에서 무효한 v4 문법 클래스 되살리기 (button·badge) | HIGH (a11y) | Correctness | **DONE** `2ea62da` · variants `303ce93` |
+| [006](006-dialog-dropdown-motion.md) | 다이얼로그·드롭다운 진입/퇴장 모션 (감사 #5·#7) | MEDIUM | Missed motion | **DONE** |
 
 ## 실행 순서
 
 ```
 001 ──┬── 002 ──> 005
       ├── 003
-      └── 004 ──> (006: 조사 결과에 따라 작성)
+      ├── 006
+      └── 004 ──> (Bottom Sheet 리팩터링: 조사 결과에 따라 작성)
 ```
 
 **001을 먼저 끝낸다.** 002·003·004가 모두 001이 만드는 토큰에 의존한다.
@@ -41,7 +43,8 @@
 | 003 | 001 | `ease-enter`·`ease-exit` 토큰 |
 | 004 | 001 | 250ms 확정 후 측정해야 수치가 유효 |
 | 005 | 002 | 002가 정한 전환 목록 위에서 동작한다 |
-| 006 (미작성) | 004 | Bottom Sheet 리팩터링. 조사 판정이 `조건부`/`리팩터링 필요`일 때만 작성 |
+| 006 | 001 | keyframes가 `--duration-*`·`--ease-*` 토큰을 참조한다 |
+| (다음 빈 번호) | 004 | Bottom Sheet 리팩터링. 조사 판정이 `조건부`/`리팩터링 필요`일 때만 작성 |
 
 ## 실행 시 반드시 지킬 것
 
@@ -65,10 +68,10 @@
 
 | 감사 # | 심각도 | 내용 | 비고 |
 |---|---|---|---|
-| #5 | MEDIUM | `DogFormDialog.tsx:38-46`·`DogsManager.tsx:180-188`의 Radix 다이얼로그가 모션 없이 튄다 | 올바른 처리가 미사용 파일 `ui/dialog.tsx:42,64`에 이미 있다 |
-| #7 | LOW | `SortDropdown.tsx:41-42`가 모션·trigger 기준 `transform-origin` 없이 나타난다 | `ui/dropdown-menu.tsx:46`이 올바른 형태 |
 | #8 | LOW | `ui/sheet.tsx:65`의 `ease-in-out`(진입엔 `ease-out`이 맞음), keyframe 기반이라 중단 시 재시작, `slide-in-from-bottom-10`이 자기 높이가 아닌 2.5rem | **현재 미사용.** P0 #7이 이 파일을 채택하면 활성화되므로 그 전에 처리한다 |
 | MO-1 | — | `CategoryPlaceTabs.tsx:86-131` 스켈레톤 → 카드 전환이 한 프레임에 교체된다 | 150ms opacity 크로스페이드. 스태거는 부적절(탭 전환은 빈번한 조작) |
 | MO-2 | — | `FavoriteButton.tsx:71-76` 즐겨찾기 토글이 테두리 색만 바뀐다 | `DESIGN.md` §8이 overshoot를 금지하므로 튕김 없는 scale settle |
 
-**#5와 #7은 함께 처리하는 편이 효율적이다.** 둘 다 "이미 저장소에 있는 올바른 `ui/` 프리미티브를 손으로 만든 구현 대신 채택한다"는 같은 작업이고, P0 #7의 접근성 작업과도 겹친다.
+**#5·#7은 계획 [006](006-dialog-dropdown-motion.md)에서 처리했다.** 다만 감사의 전제("올바른 처리가 `ui/dialog.tsx`·`ui/dropdown-menu.tsx`에 이미 있다")는 **틀렸다** — 그 파일들의 애니메이션 클래스도 전부 v4 문법이라 무효였다. 프리미티브를 채택하는 대신 사용 중인 컴포넌트에 v3 문법으로 직접 넣었다.
+
+`SortDropdown`의 **퇴장 모션은 여전히 없다**(조건부 언마운트). Radix `DropdownMenu`로 옮겨야 해결되며 P0 #7과 함께 다룬다.

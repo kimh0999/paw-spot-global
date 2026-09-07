@@ -39,7 +39,9 @@ export default function SortDropdown({ value, onChange, hasLocation = false }: S
       {isOpen && (
         <>
           <div className="fixed inset-0 z-dropdown" onClick={() => setIsOpen(false)} />
-          <div className="absolute left-0 top-full mt-1 w-52 bg-surface border rounded-xl shadow-lg z-dropdown overflow-hidden">
+          {/* 트리거 바로 아래에서 열리므로 좌상단을 기준으로 확대한다.
+              닫힐 때는 조건부 언마운트라 퇴장 모션이 없다 — Radix로 옮길 때 함께 해결한다. */}
+          <div className="absolute left-0 top-full mt-1 w-52 origin-top-left bg-surface border rounded-xl shadow-lg z-dropdown overflow-hidden animate-popover-in motion-reduce:animate-none">
             {SORT_OPTIONS.map(({ value: optValue, label, disabled }) => (
               <button
                 key={optValue}

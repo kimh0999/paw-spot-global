@@ -94,6 +94,43 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      // Radix는 닫힐 때 CSS **애니메이션**이 돌고 있으면 언마운트를 미룬다(transition으로는
+      // 안 된다). 그래서 퇴장 모션이 필요한 곳은 keyframes로 정의한다.
+      // 중앙 정렬 다이얼로그는 `-translate-x/y-1/2`로 위치를 잡으므로, keyframe의 transform이
+      // 그 정렬을 덮어쓰지 않도록 translate를 함께 넣는다.
+      keyframes: {
+        "overlay-in": { from: { opacity: "0" }, to: { opacity: "1" } },
+        "overlay-out": { from: { opacity: "1" }, to: { opacity: "0" } },
+        "dialog-in": {
+          from: { opacity: "0", transform: "translate(-50%, -50%) scale(0.97)" },
+          to: { opacity: "1", transform: "translate(-50%, -50%) scale(1)" },
+        },
+        "dialog-out": {
+          from: { opacity: "1", transform: "translate(-50%, -50%) scale(1)" },
+          to: { opacity: "0", transform: "translate(-50%, -50%) scale(0.97)" },
+        },
+        "sheet-in": {
+          from: { opacity: "0", transform: "translateY(100%)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "sheet-out": {
+          from: { opacity: "1", transform: "translateY(0)" },
+          to: { opacity: "0", transform: "translateY(100%)" },
+        },
+        "popover-in": {
+          from: { opacity: "0", transform: "scale(0.95)" },
+          to: { opacity: "1", transform: "scale(1)" },
+        },
+      },
+      animation: {
+        "overlay-in": "overlay-in var(--duration-standard) var(--ease-enter)",
+        "overlay-out": "overlay-out var(--duration-standard) var(--ease-exit)",
+        "dialog-in": "dialog-in var(--duration-standard) var(--ease-enter)",
+        "dialog-out": "dialog-out var(--duration-standard) var(--ease-exit)",
+        "sheet-in": "sheet-in var(--duration-standard) var(--ease-enter)",
+        "sheet-out": "sheet-out var(--duration-standard) var(--ease-exit)",
+        "popover-in": "popover-in var(--duration-fast) var(--ease-enter)",
+      },
       transitionDuration: {
         fast: "var(--duration-fast)",
         standard: "var(--duration-standard)",

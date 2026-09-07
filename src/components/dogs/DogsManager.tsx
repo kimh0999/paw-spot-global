@@ -178,14 +178,14 @@ export default function DogsManager({ dogs }: DogsManagerProps) {
         }}
       >
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-dialog bg-overlay" />
+          <Dialog.Overlay className="fixed inset-0 z-dialog bg-overlay data-[state=open]:animate-overlay-in data-[state=closed]:animate-overlay-out motion-reduce:animate-none" />
           <Dialog.Content
             onCloseAutoFocus={(event) => {
               if (!triggerRef.current) return;
               event.preventDefault();
               triggerRef.current.focus();
             }}
-            className="fixed left-1/2 top-1/2 z-dialog w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-surface p-5 shadow-lg outline-none"
+            className="fixed left-1/2 top-1/2 z-dialog w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-surface p-5 shadow-lg outline-none data-[state=open]:animate-dialog-in data-[state=closed]:animate-dialog-out motion-reduce:animate-none"
           >
             <Dialog.Title className="text-base font-bold text-content">
               {t("delete.title")}

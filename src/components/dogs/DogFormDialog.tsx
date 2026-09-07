@@ -36,14 +36,14 @@ export default function DogFormDialog({
       }}
     >
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-dialog bg-overlay" />
+        <Dialog.Overlay className="fixed inset-0 z-dialog bg-overlay data-[state=open]:animate-overlay-in data-[state=closed]:animate-overlay-out motion-reduce:animate-none" />
         <Dialog.Content
           onCloseAutoFocus={(event) => {
             if (!returnFocusTo) return;
             event.preventDefault();
             returnFocusTo.focus();
           }}
-          className="fixed inset-x-0 bottom-0 z-dialog flex max-h-[92dvh] flex-col rounded-t-2xl border border-border bg-surface px-4 pb-4 pt-5 shadow-lg outline-none sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-h-[85vh] sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:px-6 sm:pb-6"
+          className="fixed inset-x-0 bottom-0 z-dialog flex max-h-[92dvh] flex-col rounded-t-2xl border border-border bg-surface px-4 pb-4 pt-5 shadow-lg outline-none data-[state=open]:animate-sheet-in data-[state=closed]:animate-sheet-out motion-reduce:animate-none sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-h-[85vh] sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:px-6 sm:pb-6 sm:data-[state=open]:animate-dialog-in sm:data-[state=closed]:animate-dialog-out"
         >
           <div className="mb-4 flex items-start justify-between gap-3">
             <div className="min-w-0">
