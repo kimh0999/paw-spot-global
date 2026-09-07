@@ -7,9 +7,9 @@
 
 | # | 제목 | 심각도 | 분류 | Status |
 |---|---|---|---|---|
-| [001](001-motion-tokens.md) | DESIGN.md §8 모션 토큰을 전부 구현 | HIGH | Cohesion & tokens | TODO |
-| [002](002-button-badge-transition-scope.md) | button·badge의 `transition-all` 범위 축소 | MEDIUM | Performance / a11y | TODO |
-| [003](003-filtermodal-drawer-motion.md) | FilterModal 드로어의 지속시간·이징·reduced motion·오버레이 | MEDIUM | Easing / Physicality / a11y | TODO |
+| [001](001-motion-tokens.md) | DESIGN.md §8 모션 토큰을 전부 구현 | HIGH | Cohesion & tokens | **DONE** `3aae719` |
+| [002](002-button-badge-transition-scope.md) | button·badge의 `transition-all` 범위 축소 | MEDIUM | Performance / a11y | **DONE** `36505db` |
+| [003](003-filtermodal-drawer-motion.md) | FilterModal 드로어의 지속시간·이징·reduced motion·오버레이 | MEDIUM | Easing / Physicality / a11y | **DONE** `d3a9b2d` |
 | [004](004-bottom-sheet-height-profiling.md) | Bottom Sheet 높이 전환 프로파일링 (**조사 전용**) | HIGH (미확인) | Performance | **BLOCKED** — 실기기 없음 ([결과](004-findings.md)) |
 
 ## 실행 순서
@@ -46,6 +46,13 @@
 - **`DESIGN.md`를 수정하지 않는다.** 이 저장소의 유일한 디자인 기준이며, 계획들은 문서를 코드에 반영하는 방향으로만 움직인다. 커브나 지속시간이 어색하게 느껴지면 **보고만 하고 값은 그대로 둔다.**
 - 각 계획의 코드가 실제 파일과 다르면(커밋 `046adbb` 이후 드리프트) 임의로 맞추지 말고 **중단하고 보고한다.**
 - 모든 계획에 `Verification` 절의 **Feel check**가 있다. 기계적 검증만으로 끝내지 않는다 — 003의 `pointer-events-none` 누락처럼 **typecheck·lint·test·build를 전부 통과하면서 앱을 먹통으로 만드는** 실수가 있다.
+
+## 실행 중 발견 (계획에 없던 것)
+
+| 발견 | 위치 | 조치 |
+|---|---|---|
+| **`focus-visible:ring-3`가 무효** — Tailwind v4 문법인데 이 프로젝트는 v3.4.19다. 빌드 CSS에 규칙이 없고 Button에 포커스 링이 아예 그려지지 않는다. 실제 포커스 표시는 `focus-visible:border-ring`(테두리 색)뿐이다 | `ui/button.tsx:8`, `ui/badge.tsx:8` | 002에서 `border-color`를 전환 목록에서 빼 지연은 없앴다. **링 자체를 살리는 것은 화면 모양이 바뀌므로 별도 작업** |
+| `ui/sheet.tsx:65`가 bare `transition`을 써서 `box-shadow`·`filter`까지 전환 목록에 넣는다 | `ui/sheet.tsx:65` | 미사용 파일. 감사 #8과 함께 처리 |
 
 ## 감사에서 나왔으나 아직 계획하지 않은 것
 
