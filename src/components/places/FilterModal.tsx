@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import type {
   PlaceFilters,
   DogSizeFilter,
@@ -66,14 +67,22 @@ export default function FilterModal({
 
   return (
     <>
-      {isOpen && (
-        <div className="fixed inset-0 bg-overlay z-drawer" onClick={onClose} />
-      )}
+      {/* 오버레이는 항상 마운트해 둔다. 열고 닫을 때 패널과 같은 시간·커브로 함께 사라져야
+          한 덩어리로 읽힌다. 닫힌 동안에는 pointer-events를 꺼서 화면을 막지 않는다. */}
+      <div
+        onClick={onClose}
+        className={cn(
+          "fixed inset-0 z-drawer bg-overlay transition-opacity duration-standard motion-reduce:transition-none",
+          isOpen ? "opacity-100 ease-enter" : "pointer-events-none opacity-0 ease-exit",
+        )}
+      />
 
       <div
-        className={`fixed top-0 right-0 h-full w-full max-w-sm bg-surface z-drawer shadow-2xl flex flex-col transition-transform duration-300 ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={cn(
+          "fixed top-0 right-0 z-drawer flex h-full w-full max-w-sm flex-col bg-surface shadow-2xl",
+          "transition-transform duration-standard motion-reduce:transition-none",
+          isOpen ? "translate-x-0 ease-enter" : "translate-x-full ease-exit",
+        )}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <h2 className="font-bold text-content text-base">{t("filters.title")}</h2>

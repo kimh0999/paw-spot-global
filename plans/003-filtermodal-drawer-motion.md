@@ -50,7 +50,7 @@
       <div
         onClick={onClose}
         className={cn(
-          "fixed inset-0 z-drawer bg-overlay transition-opacity duration-standard",
+          "fixed inset-0 z-drawer bg-overlay transition-opacity duration-standard motion-reduce:transition-none",
           isOpen ? "opacity-100 ease-enter" : "pointer-events-none opacity-0 ease-exit",
         )}
       />
@@ -71,7 +71,7 @@
 | `duration-standard` (250ms) | `DESIGN.md`:449 — `standard 250ms  panel, tab, Bottom Sheet` |
 | `ease-enter` = `cubic-bezier(0, 0, 0.2, 1)` | `DESIGN.md`:456 |
 | `ease-exit` = `cubic-bezier(0.4, 0, 1, 1)` | `DESIGN.md`:457 |
-| `motion-reduce:transition-none` (패널만) | `DESIGN.md`:462 — 이동 애니메이션 제거 |
+| `motion-reduce:transition-none` (패널·오버레이 **둘 다**) | `DESIGN.md`:462 + 2026-09-07 사용자 확정 |
 
 ### 이징을 방향별로 나누는 이유
 
@@ -112,16 +112,26 @@
 
 ## Reduced motion 처리
 
-두 요소를 다르게 다룬다. 이게 이 계획에서 가장 틀리기 쉬운 부분이다.
+**패널과 오버레이 둘 다 `motion-reduce:transition-none`으로 전환을 없앤다.**
+
+> **2026-09-07 사용자 확정 — 계획 초안에서 변경.**
+> 초안은 오버레이의 opacity 페이드를 유지하려 했다. `DESIGN.md`:462가 제거 대상으로
+> 지목한 것이 **이동** 애니메이션이고, 배경이 어두워지는 과정은 "모달이 열렸다"를
+> 이해시키는 신호라고 봤기 때문이다.
+>
+> 사용자가 **둘 다 제거**로 확정했다. 패널만 즉시 나타나고 오버레이만 250ms에 걸쳐
+> 어두워지면 한 덩어리로 움직이던 것이 reduced motion에서만 둘로 갈라진다. 이 계획의
+> 목적 자체가 "두 요소를 한 덩어리로 만드는 것"이므로, 그 일관성을 reduced motion에서도
+> 유지하는 편이 맞다.
 
 | 요소 | 전환 속성 | reduced motion |
 |---|---|---|
-| 패널 | `transform` (화면 폭만큼 **이동**) | `motion-reduce:transition-none` — **즉시 제자리로.** 이동 애니메이션 제거 |
-| 오버레이 | `opacity` (이동 없음) | **게이트를 걸지 않는다.** 페이드는 그대로 유지 |
+| 패널 | `transform` (화면 폭만큼 이동) | `motion-reduce:transition-none` — 즉시 제자리로 |
+| 오버레이 | `opacity` | `motion-reduce:transition-none` — 즉시 나타나고 즉시 사라짐 |
 
-근거: `DESIGN.md:462`가 제거하라고 한 대상은 **이동** 애니메이션이다. 오버레이의 투명도 변화는 이동이 아니고, 배경이 어두워지는 과정은 "지금 모달이 열렸다"를 이해시키는 신호다. 전부 없애면 화면이 깜빡 바뀌기만 해서 오히려 이해가 어려워진다.
-
-결과적으로 reduced motion에서는 **패널이 즉시 나타나고 오버레이만 250ms에 걸쳐 어두워진다.** 의도된 동작이다. 어색해 보인다고 오버레이에도 `motion-reduce:transition-none`을 붙이지 않는다.
+결과적으로 reduced motion에서는 **필터가 전환 없이 통째로 나타나고 통째로 사라진다.**
+`bg-overlay`의 색상 자체(`rgb(17 24 39 / 48%)`)는 그대로이므로 배경이 어두워진다는
+정보는 유지되고, 그 변화가 애니메이션되지 않을 뿐이다.
 
 ## Steps
 
@@ -166,7 +176,7 @@
          <div
            onClick={onClose}
            className={cn(
-             "fixed inset-0 z-drawer bg-overlay transition-opacity duration-standard",
+             "fixed inset-0 z-drawer bg-overlay transition-opacity duration-standard motion-reduce:transition-none",
              isOpen ? "opacity-100 ease-enter" : "pointer-events-none opacity-0 ease-exit",
            )}
          />
@@ -241,8 +251,8 @@ grep -n "pointer-events-none" src/components/places/FilterModal.tsx  # 1건
 - **중단 가능성**: 패널이 미끄러지는 **도중에** `필터`를 다시 눌러 닫는다. 처음 위치로 튀지 않고 **현재 위치에서** 반대 방향으로 이어져야 한다(CSS transition의 retarget). 튀면 어딘가에서 keyframe 애니메이션을 쓴 것이다.
 - **이징 방향**: 열 때는 빠르게 들어와 부드럽게 멈추고(`ease-enter`), 닫을 때는 천천히 떠나 빠르게 사라진다(`ease-exit`). 닫기가 **굼뜨게 느껴지면 코드를 바꾸지 말고 그 관찰을 보고한다** — `DESIGN.md` §8 개정 사안이다.
 - **reduced motion**: DevTools **Rendering 패널 → Emulate CSS media feature `prefers-reduced-motion: reduce`**를 켜고 열기/닫기를 반복한다.
-  - 패널은 **즉시** 제자리에 나타나고 즉시 사라진다(이동 없음).
-  - 배경 어둠은 **여전히 250ms에 걸쳐 페이드**된다. 배경까지 즉시 바뀌면 게이트를 잘못 건 것이다.
+  - 패널과 배경 어둠이 **둘 다 즉시** 나타나고 즉시 사라진다. 어느 한쪽이라도 페이드되면 게이트가 한 곳에만 걸린 것이다.
+  - 배경 어둠 자체는 유지된다(`bg-overlay` 색상은 그대로). 사라지는 것은 그 변화의 애니메이션뿐이다.
 - **모바일**: DevTools 디바이스 모드(iPhone 12)로 바꿔 같은 동작을 확인한다. `max-w-sm`이라 폭이 화면에 꽉 차므로 이동 거리가 더 길다.
 - **오버레이 클릭으로 닫기**: 열린 상태에서 왼쪽 어두운 영역을 눌러 닫힌다.
 
@@ -251,7 +261,7 @@ grep -n "pointer-events-none" src/components/places/FilterModal.tsx  # 1건
 - 필터가 닫힌 상태에서 페이지의 모든 조작이 정상 동작한다.
 - 오버레이와 패널이 열기·닫기 모두에서 동시에 시작하고 동시에 끝난다.
 - 전환 도중 다시 토글해도 현재 위치에서 이어진다.
-- reduced motion에서 패널 이동은 사라지고 오버레이 페이드는 남는다.
+- reduced motion에서 패널 이동과 오버레이 페이드가 **둘 다** 사라진다.
 - `duration-300` 잔여 0건.
 - Mechanical 4종 통과.
 
