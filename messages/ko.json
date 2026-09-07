@@ -310,6 +310,14 @@
     },
     "detail": {
       "back": "장소 목록으로",
+      "actions": {
+        "directions": "길찾기",
+        "call": "전화",
+        "share": "공유",
+        "shareCopied": "링크를 복사했습니다.",
+        "shareFailed": "링크를 공유하지 못했습니다.",
+        "distanceFromYou": "내 위치에서 {distance}"
+      },
       "beforeYouGo": {
         "title": "방문 전 확인 사항",
         "subtitle": "반려견과 함께 입장 가능한가요?",
@@ -498,8 +506,7 @@
       },
       "info": {
         "title": "장소 정보",
-        "website": "홈페이지",
-        "viewOnMaps": "구글 지도에서 보기"
+        "website": "홈페이지"
       },
       "verification": {
         "title": "검증 정보",

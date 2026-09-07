@@ -311,8 +311,18 @@ export default function PlacePreviewCard({
             </a>
           </Button>
         )}
+        {/* 상세에서도 거리를 보여주려면 위치가 필요하다. 목록이 이미 알고 있는 값을
+            그대로 실어 보낸다. 위치가 없으면 붙이지 않고, 상세는 거리를 생략한다. */}
         <Button asChild className="h-11 flex-1">
-          <Link href={`/places/${place.id}`}>{t("preview.viewDetails")}</Link>
+          <Link
+            href={
+              userLocation
+                ? `/places/${place.id}?lat=${userLocation.lat}&lng=${userLocation.lng}`
+                : `/places/${place.id}`
+            }
+          >
+            {t("preview.viewDetails")}
+          </Link>
         </Button>
       </div>
     </div>

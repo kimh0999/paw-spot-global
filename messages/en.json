@@ -310,6 +310,14 @@
     },
     "detail": {
       "back": "Back to places",
+      "actions": {
+        "directions": "Directions",
+        "call": "Call",
+        "share": "Share",
+        "shareCopied": "Link copied.",
+        "shareFailed": "Could not share the link.",
+        "distanceFromYou": "{distance} from you"
+      },
       "beforeYouGo": {
         "title": "Before You Go",
         "subtitle": "Can I bring my dog here?",
@@ -498,8 +506,7 @@
       },
       "info": {
         "title": "Place Info",
-        "website": "Website",
-        "viewOnMaps": "View on Google Maps"
+        "website": "Website"
       },
       "verification": {
         "title": "Verification Info",

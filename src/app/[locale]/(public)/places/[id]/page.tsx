@@ -11,7 +11,7 @@ import {
   Phone,
   Globe,
   Camera,
-  Map,
+  Navigation,
   History,
   type LucideIcon,
 } from "lucide-react";
@@ -19,12 +19,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import BeforeYouGoCard from "@/components/places/BeforeYouGoCard";
 import DogMatchBadge from "@/components/places/DogMatchBadge";
+import FavoriteButton from "@/components/places/FavoriteButton";
+import ShareButton from "@/components/places/ShareButton";
 import { Link } from "@/i18n/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { matchDogsToPlace } from "@/lib/dogs/matching";
 import { getUserDogsByIds } from "@/lib/dogs/queries";
 import { parseDogSelection } from "@/lib/dogs/selection";
+import { formatDistance, haversineDistance } from "@/lib/geo/distance";
 import { displayPlaceName, isSupportedLocale } from "@/lib/i18n/locale";
+import { getFavoritePlaceIds } from "@/lib/favorites/queries";
 import { needsRecheck } from "@/lib/places/display";
 import { getPlaceById } from "@/lib/places/queries";
 import type { PlaceListItem } from "@/types/place";
@@ -36,9 +40,28 @@ const categoryIcon: Record<PlaceListItem["category"], LucideIcon> = {
   etc: MapPin,
 };
 
+/** 범위를 벗어난 값·형식이 틀린 값은 없는 것으로 본다. `places/page.tsx`와 같은 규칙이다. */
+function parseCoord(
+  value: string | undefined,
+  min: number,
+  max: number,
+): number | undefined {
+  if (!value) return undefined;
+  const n = parseFloat(value);
+  if (!Number.isFinite(n) || n < min || n > max) return undefined;
+  return n;
+}
+
 interface Props {
   params: { locale: string; id: string };
-  searchParams: { dogId?: string; dogIds?: string; match?: string };
+  searchParams: {
+    dogId?: string;
+    dogIds?: string;
+    match?: string;
+    /** 목록에서 넘어올 때만 붙는다. 없으면 거리를 표시하지 않는다. */
+    lat?: string;
+    lng?: string;
+  };
 }
 
 export default async function PlaceDetailPage({ params, searchParams }: Props) {
@@ -54,6 +77,9 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
   const selectedDogs = user
     ? await getUserDogsByIds(user.id, parseDogSelection(searchParams).dogIds)
     : [];
+  const favoritePlaceIds = user ? await getFavoritePlaceIds(user.id) : [];
+  const isFavorite = favoritePlaceIds.includes(place.id);
+
   const dogMatch = matchDogsToPlace(selectedDogs, {
     indoor: place.condition?.indoor ?? null,
     maxDogSize: place.condition?.maxDogSize ?? null,
@@ -89,6 +115,21 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
     place.location != null
       ? `https://www.google.com/maps/search/?api=1&query=${place.location.lat},${place.location.lng}`
       : null;
+
+  // 목록에서 위치를 갖고 들어온 경우에만 거리를 낸다. 위치가 없으면 표시하지 않는다
+  // (개발명세서 v2 §7-2 — 좌표 fallback은 지도 중심에만 쓴다).
+  const userLat = parseCoord(searchParams.lat, -90, 90);
+  const userLng = parseCoord(searchParams.lng, -180, 180);
+  const distanceText =
+    userLat != null && userLng != null && place.location != null
+      ? formatDistance(
+          haversineDistance(userLat, userLng, place.location.lat, place.location.lng),
+          safeLocale,
+        )
+      : null;
+
+  // 공유에는 사용자 좌표가 붙지 않은 정규 경로를 넘긴다.
+  const canonicalPath = `/${safeLocale}/places/${place.id}`;
 
   return (
     <div className="min-h-screen bg-surface-subtle">
@@ -134,6 +175,14 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
               <MapPin className="w-4 h-4 shrink-0 mt-0.5 text-content-muted" strokeWidth={1.5} aria-hidden="true" />
               <p className="text-sm text-content-secondary leading-relaxed">{place.address}</p>
             </div>
+            {distanceText && (
+              <div className="flex items-center gap-2">
+                <Navigation className="w-4 h-4 shrink-0 text-content-muted" strokeWidth={1.5} aria-hidden="true" />
+                <p className="text-sm text-content-secondary">
+                  {t("actions.distanceFromYou", { distance: distanceText })}
+                </p>
+              </div>
+            )}
             {place.latestVerification && (
               <div className="flex items-center gap-2">
                 <BadgeCheck className="w-4 h-4 shrink-0 mt-0.5 text-content-muted" strokeWidth={1.5} aria-hidden="true" />
@@ -142,6 +191,37 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
                 </p>
               </div>
             )}
+          </div>
+
+          {/* 액션 (DESIGN.md §6 표시 순서 3). 길찾기가 primary, 전화·공유는 secondary다.
+              값이 없는 액션은 비활성 버튼을 두지 않고 아예 그리지 않는다. */}
+          <div className="flex flex-wrap items-center gap-2 border-t border-border px-5 py-4">
+            {googleMapsUrl && (
+              <a
+                href={googleMapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground outline-none transition-colors hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Navigation className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+                {t("actions.directions")}
+              </a>
+            )}
+            {place.phone && (
+              <a
+                href={`tel:${place.phone}`}
+                className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border border-border-strong bg-surface px-4 text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Phone className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+                {t("actions.call")}
+              </a>
+            )}
+            <ShareButton path={canonicalPath} title={placeName} />
+            <FavoriteButton
+              placeId={place.id}
+              initialFavorite={isFavorite}
+              className="h-11 w-11 shrink-0 rounded-xl"
+            />
           </div>
         </div>
 
@@ -199,19 +279,6 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
                   className="text-sm text-primary hover:underline"
                 >
                   @{place.instagram.replace(/^@/, "")}
-                </a>
-              </div>
-            )}
-            {googleMapsUrl && (
-              <div className="flex items-center gap-2">
-                <Map className="w-4 h-4 shrink-0 mt-0.5 text-content-muted" strokeWidth={1.5} aria-hidden="true" />
-                <a
-                  href={googleMapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline"
-                >
-                  {t("info.viewOnMaps")}
                 </a>
               </div>
             )}
