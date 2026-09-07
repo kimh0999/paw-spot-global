@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { LayoutList, LoaderCircle, MapIcon, MapPin, PawPrint, Search, X } from "lucide-react";
@@ -27,8 +27,6 @@ import type { CategoryFilterValue, PlaceListItem } from "@/types/place";
 interface PlacesClientProps {
   initialPlaces: PlaceListItem[];
   userLocation: { lat: number; lng: number } | null;
-  initialCategory?: CategoryFilterValue;
-  initialSearchQuery?: string;
   favoritePlaceIds?: string[];
   /** URL에서 고른 반려견 중 이 사용자의 것으로 확인된 목록. */
   matchDogs?: MatchableDog[];
@@ -45,7 +43,7 @@ const SHEET_HEIGHT: Record<SheetState, string> = {
   selected: "h-72",
 };
 
-export default function PlacesClient({ initialPlaces, userLocation, initialCategory, initialSearchQuery, favoritePlaceIds, matchDogs, hasStaleDogSelection = false }: PlacesClientProps) {
+export default function PlacesClient({ initialPlaces, userLocation, favoritePlaceIds, matchDogs, hasStaleDogSelection = false }: PlacesClientProps) {
   const t = useTranslations("places");
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -63,8 +61,6 @@ export default function PlacesClient({ initialPlaces, userLocation, initialCateg
     { value: "travel", label: t("filters.category.travel") },
   ];
 
-  const initialSortOption =
-    searchParams.get("sort") === "distance" ? "distance" : "recent";
   const [referenceDate] = useState(() => new Date());
   const {
     selectedCategory,
@@ -84,13 +80,7 @@ export default function PlacesClient({ initialPlaces, userLocation, initialCateg
     resetFilters,
     handlePlaceSelect,
     clearSelectedPlace,
-  } = usePlaceListState({
-    initialPlaces,
-    initialSortOption,
-    initialCategory,
-    initialSearchQuery,
-    referenceDate,
-  });
+  } = usePlaceListState({ initialPlaces, referenceDate });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSheetListOpen, setIsSheetListOpen] = useState(false);
   const {
@@ -101,12 +91,6 @@ export default function PlacesClient({ initialPlaces, userLocation, initialCateg
     handleMyLocation,
   } = useUserLocationQuery();
 
-  useEffect(() => {
-    if (searchParams.get("sort") === "distance") {
-      setSortOption("distance");
-    }
-  }, [searchParams, setSortOption]);
-
   // 확인되지 않은 dogId는 오류로 알리지 않고 주소에서만 걷어낸다.
   useEffect(() => {
     if (!hasStaleDogSelection) return;
@@ -114,6 +98,39 @@ export default function PlacesClient({ initialPlaces, userLocation, initialCateg
       scroll: false,
     });
   }, [hasStaleDogSelection, router, pathname, searchParams]);
+
+  // 목록 카드를 장소 id로 잡아 둔다. 배열 인덱스는 정렬·필터가 바뀌면 다른 장소를 가리킨다.
+  const cardRefs = useRef(new Map<string, HTMLLIElement>());
+  // 지도에서 고른 경우에만 스크롤한다. 첫 렌더나 평범한 재렌더로 화면이 튀지 않게 한다.
+  const pendingScrollPlaceId = useRef<string | null>(null);
+
+  const handleMarkerSelect = useCallback(
+    (placeId: string) => {
+      pendingScrollPlaceId.current = placeId;
+      handlePlaceSelect(placeId);
+    },
+    [handlePlaceSelect],
+  );
+
+  // 선택이 반영된 뒤에 스크롤한다. 목록에서 걸러진 장소면 ref가 없어 아무 일도 하지 않는다.
+  useEffect(() => {
+    const placeId = pendingScrollPlaceId.current;
+    if (!placeId) return;
+    pendingScrollPlaceId.current = null;
+
+    const card = cardRefs.current.get(placeId);
+    if (!card) return;
+
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    // `nearest` — 이미 보이는 카드는 건드리지 않고, 벗어난 만큼만 움직인다.
+    card.scrollIntoView({
+      block: "nearest",
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+    });
+  }, [selectedPlaceId]);
 
   const dogMatchByPlaceId = useMemo(() => {
     const map = new Map<string, DogMatchResult>();
@@ -384,6 +401,11 @@ export default function PlacesClient({ initialPlaces, userLocation, initialCateg
                 {visiblePlaces.map((place) => (
                   <li
                     key={place.id}
+                    ref={(node) => {
+                      // 목록에서 빠진 카드는 지워 둔다. 남겨 두면 떼어낸 DOM을 잡고 있게 된다.
+                      if (node) cardRefs.current.set(place.id, node);
+                      else cardRefs.current.delete(place.id);
+                    }}
                     onMouseEnter={() => setHoveredPlaceId(place.id)}
                     onMouseLeave={() => setHoveredPlaceId(null)}
                   >
@@ -431,7 +453,7 @@ export default function PlacesClient({ initialPlaces, userLocation, initialCateg
             places={visiblePlaces}
             selectedPlaceId={selectedPlaceId}
             hoveredPlaceId={hoveredPlaceId}
-            onSelectPlace={handlePlaceSelect}
+            onSelectPlace={handleMarkerSelect}
             placeholder={t("list.mapPlaceholder")}
             userLocation={userLocation}
             onRequestUserLocation={handleMyLocation}

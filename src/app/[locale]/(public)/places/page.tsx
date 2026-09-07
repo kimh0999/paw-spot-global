@@ -3,7 +3,6 @@ import { getUserDogsByIds } from "@/lib/dogs/queries";
 import { parseDogSelection } from "@/lib/dogs/selection";
 import { getFavoritePlaceIds } from "@/lib/favorites/queries";
 import { getPlaces } from "@/lib/places/queries";
-import type { CategoryFilterValue } from "@/types/place";
 import PlacesClient from "./PlacesClient";
 
 interface PlacesPageProps {
@@ -30,11 +29,6 @@ function parseCoord(
   return n;
 }
 
-function parseCategory(value: string | undefined): CategoryFilterValue {
-  if (value === "cafe" || value === "restaurant" || value === "travel") return value;
-  return "all";
-}
-
 export default async function PlacesPage({ searchParams }: PlacesPageProps) {
   const lat = parseCoord(searchParams.lat, -90, 90);
   const lng = parseCoord(searchParams.lng, -180, 180);
@@ -43,8 +37,6 @@ export default async function PlacesPage({ searchParams }: PlacesPageProps) {
     lat != null && lng != null ? { lat, lng } : null;
 
   const places = await getPlaces({ lat, lng, sort: searchParams.sort });
-  const initialCategory = parseCategory(searchParams.category);
-  const initialSearchQuery = searchParams.q ?? "";
 
   const user = await getCurrentUser();
   const selection = parseDogSelection(searchParams);
@@ -70,8 +62,6 @@ export default async function PlacesPage({ searchParams }: PlacesPageProps) {
     <PlacesClient
       initialPlaces={places}
       userLocation={userLocation}
-      initialCategory={initialCategory}
-      initialSearchQuery={initialSearchQuery}
       favoritePlaceIds={favoritePlaceIds}
       matchDogs={selectedDogs.map((dog) => ({
         id: dog.id,

@@ -1,19 +1,50 @@
 import { parseVerifiedAt } from "./filtering";
 
-// Info is considered "stale" once the last check is at least this many weeks old.
-// Keep this high enough that the warning stays rare — if every place is amber, nothing stands out.
-export const STALE_VERIFICATION_WEEKS = 8;
+/**
+ * 재확인이 필요해지는 경계 (결정 D-02).
+ *
+ * 8주(56일) 임계는 폐기했다. 56일과 90일은 사용자가 다르게 행동할 근거가 없는 차이였다.
+ * 중간 경고 단계도 두지 않는다 — 경고가 흔해지면 아무것도 강조하지 못한다.
+ *
+ * 경계는 **90일 이상 지났을 때**다. 정확히 90일째부터 재확인 대상이다
+ * (`DESIGN.md` v1.2.1 §6·§7).
+ */
+export const RECHECK_AFTER_DAYS = 90;
 
-const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-export function weeksSinceVerified(
+/**
+ * 마지막 확인일로부터 지난 일수. **경과 시간 표시용**이며 재확인 판정과는 분리한다.
+ *
+ * 확인일이 없거나 읽을 수 없는 형식이면 `null`을 준다. 미래 날짜는 0일로 본다(기존 정책).
+ */
+export function daysSinceVerified(
   verifiedAt: string | null,
   referenceDate: Date,
 ): number | null {
   if (!verifiedAt) return null;
-  const diffMs = referenceDate.getTime() - parseVerifiedAt(verifiedAt).getTime();
+
+  const verified = parseVerifiedAt(verifiedAt);
+  if (Number.isNaN(verified.getTime())) return null;
+
+  const diffMs = referenceDate.getTime() - verified.getTime();
   if (diffMs < 0) return 0;
-  return Math.floor(diffMs / MS_PER_WEEK);
+  return Math.floor(diffMs / MS_PER_DAY);
+}
+
+/**
+ * 재확인이 필요한가 (`Recheck needed` 배지를 띄울지).
+ *
+ * 확인일을 모르면 **재확인 대상으로 본다.** 확인되지 않은 것을 확인된 것처럼 다루지 않는다는
+ * 이 프로젝트의 원칙(`eligibility.ts`·조건 필터)을 신선도에도 그대로 적용한다.
+ */
+export function needsRecheck(
+  verifiedAt: string | null,
+  referenceDate: Date,
+): boolean {
+  const days = daysSinceVerified(verifiedAt, referenceDate);
+  if (days === null) return true;
+  return days >= RECHECK_AFTER_DAYS;
 }
 
 // verificationMethod arrives already mapped to a stable English label (queries.ts).

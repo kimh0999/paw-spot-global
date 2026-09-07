@@ -12,6 +12,7 @@ import {
   Globe,
   Camera,
   Map,
+  History,
   type LucideIcon,
 } from "lucide-react";
 
@@ -24,6 +25,7 @@ import { matchDogsToPlace } from "@/lib/dogs/matching";
 import { getUserDogsByIds } from "@/lib/dogs/queries";
 import { parseDogSelection } from "@/lib/dogs/selection";
 import { displayPlaceName, isSupportedLocale } from "@/lib/i18n/locale";
+import { needsRecheck } from "@/lib/places/display";
 import { getPlaceById } from "@/lib/places/queries";
 import type { PlaceListItem } from "@/types/place";
 
@@ -76,6 +78,12 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
           : place.category.toUpperCase();
 
   const CategoryIcon = categoryIcon[place.category];
+
+  // 목록·카드와 같은 판정을 쓴다. 기준이 되는 확인일도 같은 `formatVerifiedAt` 결과다.
+  // 여기서 90일을 다시 세지 않는다 — 화면마다 경계가 갈라지면 같은 장소가 다르게 보인다.
+  const showRecheckBadge =
+    place.latestVerification != null &&
+    needsRecheck(place.latestVerification.verifiedAt, new Date());
 
   const googleMapsUrl =
     place.location != null
@@ -222,8 +230,19 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
                   <span className="text-xs font-medium text-content-muted w-28 shrink-0">
                     {t("verification.lastVerified")}
                   </span>
-                  <span className="text-sm text-content">
+                  <span className="flex flex-wrap items-center gap-2 text-sm text-content">
                     {place.latestVerification.verifiedAt}
+                    {/* 신선도 경고다. 동반 불가 판정으로 읽히지 않도록 danger가 아닌 amber를 쓰고
+                        확인일 옆에 붙인다 (DESIGN.md §7 Stale verification). */}
+                    {showRecheckBadge && (
+                      <Badge
+                        variant="outline"
+                        className="border-transparent bg-warning-soft text-warning"
+                      >
+                        <History className="shrink-0" aria-hidden="true" />
+                        {tCard("staleBadge")}
+                      </Badge>
+                    )}
                   </span>
                 </div>
                 <div className="flex items-center gap-3 py-2.5">

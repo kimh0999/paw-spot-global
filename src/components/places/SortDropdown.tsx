@@ -30,7 +30,7 @@ export default function SortDropdown({ value, onChange, hasLocation = false }: S
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex items-center gap-1.5 px-4 py-2 border border-strong rounded-full text-sm font-medium text-content hover:bg-surface-subtle bg-surface transition-colors"
+        className="flex items-center gap-1.5 px-4 py-2 border border-border-strong rounded-full text-sm font-medium text-content hover:bg-surface-subtle bg-surface transition-colors"
       >
         {selectedLabel}
         <span className="text-content-muted text-xs">{isOpen ? "▲" : "▼"}</span>

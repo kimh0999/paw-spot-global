@@ -5,7 +5,7 @@ export type ConditionStatus = "good" | "warning" | "bad" | "neutral";
 export type PlaceCategory = "cafe" | "restaurant" | "travel";
 export type CategoryFilterValue = "all" | PlaceCategory;
 
-export type IndoorFilter = "all" | "indoor" | "outdoor" | "partial-area" | "exclude-unknown";
+export type IndoorFilter = "all" | "indoor" | "outdoor" | "partial-area";
 export type CarrierFilter = "all" | "not-required" | "can-bring";
 export type DogSizeFilter = "all" | "small" | "medium" | "large";
 export type RecentFilter = "all" | "30days" | "90days";
@@ -45,20 +45,6 @@ export interface CategoryPlacesResult {
   /** 해당 카테고리의 전체 공개 장소 수. places는 조회 limit 만큼만 담는다. */
   totalCount: number;
 }
-
-export type HomePlaceItem = Pick<
-  PlaceListItem,
-  | "id"
-  | "nameKr"
-  | "nameEn"
-  | "category"
-  | "address"
-  | "thumbnailUrl"
-  | "indoor"
-  | "carrierStrollerPolicy"
-  | "maxDogSize"
-  | "latestVerifiedAt"
->;
 
 export interface PlaceDetail {
   id: string;

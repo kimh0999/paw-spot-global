@@ -6,12 +6,10 @@ import { readPolicyDetails, type PolicyDetailsRead } from "@/lib/places/policy-d
 import type {
   CategoryFilterValue,
   CategoryPlacesResult,
-  HomePlaceItem,
   PlaceDetail,
   PlaceListItem,
 } from "@/types/place";
 
-const HOME_PLACE_LIMIT = 6;
 
 // MVP 카테고리 탭은 음식점·카페·여행지만 다룬다. `전체` 범위는 MVP_PLACE_CATEGORIES가 정한다.
 const CATEGORY_FILTER_TO_ENUM = {
@@ -145,10 +143,22 @@ export const placeListSelect = {
   },
 } satisfies Prisma.PlaceSelect;
 
+/**
+ * 사용자 화면에 내보낼 수 있는 장소의 조건 (결정 D-07).
+ *
+ * `VISIBLE`인 것만으로는 부족하다. 확인 방법과 확인일이 담긴 검증 이력이 최소 1건 있어야
+ * 공개한다. 검증 이력이 없는 장소는 조회에서 빠질 뿐이며, 공개 상태를 유지하려고 임시
+ * 확인일을 만들어 넣지 않는다.
+ */
+const PUBLIC_PLACE_WHERE = {
+  visibility: "VISIBLE",
+  verifications: { some: {} },
+} as const satisfies Prisma.PlaceWhereInput;
+
 async function findPlaces() {
   return prisma.place.findMany({
     // 홈 `전체` 탭과 결과 범위를 맞춘다. ETC는 목록 카테고리 칩이 없으므로 여기서도 제외한다.
-    where: { visibility: "VISIBLE", category: { in: [...MVP_PLACE_CATEGORIES] } },
+    where: { ...PUBLIC_PLACE_WHERE, category: { in: [...MVP_PLACE_CATEGORIES] } },
     select: placeListSelect,
     orderBy: { updatedAt: "desc" },
   });
@@ -235,57 +245,6 @@ export function toPlaceListItem(row: RawPlace, coord?: CoordQueryRow): PlaceList
   };
 }
 
-export async function getHomePlaces(): Promise<HomePlaceItem[]> {
-  const rows = await prisma.place.findMany({
-    where: { visibility: "VISIBLE" },
-    select: {
-      id: true,
-      nameKr: true,
-      nameEn: true,
-      category: true,
-      address: true,
-      thumbnailUrl: true,
-      condition: {
-        select: {
-          indoor: true,
-          carrierStrollerPolicy: true,
-          maxDogSize: true,
-        },
-      },
-      verifications: {
-        orderBy: { verifiedAt: "desc" },
-        take: 1,
-        select: {
-          verifiedAt: true,
-        },
-      },
-    },
-    orderBy: { updatedAt: "desc" },
-    take: HOME_PLACE_LIMIT,
-  });
-
-  return rows.map((row) => ({
-    id: row.id,
-    nameKr: row.nameKr,
-    nameEn: row.nameEn ?? null,
-    category: mapCategory(String(row.category)),
-    address: row.address,
-    thumbnailUrl: row.thumbnailUrl ?? null,
-    indoor: row.condition
-      ? mapIndoorPolicy(String(row.condition.indoor))
-      : null,
-    carrierStrollerPolicy: row.condition
-      ? mapCarrierStrollerPolicy(String(row.condition.carrierStrollerPolicy))
-      : null,
-    maxDogSize: row.condition
-      ? mapMaxDogSize(String(row.condition.maxDogSize))
-      : null,
-    latestVerifiedAt: row.verifications[0]
-      ? formatVerifiedAt(row.verifications[0].verifiedAt)
-      : null,
-  }));
-}
-
 /**
  * 홈 카테고리 탭용 조회.
  * 선택한 카테고리를 DB에서 걸러 필요한 카드 수만 가져온다. 전체 장소를 내려받아 클라이언트에서 거르지 않는다.
@@ -294,7 +253,7 @@ export async function getCategoryPlaces(
   category: CategoryFilterValue,
 ): Promise<CategoryPlacesResult> {
   const where: Prisma.PlaceWhereInput = {
-    visibility: "VISIBLE",
+    ...PUBLIC_PLACE_WHERE,
     category:
       category === "all"
         ? { in: [...MVP_PLACE_CATEGORIES] }
@@ -371,7 +330,13 @@ export async function getPlaceById(id: string): Promise<PlaceDetail | null> {
     },
   });
 
-  if (!place || place.visibility !== "VISIBLE") return null;
+  // `findUnique`는 관계 조건을 받지 못하므로, 이미 조회한 검증 이력으로 같은 규칙을 적용한다.
+  const isPublic =
+    place != null &&
+    place.visibility === "VISIBLE" &&
+    place.verifications.length > 0;
+
+  if (!isPublic) return null;
 
   const coords = await prisma.$queryRaw<
     Array<{ id: string; lat: unknown; lng: unknown }>

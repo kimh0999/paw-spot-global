@@ -17,7 +17,7 @@
         "all": "All",
         "restaurant": "Restaurants",
         "cafe": "Cafes",
-        "travel": "Travel Spots"
+        "travel": "Attractions"
       },
       "recommended": "{count} recommended places",
       "viewAll": "View all",
@@ -47,14 +47,6 @@
         "title": "Last verified date",
         "description": "See when and how information was last confirmed"
       }
-    },
-    "recentPlaces": {
-      "title": "Explore dog-friendly places",
-      "description": "Browse recently updated places that are currently available to the public.",
-      "verifiedAt": "Verified:",
-      "viewAll": "View all places",
-      "empty": "No places are available yet.",
-      "checkRequired": "Check required"
     },
     "footer": "© 2026 Paw Spot Global. Place information is subject to change."
   },
@@ -86,15 +78,14 @@
         "all": "All",
         "cafe": "Cafe",
         "restaurant": "Restaurant",
-        "travel": "Travel"
+        "travel": "Attractions"
       },
       "indoor": {
         "title": "Dog access",
         "all": "All",
         "indoorAllowed": "Indoor allowed",
         "outdoorOnly": "Outdoor / terrace only",
-        "partialArea": "Partial area only",
-        "excludeUnknown": "Exclude unconfirmed"
+        "partialArea": "Partial area only"
       },
       "carrier": {
         "title": "Carrier / stroller",
@@ -180,7 +171,7 @@
       "category": {
         "cafe": "Cafe",
         "restaurant": "Restaurant",
-        "travel": "Travel Spot",
+        "travel": "Attractions",
         "etc": "Other"
       },
       "verificationPath": {
@@ -191,7 +182,7 @@
         "userReport": "User report"
       },
       "walkFallback": "Set your location",
-      "staleBadge": "{weeks} wk old",
+      "staleBadge": "Recheck needed",
       "lastChecked": "Checked {date}",
       "notChecked": "Not checked yet",
       "select": "Select {name}",

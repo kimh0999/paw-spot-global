@@ -24,11 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { formatDistance } from "@/lib/geo/distance";
 import { displayPlaceName, isSupportedLocale } from "@/lib/i18n/locale";
-import {
-  STALE_VERIFICATION_WEEKS,
-  verificationMethodKey,
-  weeksSinceVerified,
-} from "@/lib/places/display";
+import { needsRecheck, verificationMethodKey } from "@/lib/places/display";
 import {
   getPlaceConditionBreakdown,
   getVisitEligibility,
@@ -169,12 +165,10 @@ export default function PlacePreviewCard({
     ? t(`card.eligibility.${eligibility.messageKey}`)
     : t(`preview.status.${status}.description`);
 
-  // 확인일은 기존 유틸리티와 재확인 정책(8주)을 그대로 재사용한다.
-  const weeksStale = weeksSinceVerified(place.latestVerifiedAt, referenceDate);
-  const staleText =
-    weeksStale != null && weeksStale >= STALE_VERIFICATION_WEEKS
-      ? t("card.staleBadge", { weeks: weeksStale })
-      : null;
+  // 재확인 판정은 공용 helper 하나만 쓴다. 화면마다 다른 경계를 두지 않는다(D-02).
+  const staleText = needsRecheck(place.latestVerifiedAt, referenceDate)
+    ? t("card.staleBadge")
+    : null;
   const methodKey = verificationMethodKey(place.verificationMethod);
   const checkedParts = place.latestVerifiedAt
     ? [
@@ -189,8 +183,6 @@ export default function PlacePreviewCard({
     ? `https://www.google.com/maps/dir/?api=1&destination=${place.location.lat},${place.location.lng}` +
       (userLocation ? `&origin=${userLocation.lat},${userLocation.lng}` : "")
     : null;
-  // 한 영역의 primary는 하나다 (DESIGN.md §3.5). 길찾기를 쓸 수 없으면 상세 정보가 그 자리를 받는다.
-  const detailsVariant = directionsUrl ? "outline" : "default";
 
   const hasBodySections =
     allowances.length > 0 || conditions.length > 0 || place.caution != null;
@@ -308,15 +300,18 @@ export default function PlacePreviewCard({
           initialFavorite={isFavorite}
           className="h-11 w-11 shrink-0"
         />
+        {/* 미리보기의 목적은 상세로 이어주는 것이므로 `상세 보기`가 primary다
+            (기획서 v3 §6-3 · DESIGN.md §6). 길찾기는 secondary로 두고, 위치가 없으면
+            버튼 자체를 만들지 않는다 — 눌러도 갈 곳이 없는 버튼을 남기지 않는다. */}
         {directionsUrl && (
-          <Button asChild className="h-11 flex-1">
+          <Button asChild variant="outline" className="h-11 flex-1">
             <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
               <Navigation size={16} aria-hidden="true" />
               {t("preview.directions")}
             </a>
           </Button>
         )}
-        <Button asChild variant={detailsVariant} className="h-11 flex-1">
+        <Button asChild className="h-11 flex-1">
           <Link href={`/places/${place.id}`}>{t("preview.viewDetails")}</Link>
         </Button>
       </div>

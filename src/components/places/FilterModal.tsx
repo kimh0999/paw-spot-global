@@ -22,7 +22,7 @@ interface FilterModalProps {
 
 const chipBase = "px-3 py-1.5 rounded-full text-sm border transition-colors";
 const chipActive = "bg-primary border-primary text-primary-foreground";
-const chipInactive = "border-strong text-content hover:border-strong bg-surface";
+const chipInactive = "border-border-strong text-content hover:border-border-strong bg-surface";
 
 export default function FilterModal({
   isOpen,
@@ -40,7 +40,6 @@ export default function FilterModal({
     { value: "indoor", label: t("filters.indoor.indoorAllowed") },
     { value: "outdoor", label: t("filters.indoor.outdoorOnly") },
     { value: "partial-area", label: t("filters.indoor.partialArea") },
-    { value: "exclude-unknown", label: t("filters.indoor.excludeUnknown") },
   ];
 
   const CARRIER_OPTIONS: { value: CarrierFilter; label: string }[] = [
@@ -162,7 +161,7 @@ export default function FilterModal({
           <button
             type="button"
             onClick={onReset}
-            className="flex-1 py-2.5 border border-strong rounded-xl text-sm font-semibold text-content hover:bg-surface-subtle transition-colors"
+            className="flex-1 py-2.5 border border-border-strong rounded-xl text-sm font-semibold text-content hover:bg-surface-subtle transition-colors"
           >
             {t("filters.reset")}
           </button>

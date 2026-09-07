@@ -18,7 +18,7 @@ import ConditionBadge from "@/components/places/ConditionBadge";
 import FavoriteButton from "@/components/places/FavoriteButton";
 import { Link } from "@/i18n/navigation";
 import { displayPlaceName, isSupportedLocale } from "@/lib/i18n/locale";
-import { STALE_VERIFICATION_WEEKS, weeksSinceVerified } from "@/lib/places/display";
+import { needsRecheck } from "@/lib/places/display";
 import {
   getPlaceConditionBreakdown,
   getVisitStatus,
@@ -77,11 +77,8 @@ export default function CategoryPlaceCard({
   const { allowances } = getPlaceConditionBreakdown(place);
   const visibleAllowances = allowances.slice(0, MAX_ALLOWANCE_BADGES);
 
-  const weeksStale = weeksSinceVerified(place.latestVerifiedAt, referenceDate);
-  const staleText =
-    weeksStale != null && weeksStale >= STALE_VERIFICATION_WEEKS
-      ? t("card.staleBadge", { weeks: weeksStale })
-      : null;
+  const isStale = needsRecheck(place.latestVerifiedAt, referenceDate);
+  const staleText = isStale ? t("card.staleBadge") : null;
   const checkedText = place.latestVerifiedAt
     ? [t("preview.lastChecked"), place.latestVerifiedAt, staleText]
         .filter((part): part is string => part != null)
@@ -150,7 +147,7 @@ export default function CategoryPlaceCard({
         <p
           className={cn(
             "mt-3 truncate text-xs",
-            staleText ? "text-warning" : "text-content-muted",
+            isStale ? "text-warning" : "text-content-muted",
           )}
         >
           {checkedText}

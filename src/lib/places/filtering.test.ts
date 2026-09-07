@@ -10,10 +10,11 @@ import {
 import type { PlaceFilters, PlaceListItem } from "@/types/place";
 
 /**
- * 목록 필터·정렬의 **현재 동작을 고정**하는 회귀 테스트.
+ * 목록 필터·정렬의 동작을 고정하는 회귀 테스트.
  *
- * 미확인 값 처리 규칙이 필터마다 다른데(§PROJECT_STATUS P0 #19), 고칠 대상이지
- * 지금 바꿀 것이 아니므로 현재 규칙을 그대로 기록한다.
+ * 미확인 값 처리는 D-03·D-12로 통일됐다 — **긍정 조건 필터(실내·이동장)는 확인된 일치
+ * 값만 통과**시키고, **크기 필터만 예외로 미확인을 남긴다**. 필터를 고르지 않은 상태는
+ * 어떤 값도 걸러내지 않는다. 세 규칙을 각각 고정한다.
  */
 
 function place(overrides: Partial<PlaceListItem> = {}): PlaceListItem {
@@ -116,27 +117,43 @@ describe("filterPlaces — 실내 필터", () => {
     place({ id: "null", indoor: null }),
   ];
 
-  // 현재 규칙: 실내 필터는 미확인을 통과시킨다. 이동장 필터와 비대칭이며 P0 #19의 수정 대상이다.
-  it("실내 가능 필터가 미확인과 null을 통과시킨다", () => {
-    expect(run(places, { indoor: "indoor" })).toEqual(["allowed", "unknown", "null"]);
+  // D-03: 긍정 조건 필터는 확인된 일치 값만 통과시킨다. 미확인·값 없음은 제외된다.
+  it("실내 가능 필터는 확인된 allowed만 남긴다", () => {
+    expect(run(places, { indoor: "indoor" })).toEqual(["allowed"]);
   });
 
-  it("실외 전용 필터도 미확인을 통과시킨다", () => {
-    expect(run(places, { indoor: "outdoor" })).toEqual(["outdoor", "unknown", "null"]);
+  it("실외 전용 필터는 확인된 outdoor_only만 남긴다", () => {
+    expect(run(places, { indoor: "outdoor" })).toEqual(["outdoor"]);
   });
 
-  it("일부 구역 필터도 미확인을 통과시킨다", () => {
-    expect(run(places, { indoor: "partial-area" })).toEqual(["partial", "unknown", "null"]);
+  it("일부 구역 필터는 확인된 partial_area만 남긴다", () => {
+    expect(run(places, { indoor: "partial-area" })).toEqual(["partial"]);
   });
 
-  // 제거 예정 옵션(P0 #19). 지금은 동작하므로 그대로 고정한다.
-  it("exclude-unknown은 미확인과 null만 걸러낸다", () => {
-    expect(run(places, { indoor: "exclude-unknown" })).toEqual([
+  // D-12로 `exclude-unknown` 옵션이 사라졌다. 모든 긍정 조건 필터가 같은 규칙을 쓰므로
+  // 별도 옵션 없이도 미확인이 제외된다 — 그 대체 동작을 여기서 고정한다.
+  it("실내 필터를 고르지 않으면 미확인도 남는다", () => {
+    expect(run(places, { indoor: "all" })).toEqual([
       "allowed",
       "outdoor",
       "partial",
       "notAllowed",
+      "unknown",
+      "null",
     ]);
+  });
+
+  it("실내 필터의 미확인 제외 규칙이 이동장 필터와 같다", () => {
+    const indoorKept = run(places, { indoor: "indoor" });
+    const carrierPlaces = [
+      place({ id: "allowed", carrierStrollerPolicy: "not_required" }),
+      place({ id: "outdoor", carrierStrollerPolicy: "required_always" }),
+      place({ id: "partial", carrierStrollerPolicy: "required_indoor" }),
+      place({ id: "notAllowed", carrierStrollerPolicy: "required_always" }),
+      place({ id: "unknown", carrierStrollerPolicy: "unknown" }),
+      place({ id: "null", carrierStrollerPolicy: null }),
+    ];
+    expect(indoorKept).toEqual(run(carrierPlaces, { carrier: "not-required" }));
   });
 });
 
@@ -334,6 +351,61 @@ describe("getFilteredAndSortedPlaces", () => {
         sortOption: "distance",
       }).map((p) => p.id),
     ).toEqual(["nearAllowed", "farAllowed"]);
+  });
+
+  it("실내·이동장·크기를 함께 걸면 각 규칙이 그대로 겹쳐 적용된다", () => {
+    const places = [
+      // 세 조건 모두 확인된 일치 — 유일한 통과 대상
+      place({
+        id: "pass",
+        indoor: "allowed",
+        carrierStrollerPolicy: "not_required",
+        maxDogSize: "large",
+      }),
+      // 실내만 미확인 → 긍정 조건 필터라 제외
+      place({
+        id: "indoorUnknown",
+        indoor: "unknown",
+        carrierStrollerPolicy: "not_required",
+        maxDogSize: "large",
+      }),
+      // 이동장만 미확인 → 제외
+      place({
+        id: "carrierUnknown",
+        indoor: "allowed",
+        carrierStrollerPolicy: "unknown",
+        maxDogSize: "large",
+      }),
+      // 크기만 미확인 → 크기 필터는 예외라 남아야 한다
+      place({
+        id: "sizeUnknown",
+        indoor: "allowed",
+        carrierStrollerPolicy: "not_required",
+        maxDogSize: "unknown",
+      }),
+      // 크기 상한 미달 → 크기 필터가 실제로 거른다
+      place({
+        id: "tooSmall",
+        indoor: "allowed",
+        carrierStrollerPolicy: "not_required",
+        maxDogSize: "small",
+      }),
+    ];
+
+    expect(
+      filterPlaces({
+        places,
+        selectedCategory: "all",
+        searchQuery: "",
+        filters: {
+          indoor: "indoor",
+          carrier: "not-required",
+          dogSize: "large",
+          recent: "all",
+        },
+        referenceDate: REFERENCE_DATE,
+      }).map((p) => p.id),
+    ).toEqual(["pass", "sizeUnknown"]);
   });
 });
 

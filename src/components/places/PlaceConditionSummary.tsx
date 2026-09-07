@@ -3,11 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Check, CircleAlert, CircleSlash, History, Info, type LucideIcon } from "lucide-react";
 
-import {
-  STALE_VERIFICATION_WEEKS,
-  verificationMethodKey,
-  weeksSinceVerified,
-} from "@/lib/places/display";
+import { needsRecheck, verificationMethodKey } from "@/lib/places/display";
 import { cn } from "@/lib/utils";
 import type { ConditionStatus, PlaceListItem } from "@/types/place";
 
@@ -47,8 +43,7 @@ export default function PlaceConditionSummary({
 }: PlaceConditionSummaryProps) {
   const t = useTranslations("places.card");
 
-  const weeksStale = weeksSinceVerified(place.latestVerifiedAt, referenceDate);
-  const isStale = weeksStale != null && weeksStale >= STALE_VERIFICATION_WEEKS;
+  const isStale = needsRecheck(place.latestVerifiedAt, referenceDate);
 
   const conditions: CoreCondition[] = [];
 
@@ -111,7 +106,7 @@ export default function PlaceConditionSummary({
   function getCheckedText() {
     if (!place.latestVerifiedAt) return t("notChecked");
     const checked = t("lastChecked", { date: place.latestVerifiedAt });
-    if (isStale) return `${checked} · ${t("staleBadge", { weeks: weeksStale })}`;
+    if (isStale) return `${checked} · ${t("staleBadge")}`;
     return checked;
   }
 

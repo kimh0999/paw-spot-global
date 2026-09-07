@@ -13,9 +13,12 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   session: {
     strategy: "jwt",
   },
+  // NextAuth 설정은 요청마다 달라질 수 없으므로 locale을 붙이지 않는다.
+  // locale 없는 `/login`은 next-intl 미들웨어가 기존 정책(NEXT_LOCALE 쿠키 → Accept-Language
+  // → defaultLocale)대로 `/ko/login` 또는 `/en/login`으로 넘긴다. 쿼리(`?error=`)는 그대로 따라간다.
   pages: {
-    signIn: "/en/login",
-    error: "/en/login",
+    signIn: "/login",
+    error: "/login",
   },
   callbacks: {
     async signIn({ user, account }) {

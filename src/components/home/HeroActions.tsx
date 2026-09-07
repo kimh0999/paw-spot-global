@@ -34,7 +34,7 @@ export default function HeroActions() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t("searchPlaceholder")}
-          className="flex-1 px-4 py-3 border border-strong rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary placeholder:text-content-muted"
+          className="flex-1 px-4 py-3 border border-border-strong rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary placeholder:text-content-muted"
         />
         <button
           type="submit"
