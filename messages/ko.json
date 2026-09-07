@@ -63,6 +63,13 @@
       "locationBlocked": "위치 권한이 차단되어 있습니다. 브라우저 설정에서 허용해 주세요.",
       "resultCount": "장소 {count}곳",
       "empty": "해당 조건에 맞는 장소가 없습니다.",
+      "resetFilters": "필터 초기화",
+      "emptyNoPlaces": "아직 공개된 장소가 없습니다.",
+      "serviceArea": {
+        "notice": "현재 대전 지역만 다루고 있습니다.",
+        "outOfRange": "현재 대전 지역만 지원합니다. 내 위치는 서비스 범위 밖입니다.",
+        "viewPlaces": "대전 장소 보기"
+      },
       "mapPlaceholder": "지도 영역 (Google Maps 연동 예정)",
       "dogSelection": {
         "single": "{name} 기준으로 조건을 표시합니다",

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { LayoutList, LoaderCircle, MapIcon, MapPin, PawPrint, Search, X } from "lucide-react";
+import { Compass, LayoutList, LoaderCircle, MapIcon, MapPin, PawPrint, Search, X } from "lucide-react";
 
 import Header from "@/components/Header";
 import FilterModal from "@/components/places/FilterModal";
@@ -21,6 +21,10 @@ import {
 } from "@/lib/dogs/matching";
 import { stripDogSelectionFromUrl } from "@/lib/dogs/selection";
 import { toDogSizeFilter } from "@/lib/places/eligibility";
+import {
+  isOutsideServiceArea,
+  resolveListEmptyReason,
+} from "@/lib/places/service-area";
 import { cn } from "@/lib/utils";
 import type { CategoryFilterValue, PlaceListItem } from "@/types/place";
 
@@ -78,6 +82,7 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
     selectedPlace,
     activeFilterCount,
     resetFilters,
+    resetConditions,
     handlePlaceSelect,
     clearSelectedPlace,
   } = usePlaceListState({ initialPlaces, referenceDate });
@@ -89,6 +94,7 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
     locationBlocked,
     hasLocationInUrl,
     handleMyLocation,
+    clearLocation,
   } = useUserLocationQuery();
 
   // 확인되지 않은 dogId는 오류로 알리지 않고 주소에서만 걷어낸다.
@@ -173,6 +179,56 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
     : isSheetListOpen
       ? "results"
       : "peek";
+
+  // 범위 판정은 **필터를 거치지 않은** 전체 공개 장소로 한다. 필터로 0건이 된 것과
+  // 사용자가 서비스 지역 밖에 있는 것은 다른 상태다 (D-11).
+  const outOfServiceArea = useMemo(
+    () => isOutsideServiceArea(initialPlaces),
+    [initialPlaces],
+  );
+
+  // 결과 수를 줄이는 조건. 정렬·위치는 결과 수를 바꾸지 않으므로 세지 않는다.
+  const hasNarrowedConditions =
+    activeFilterCount > 0 ||
+    selectedCategory !== "all" ||
+    searchQuery.trim() !== "";
+
+  // 빈 화면의 원인이 다르면 다음 행동도 달라야 한다 (D-11). 우선순위는 순수 함수가 정한다.
+  function getEmptyState() {
+    const reason = resolveListEmptyReason({
+      outsideServiceArea: outOfServiceArea,
+      hasNarrowedConditions,
+    });
+
+    if (reason === "out-of-service-area") {
+      return {
+        icon: Compass,
+        message: t("list.serviceArea.outOfRange"),
+        actionLabel: t("list.serviceArea.viewPlaces"),
+        onAction: clearLocation,
+      };
+    }
+
+    if (reason === "filtered-out") {
+      return {
+        icon: PawPrint,
+        message: t("list.empty"),
+        actionLabel: t("list.resetFilters"),
+        onAction: resetConditions,
+      };
+    }
+
+    // 공개된 장소 자체가 없다. 지울 필터가 없으므로 버튼을 주지 않는다.
+    return {
+      icon: PawPrint,
+      message: t("list.emptyNoPlaces"),
+      actionLabel: null,
+      onAction: null,
+    };
+  }
+
+  const emptyState = getEmptyState();
+  const EmptyIcon = emptyState.icon;
 
   const previewCard = selectedPlace ? (
     <PlacePreviewCard
@@ -370,6 +426,42 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
             </p>
           )}
 
+          {/*
+            서비스 범위 안내 (D-11). 목록이 비어 있으면 빈 상태가 같은 말과 같은 버튼을
+            내놓으므로 배너는 접는다 — 한 화면에 `대전 장소 보기`가 두 개 뜨지 않게 한다.
+          */}
+          {outOfServiceArea && visiblePlaces.length > 0 && (
+            <div
+              className={cn(
+                "shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border bg-warning-soft px-4 py-2 lg:flex",
+                sheetState === "results" ? "flex" : "hidden",
+              )}
+            >
+              <p className="min-w-0 text-xs text-warning">
+                {t("list.serviceArea.outOfRange")}
+              </p>
+              <button
+                type="button"
+                onClick={clearLocation}
+                className="shrink-0 rounded-full border border-warning px-3 py-1.5 text-xs font-semibold text-warning outline-none transition-colors hover:bg-warning/10 focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {t("list.serviceArea.viewPlaces")}
+              </button>
+            </div>
+          )}
+
+          {/* 대전 단독 공개 기간 동안의 상시 안내. 조용한 정보라 경고 색을 쓰지 않는다. */}
+          {!outOfServiceArea && (
+            <p
+              className={cn(
+                "shrink-0 border-b border-border bg-surface-subtle px-4 py-2 text-xs text-content-secondary lg:block",
+                sheetState === "results" ? "block" : "hidden",
+              )}
+            >
+              {t("list.serviceArea.notice")}
+            </p>
+          )}
+
           {/* 결과 수와 정렬은 서로를 설명하므로 같은 줄에 둔다. 모바일 결과 수는 시트 헤더에 이미 있다. */}
           <div
             className={cn(
@@ -421,9 +513,18 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
                 ))}
               </ul>
             ) : (
-              <div className="py-20 text-center text-content-muted">
-                <PawPrint className="mx-auto mb-3 h-6 w-6" strokeWidth={1.5} aria-hidden="true" />
-                <p className="text-sm">{t("list.empty")}</p>
+              <div className="px-4 py-20 text-center text-content-muted">
+                <EmptyIcon className="mx-auto mb-3 h-6 w-6" strokeWidth={1.5} aria-hidden="true" />
+                <p className="text-sm">{emptyState.message}</p>
+                {emptyState.onAction && (
+                  <button
+                    type="button"
+                    onClick={emptyState.onAction}
+                    className="mt-4 inline-flex h-11 items-center rounded-full border border-border-strong bg-surface px-4 text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {emptyState.actionLabel}
+                  </button>
+                )}
               </div>
             )}
           </div>

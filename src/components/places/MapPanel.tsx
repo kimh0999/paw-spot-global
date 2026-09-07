@@ -3,6 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 
+import {
+  SERVICE_AREA_CENTER,
+  SERVICE_AREA_ZOOM,
+} from "@/lib/places/service-area";
 import type { PlaceListItem } from "@/types/place";
 
 interface MapPanelProps {
@@ -16,7 +20,6 @@ interface MapPanelProps {
   isLocating?: boolean;
 }
 
-const SEOUL_CITY_HALL = { lat: 37.5665, lng: 126.978 };
 const DEFAULT_ZOOM = 14;
 
 // Map pin drawn as an SVG path so we can recolour per state without recreating markers.
@@ -60,19 +63,30 @@ function markerVisual(isSelected: boolean, isHovered: boolean): MarkerVisual {
   return { icon: pinIcon(colors.default, 1.4), zIndex: 1 };
 }
 
-function getInitialCenter(
+type MapView = { center: { lat: number; lng: number }; zoom: number };
+
+/**
+ * 첫 화면의 중심과 zoom.
+ *
+ * 앞의 세 단계는 특정 장소를 겨냥하므로 기본 zoom을 쓰고, 마지막 fallback만 다르다.
+ * 볼 장소가 정해지지 않은 상태이므로 서비스 범위(대전) 전체가 들어오도록 넓게 잡는다(D-11).
+ */
+function getInitialView(
   places: PlaceListItem[],
   selectedPlaceId: string | null,
   userLocation?: { lat: number; lng: number } | null,
-): { lat: number; lng: number } {
-  if (userLocation) return userLocation;
+): MapView {
+  if (userLocation) return { center: userLocation, zoom: DEFAULT_ZOOM };
   if (selectedPlaceId) {
     const selected = places.find((p) => p.id === selectedPlaceId);
-    if (selected?.location) return selected.location;
+    if (selected?.location) {
+      return { center: selected.location, zoom: DEFAULT_ZOOM };
+    }
   }
   const first = places.find((p) => p.location != null);
-  if (first?.location) return first.location;
-  return SEOUL_CITY_HALL;
+  if (first?.location) return { center: first.location, zoom: DEFAULT_ZOOM };
+
+  return { center: SERVICE_AREA_CENTER, zoom: SERVICE_AREA_ZOOM };
 }
 
 // TODO(map-integration): avoid duplicated map instances for mobile/desktop if needed
@@ -107,7 +121,7 @@ export default function MapPanel({
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-  // Initialize Google Maps once — center priority: userLocation > selectedPlace > first place > Seoul
+  // Initialize Google Maps once — center priority: userLocation > selectedPlace > first place > service area
   useEffect(() => {
     if (!apiKey) {
       setMapState("no-key");
@@ -122,14 +136,14 @@ export default function MapPanel({
       .then(([{ Map }]) => {
         if (cancelled || !containerRef.current) return;
         try {
-          const center = getInitialCenter(
+          const view = getInitialView(
             placesRef.current,
             selectedPlaceIdRef.current,
             userLocationRef.current,
           );
           const map = new Map(containerRef.current, {
-            center,
-            zoom: DEFAULT_ZOOM,
+            center: view.center,
+            zoom: view.zoom,
           });
           mapRef.current = map;
           setMapState("ready");
@@ -235,6 +249,21 @@ export default function MapPanel({
   useEffect(() => {
     if (mapState !== "ready" || !mapRef.current || !userLocation) return;
     mapRef.current.panTo(userLocation);
+  }, [userLocation, mapState]);
+
+  // 사용자가 위치를 **끈** 경우에만 서비스 지역으로 되돌린다(D-11의 `대전 장소 보기`).
+  // 처음부터 위치가 없던 방문은 초기 중심 규칙(선택 장소 → 첫 장소 → 서비스 지역)이 이미
+  // 정했으므로 건드리지 않는다. 그래서 값이 있다가 없어진 전환만 본다.
+  const hadUserLocationRef = useRef(userLocation != null);
+  useEffect(() => {
+    if (mapState !== "ready" || !mapRef.current) return;
+
+    const had = hadUserLocationRef.current;
+    hadUserLocationRef.current = userLocation != null;
+    if (!had || userLocation != null) return;
+
+    mapRef.current.panTo(SERVICE_AREA_CENTER);
+    mapRef.current.setZoom(SERVICE_AREA_ZOOM);
   }, [userLocation, mapState]);
 
   if (mapState === "no-key") {

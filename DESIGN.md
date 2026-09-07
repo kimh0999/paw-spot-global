@@ -5,6 +5,8 @@
 
 **v1.2 변경 사항** (기획서 v3 결정 반영): 정보 신선도 임계값을 8주에서 **90일 단일 기준**으로 통일(D-02), Korean Inquiry Box를 **MVP 제외 / P1 재도입 예정**으로 표기(D-01).
 
+**v1.2.2 (2026-09-07)**: §7 States의 위치·빈 상태 행을 D-11에 맞췄다. `Seoul City Hall` fallback 표기를 대전으로 바꾸고, 서비스 범위 밖 상태와 빈 상태 2종 분리를 표에 넣었다.
+
 **v1.2.1 (2026-09-06)**: D-02의 경계를 **`마지막 확인일로부터 90일 이상 경과`(>= 90일)**로 확정했다. §6은 "90일 이상", §7 상태표는 "90일 초과"로 적혀 하루 어긋나 있던 것을 §6 기준으로 통일했다.
 
 **v1.1 변경 사항**: 다크 모드 정책, z-index 체계, 아이콘 규칙, 텍스트 색상 용도 구분, Place Card 밀도 검증 기준, 한국어 UI의 문의 박스 처리, 거리 표기 규칙 추가.
@@ -424,8 +426,10 @@ Confirmation needed
 |---|---|
 | Initial loading | 최종 카드 구조와 같은 Skeleton |
 | Load more | 기존 목록을 유지하고 하단 spinner 표시 |
-| No results | `No places match your filters.` + `Reset filters` |
-| Location denied | `Showing places near Seoul City Hall.` + `Use my location` |
+| No results (필터) | `No places match your filters.` + `Reset filters` |
+| No places yet | `No places are available yet.` — 지울 필터가 없으므로 액션을 두지 않는다 |
+| Location denied | `Showing results near Daejeon center.` + `Near me`. 거리는 표시하지 않고 지도 중심만 대전으로 둔다 |
+| Out of service area (D-11) | Amber 배너 `We currently cover Daejeon only.` + `View places in Daejeon`. 사용자가 허용한 위치를 말없이 무시하지 않고, 이동 여부를 버튼으로 맡긴다 |
 | Map error | 목록은 유지하고 지도 영역에 재시도 안내 |
 | Stale verification (마지막 확인일로부터 90일 이상 경과) | Amber 아이콘 + `Recheck needed` + 마지막 확인일 + 정책 변경 가능 문구 |
 | Unknown condition | Gray 아이콘 + `Confirmation needed` |

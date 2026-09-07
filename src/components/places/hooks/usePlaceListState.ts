@@ -112,6 +112,28 @@ export function usePlaceListState({
     );
   }, []);
 
+  /**
+   * 빈 화면에서 결과를 되살리는 버튼용 (D-11).
+   *
+   * `resetFilters`와 달리 카테고리·검색어까지 되돌린다. 검색어를 남긴 채 필터만 풀면
+   * 버튼을 눌러도 여전히 0건이라 사용자를 헛돌게 한다. 정렬과 위치는 결과 수를 바꾸지
+   * 않으므로 건드리지 않는다. 주소는 한 번만 쓴다.
+   */
+  const resetConditions = useCallback(() => {
+    // 디바운스가 방금 지운 검색어를 되살리지 않도록 동기화 기준을 먼저 맞춘다.
+    syncedQuery.current = DEFAULT_PLACE_LIST_PARAMS.searchQuery;
+    setSearchQuery(DEFAULT_PLACE_LIST_PARAMS.searchQuery);
+
+    writePlaceListParams(
+      {
+        category: DEFAULT_PLACE_LIST_PARAMS.category,
+        searchQuery: DEFAULT_PLACE_LIST_PARAMS.searchQuery,
+        filters: DEFAULT_PLACE_LIST_PARAMS.filters,
+      },
+      "push",
+    );
+  }, []);
+
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [hoveredPlaceId, setHoveredPlaceId] = useState<string | null>(null);
 
@@ -171,6 +193,7 @@ export function usePlaceListState({
     selectedPlace,
     activeFilterCount,
     resetFilters,
+    resetConditions,
     handlePlaceSelect,
     clearSelectedPlace,
   };

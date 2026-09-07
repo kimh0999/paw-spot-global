@@ -63,6 +63,13 @@
       "locationBlocked": "Location access is blocked. Please allow it in your browser settings.",
       "resultCount": "{count} places",
       "empty": "No places match your filters.",
+      "resetFilters": "Reset filters",
+      "emptyNoPlaces": "No places are available yet.",
+      "serviceArea": {
+        "notice": "We currently cover Daejeon only.",
+        "outOfRange": "We currently cover Daejeon only. You are outside the service area.",
+        "viewPlaces": "View places in Daejeon"
+      },
       "mapPlaceholder": "Map area (Google Maps integration coming soon)",
       "dogSelection": {
         "single": "Showing conditions for {name}",
