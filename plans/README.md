@@ -11,13 +11,14 @@
 | [002](002-button-badge-transition-scope.md) | button·badge의 `transition-all` 범위 축소 | MEDIUM | Performance / a11y | **DONE** `36505db` |
 | [003](003-filtermodal-drawer-motion.md) | FilterModal 드로어의 지속시간·이징·reduced motion·오버레이 | MEDIUM | Easing / Physicality / a11y | **DONE** `d3a9b2d` |
 | [004](004-bottom-sheet-height-profiling.md) | Bottom Sheet 높이 전환 프로파일링 (**조사 전용**) | HIGH (미확인) | Performance | **BLOCKED** — 실기기 없음 ([결과](004-findings.md)) |
+| [005](005-tailwind-v4-syntax-in-v3.md) | v3에서 무효한 v4 문법 클래스 되살리기 (button·badge) | HIGH (a11y) | Correctness | TODO |
 
 ## 실행 순서
 
 ```
-001 ──┬── 002
+001 ──┬── 002 ──> 005
       ├── 003
-      └── 004 ──> (005: 조사 결과에 따라 작성)
+      └── 004 ──> (006: 조사 결과에 따라 작성)
 ```
 
 **001을 먼저 끝낸다.** 002·003·004가 모두 001이 만드는 토큰에 의존한다.
@@ -28,6 +29,7 @@
 | 2 | **002** | 파일 2개·각 1줄. 위험이 가장 낮고 001의 토큰이 실제로 동작하는지 먼저 확인된다 |
 | 3 | **003** | 사용자에게 보이는 변화가 가장 크다. 002에서 토큰 동작을 확인한 뒤 하는 편이 안전하다 |
 | 4 | **004** | 코드를 바꾸지 않는 조사다. 001 이후 아무 때나 해도 되지만, 250행이 250ms로 정리된 뒤 측정해야 수치가 최종 코드와 맞는다 |
+| 5 | **005** | 002 실행 중 발견된 별도 결함. **모션이 아니라 correctness/a11y 작업**이고 계획 001~003과 달리 화면이 눈에 띄게 바뀐다(포커스 링 신설·배지 pill화) |
 
 002와 003은 서로 독립이라 순서를 바꿔도 되고 병렬로 진행해도 된다. 다만 003이 훨씬 위험하므로 002를 먼저 두었다.
 
@@ -38,7 +40,8 @@
 | 002 | 001 | `duration-fast` 토큰 |
 | 003 | 001 | `ease-enter`·`ease-exit` 토큰 |
 | 004 | 001 | 250ms 확정 후 측정해야 수치가 유효 |
-| 005 (미작성) | 004 | 조사 판정이 `조건부`/`리팩터링 필요`일 때만 작성 |
+| 005 | 002 | 002가 정한 전환 목록 위에서 동작한다 |
+| 006 (미작성) | 004 | Bottom Sheet 리팩터링. 조사 판정이 `조건부`/`리팩터링 필요`일 때만 작성 |
 
 ## 실행 시 반드시 지킬 것
 
@@ -51,7 +54,7 @@
 
 | 발견 | 위치 | 조치 |
 |---|---|---|
-| **`focus-visible:ring-3`가 무효** — Tailwind v4 문법인데 이 프로젝트는 v3.4.19다. 빌드 CSS에 규칙이 없고 Button에 포커스 링이 아예 그려지지 않는다. 실제 포커스 표시는 `focus-visible:border-ring`(테두리 색)뿐이다 | `ui/button.tsx:8`, `ui/badge.tsx:8` | 002에서 `border-color`를 전환 목록에서 빼 지연은 없앴다. **링 자체를 살리는 것은 화면 모양이 바뀌므로 별도 작업** |
+| **v4 문법 클래스가 v3에서 무효** — `ring-3`(포커스 링 없음) · `not-aria-[haspopup]:translate-y-px`(누름 피드백 없음) · `rounded-4xl`(배지가 사각형, 계산된 `border-radius`가 `0px`) 등 7종 | `ui/button.tsx:8`, `ui/badge.tsx:8` | **→ 계획 [005](005-tailwind-v4-syntax-in-v3.md)로 작성됨** |
 | `ui/sheet.tsx:65`가 bare `transition`을 써서 `box-shadow`·`filter`까지 전환 목록에 넣는다 | `ui/sheet.tsx:65` | 미사용 파일. 감사 #8과 함께 처리 |
 
 ## 감사에서 나왔으나 아직 계획하지 않은 것
