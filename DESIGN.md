@@ -5,6 +5,8 @@
 
 **v1.2 변경 사항** (기획서 v3 결정 반영): 정보 신선도 임계값을 8주에서 **90일 단일 기준**으로 통일(D-02), Korean Inquiry Box를 **MVP 제외 / P1 재도입 예정**으로 표기(D-01).
 
+**v1.2.1 (2026-09-06)**: D-02의 경계를 **`마지막 확인일로부터 90일 이상 경과`(>= 90일)**로 확정했다. §6은 "90일 이상", §7 상태표는 "90일 초과"로 적혀 하루 어긋나 있던 것을 §6 기준으로 통일했다.
+
 **v1.1 변경 사항**: 다크 모드 정책, z-index 체계, 아이콘 규칙, 텍스트 색상 용도 구분, Place Card 밀도 검증 기준, 한국어 UI의 문의 박스 처리, 거리 표기 규칙 추가.
 
 ## 1. Product Direction
@@ -425,7 +427,7 @@ Confirmation needed
 | No results | `No places match your filters.` + `Reset filters` |
 | Location denied | `Showing places near Seoul City Hall.` + `Use my location` |
 | Map error | 목록은 유지하고 지도 영역에 재시도 안내 |
-| Stale verification (90일 초과) | Amber 아이콘 + `Recheck needed` + 마지막 확인일 + 정책 변경 가능 문구 |
+| Stale verification (마지막 확인일로부터 90일 이상 경과) | Amber 아이콘 + `Recheck needed` + 마지막 확인일 + 정책 변경 가능 문구 |
 | Unknown condition | Gray 아이콘 + `Confirmation needed` |
 | Dog mismatch | 조건 불일치 항목을 명시하고 카드 전체를 error처럼 만들지 않음 |
 | Copy success | 짧은 Snackbar, 3초 이내 자동 종료 |

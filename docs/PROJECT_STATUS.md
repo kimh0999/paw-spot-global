@@ -3,7 +3,7 @@
 > **이 문서의 목적**: 기획이 아니라 **실제 개발 진행 상황 추적**이다.
 > 모든 상태는 코드 확인에 근거한다. 확인하지 못한 것은 `확인 필요`로 남기고 추측하지 않는다.
 >
-> **기준일**: 2026-08-18 (D-01~D-12 결정 반영 · 전 항목 코드 재확인) · **브랜치**: `chore/project-foundation`
+> **기준일**: 2026-09-06 (**P0 20건 코드 재대조** + #3·#4·#19·#16·#15·#17·#1·#2·#8·#9 구현) · 직전 전 항목 재확인 2026-08-18 · **브랜치**: `chore/project-foundation`
 > **기획 기준**: `docs/Paw_Spot_Global_기획서_v3.md` · **구현 기준**: `docs/Paw_Spot_Global_개발명세서_v2.md` · **디자인 기준**: `DESIGN.md`
 
 **상태 값**: `완료` / `부분 완료` / `미구현` / `확인 필요`
@@ -16,14 +16,18 @@
 
 | 상태 | 개수 |
 |---|---|
-| 완료 | 77 |
-| 부분 완료 | 20 |
-| 미구현 | 59 |
+| 완료 | 94 |
+| 부분 완료 | 19 |
+| 미구현 | 43 |
 | 확인 필요 | 4 |
 
-**MVP 출시를 차단하는 P0 항목: 20개 — 전부 즉시 착수 가능. 8/13 이후 진행된 것 없음** (§P0 목록 참조)
+> **집계 범위 주의**: 2026-09-06 재대조는 **P0 20건과 그에 직접 대응하는 상태 행만** 코드로 확인했다.
+> 위 수치는 그 7개 행의 판정 변경만 반영해 다시 계산한 값이고, 나머지 행은 2026-08-18 판정을
+> 그대로 이어받은 **미검증** 값이다.
 
-주의: "완료" 77건은 **세부 항목 단위** 집계다. 화면·기능 단위로 보면 탐색 화면의 레이아웃·동기화·판정 로직은 완성도가 높은 반면, 상세 페이지·데이터 파이프라인·라우트 상태 처리는 큰 폭으로 비어 있다. 절별 분포를 함께 볼 것.
+**MVP 출시를 차단하는 P0 항목: 20개 중 완료 13 · 부분 완료 1 · 미착수 6** (§P0 목록 참조)
+
+주의: "완료" 94건은 **세부 항목 단위** 집계다. 화면·기능 단위로 보면 탐색 화면의 레이아웃·동기화·판정 로직은 완성도가 높은 반면, 상세 페이지·데이터 파이프라인·라우트 상태 처리는 큰 폭으로 비어 있다. 절별 분포를 함께 볼 것.
 
 D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 비대칭"이 `미구현`(수정 대상)으로 확정되었고, 선행 결정 대기 상태였던 4개 항목(신선도 임계 · 운영시간 구조 · 후보 저장 방식 · Import 실행 형태)이 착수 가능해졌다.
 
@@ -40,19 +44,43 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 | `.dark{}` 블록 제거 — 단 `next-themes`는 `sonner.tsx`가 사용 중 | §17 |
 | 빌드·타입체크·린트·테스트 전부 통과 확인 | §20 |
 
+### 2026-08-18 → 09-06 변경분
+
+이 기간에는 **반려동물 이용 조건 구조화**(`policyDetails`)와 **라우트 상태 처리**가 진행됐다.
+P0 20건 재대조 결과, 08-18 시점에 `미구현`으로 적혀 있던 5건이 실제로는 해소돼 있었다.
+
+| 변경 | 절 | P0 |
+|---|---|---|
+| `policyDetails` JSONB 도입 + 관리자 입력 UI 4그룹 + 상세 표시 (별도 갭 분석 문서) | §6, §9, §15 | — |
+| `loading.tsx`(공개·목록·상세) / `error.tsx`(공개·관리자) / `not-found.tsx` 추가 | §18 | #5 |
+| 홈 `try/catch` 오류 삼킴 제거 → 오류 경계로 위임 | §1 | #6 |
+| 예방접종 `UNKNOWN` 행 숨김 (`showsVaccinationRow` + 테스트) | §6 | #12 |
+| 한국어 문의 박스 상세 페이지 비노출 (컴포넌트·메시지 키는 보존, 테스트로 고정) | §7 | #13 |
+| 장소 순수 함수 테스트 보강 — `eligibility` 28 · `filtering` 27 · `display` 5 | §20 | — |
+| **홈 장소 탐색 섹션 단일화** — `RecentPlacesSection`·`HomePlaceCard`·`getHomePlaces()`·`HomePlaceItem`·`home.recentPlaces` 제거 | §1 | #3 |
+| **카테고리 영어 라벨 `Attractions`** — en 문자열 3개만 교체 (enum·내부값 유지) | §16 | #4 |
+| **긍정 조건 필터에서 미확인 제외** — `indoor`를 `carrier` 규칙에 맞추고 `exclude-unknown` 전 계층 제거 | §2 | #19 |
+| **카테고리·필터·정렬·검색어 URL 반영** — `place-list-params.ts` 신설, 주소가 목록 조건의 단일 출처 | §2 | #16 |
+| **로그인 locale 하드코딩 제거** — `auth.ts`의 `pages`를 locale 없는 `/login`으로, 미들웨어가 협상 | §12 | #15 |
+| **`border-strong` 무효 클래스 교체** — 4파일 6곳을 `border-border-strong`으로 | §17 | #17 |
+| **공개 조건에 검증 이력 필수** — 사용자 조회 4곳에 `verifications: { some: {} }` | §8 | #1 |
+| **신선도 임계 90일 단일** — 8주 임계 폐기, `Recheck needed`/`재확인 필요` 배지 (상세 페이지 포함 4곳) | §6, §8 | #2 |
+| **미리보기 Primary Action 반전** — `상세 보기`를 primary, 길찾기를 secondary로 | §5 | #8 |
+| **마커 선택 → 목록 카드 스크롤** — 장소 id로 카드를 잡아 `scrollIntoView` | §3 | #9 |
+
 ---
 
 ## 1. 홈
 
 | 영역 | 상태 | 현재 구현 | 남은 작업 | 우선순위 | 근거 파일 |
 |---|---|---|---|---|---|
-| 홈 카테고리 탭 | 완료 | Radix Tabs 4탭(all/restaurant/cafe/travel), 탭별 지연 로딩 + 클라이언트 캐시 + race guard | 라벨 `Travel Spots` → `Attractions` | P0 | `src/components/home/CategoryPlaceTabs.tsx`, `src/components/home/CategorySection.tsx` |
+| 홈 카테고리 탭 | 완료 | Radix Tabs 4탭(all/restaurant/cafe/travel), 탭별 지연 로딩 + 클라이언트 캐시 + race guard. 영어 라벨 `All / Restaurants / Cafes / Attractions` | — | — | `src/components/home/CategoryPlaceTabs.tsx`, `src/components/home/CategorySection.tsx` |
 | 카테고리별 장소 조회 | 완료 | `getCategoryPlaces(category)` — DB에서 카테고리 필터 + `take 8` + `count` 동시 반환. Server Action `fetchCategoryPlaces`로 노출 | 공개 조건에 "검증 이력 존재" 추가 | P0 | `src/lib/places/queries.ts:290-312`, `src/lib/places/actions.ts` |
 | 홈 카드 즐겨찾기 | 완료 | 서버에서 `getFavoritePlaceIds` 조회 → `CategoryPlaceCard`가 링크 오버레이 위에 `FavoriteButton` 배치 | — | — | `src/components/home/CategoryPlaceCard.tsx:160-167` |
 | 홈 로딩·빈·오류 상태 | 완료 | 탭 전환 시 직전 카드 수만큼 스켈레톤, `empty` 문구, 오류 + `Try again` 버튼 | — | — | `src/components/home/CategoryPlaceTabs.tsx:85-131` |
-| 홈 장소 섹션 단일화 | 미구현 | `CategoryPlaceTabs`(8개)와 `RecentPlacesSection`(6개)이 같은 데이터를 중복 노출 | `RecentPlacesSection`·`HomePlaceCard`·`getHomePlaces()`·`HomePlaceItem`·`home.recentPlaces` 키 제거 | P0 | `src/app/[locale]/(public)/page.tsx:20-28`, `src/components/home/RecentPlacesSection.tsx` |
-| 홈 데이터 범위 일관성 | 미구현 | `getCategoryPlaces`는 ETC 제외, `getHomePlaces`는 ETC 포함 → 같은 화면에서 범위 불일치 | 위 단일화로 함께 해소 | P0 | `src/lib/places/queries.ts:236-262` vs `:290-299` |
-| 홈 오류 처리 | 미구현 | `page.tsx`가 `try/catch`로 오류를 삼키고 빈 배열 렌더 → 실패와 "데이터 없음" 구분 불가 | `error.tsx` 추가 + 삼킴 제거 | P0 | `src/app/[locale]/(public)/page.tsx:14-18` |
+| 홈 장소 섹션 단일화 | 완료 | 홈은 `CategorySection` → `CategoryPlaceTabs` 하나만 렌더. 명세서 v2 §7-1 제거 목록 5종(컴포넌트 2 · 쿼리 1 · 타입 1 · 메시지 키 1) 전부 삭제, 잔여 참조 0건 | — | — | `src/app/[locale]/(public)/page.tsx` |
+| 홈 데이터 범위 일관성 | 완료 | `getHomePlaces` 제거로 ETC 포함 경로가 사라졌다. 홈 전체가 `MVP_PLACE_CATEGORIES` 하나만 따른다 | — | — | `src/lib/places/queries.ts` |
+| 홈 오류 처리 | 완료 | `page.tsx`에 `try/catch` 없음 — 조회 실패가 `[locale]/error.tsx` 경계로 전파돼 재시도 버튼이 뜬다. 실패와 "데이터 없음"이 구분된다 | — | — | `src/app/[locale]/(public)/page.tsx`, `src/app/[locale]/error.tsx` |
 | Hero 검색 · Near me | 부분 완료 | 검색 폼(`/places?q=`) + Geolocation "Near me" 동작 | 일러스트 플레이스홀더 박스 대체 | P1 | `src/components/home/HeroSection.tsx:24-32`, `HeroActions.tsx` |
 | 안내 섹션 | 완료 | 확인 항목 5종(실내·이동장·크기·입장조건·확인일) | — | — | `src/components/home/InfoSection.tsx` |
 
@@ -65,14 +93,14 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 | 장소 카드 | 완료 | 이미지 없는 밀도형 카드. 장소명·거리·카테고리·주소·방문가능배너·조건 3개·확인일. `min-h-14`로 높이 고정 | — | — | `src/components/places/PlaceCard.tsx`, `PlaceConditionSummary.tsx` |
 | 방문 가능 여부 판정 | 완료 | `eligibility.ts`가 조건 해석의 단일 출처. `unknown`/`null`을 허용 조건에 넣지 않음. 핵심 3조건 미확인 시 `confirm` 상태 | — | — | `src/lib/places/eligibility.ts` |
 | 조건 미확인 표시 | 완료 | `Needs confirmation` / `Indoor unconfirmed` / `Not checked yet` 문구 | — | — | `messages/en.json` `places.card.*`, `places.preview.status.confirm` |
-| 필터 | 부분 완료 | 우측 Drawer. 실내 5택 / 이동장 3택 / 크기 4택 / 신선도 30·90일 | focus trap·ESC·`role="dialog"` 없음 / URL 미반영 | P0 | `src/components/places/FilterModal.tsx` |
-| 정렬 | 부분 완료 | 4종(거리·최근확인·실내우선·이동장불필요). 위치 없으면 거리순 `disabled` | 접근성(`aria-expanded`, listbox) / Radix 교체 / URL 미반영 | P1 | `src/components/places/SortDropdown.tsx` |
-| 필터·정렬 URL 반영 | 미구현 | 초기값만 `searchParams`에서 읽고 이후는 `useState`. `lat`/`lng`/`sort`만 URL 갱신 | 필터·정렬·카테고리·검색어를 URL에 반영 | P0 | `src/app/[locale]/(public)/places/PlacesClient.tsx:37-91`, `hooks/usePlaceListState.ts` |
+| 필터 | 부분 완료 | 우측 Drawer. 실내 **4택**(D-12로 `확인 필요 제외` 삭제) / 이동장 3택 / 크기 4택 / 신선도 30·90일. 선택은 URL에 반영됨 | focus trap·ESC·`role="dialog"` 없음 | P0 | `src/components/places/FilterModal.tsx` |
+| 정렬 | 부분 완료 | 4종(거리·최근확인·실내우선·이동장불필요). 위치 없으면 거리순 `disabled`. 선택은 URL에 반영됨 | 접근성(`aria-expanded`, listbox) / Radix 교체 | P1 | `src/components/places/SortDropdown.tsx` |
+| 필터·정렬 URL 반영 | 완료 | 주소가 단일 출처다. `usePlaceListState`가 `useSearchParams`에서 카테고리·필터·정렬을 파생하고, 검색어만 입력 즉시성을 위해 로컬 state + 300ms 디바운스로 주소에 뒤따른다. 쓰기는 native history API라 서버 재요청이 없다 | — | — | `src/lib/places/place-list-params.ts`, `hooks/usePlaceListState.ts` |
 | 텍스트 검색 | 완료 | `q` 파라미터 + 실시간 클라이언트 필터(nameKr/nameEn/address) | — | — | `src/lib/places/filtering.ts:37-43` |
 | 서버 페이징 | 미구현 | `findPlaces()`가 `take` 없이 공개 장소 전량 로드 | MVP는 임시 허용(기획서 v3 §6-2). 안전 상한 가드 권장, 전국 확장 전 커서 페이징 필수 | P2 | `src/lib/places/queries.ts:146-153` |
 | 반경 / Bounds 검색 | 미구현 | 반경 개념 없음. 전량에 `ST_Distance` 계산 | 전국 확장 선행 조건 | P2 | `src/lib/places/queries.ts:162-189` |
-| 필터 `unknown` 처리 | 미구현 | `indoor` 필터는 미확인 통과, `carrier` 필터는 미확인 제외 — 규칙 비대칭 | **D-03·D-12 확정**: 긍정 조건 필터에서 `UNKNOWN`/`null` 제외(`indoor`를 `carrier` 규칙에 맞춤, `dogSize`는 현행 유지). **`exclude-unknown` 옵션 제거** — 타입·필터 분기·모달 옵션·i18n 키(en/ko) 동시 정리. 전역 토글은 MVP 미포함 | P0 | `src/lib/places/filtering.ts:45-88`, `src/types/place.ts:6`, `FilterModal.tsx:38-44` |
-| 목록 로딩·오류 상태 | 미구현 | 빈 상태만 존재 | `loading.tsx` / `error.tsx` | P0 | `find src/app -name "loading.tsx"` → 0건 |
+| 필터 `unknown` 처리 | 완료 | `INDOOR_FILTER_MATCH`가 필터값별 확정값 하나만 인정 → `indoor`가 `carrier`와 같은 규칙이 됐다. `dogSize`는 D-03 예외로 미확인 유지. `exclude-unknown`은 타입·분기·모달 옵션·en/ko 키에서 전부 제거 | — | — | `src/lib/places/filtering.ts`, `src/types/place.ts`, `FilterModal.tsx` |
+| 목록 로딩·오류 상태 | 완료 | `places/loading.tsx`(목록+지도 2단 스켈레톤) + `[locale]/error.tsx` 경계가 목록 라우트를 덮는다 | — | — | `src/app/[locale]/(public)/places/loading.tsx`, `src/app/[locale]/error.tsx` |
 
 ---
 
@@ -85,7 +113,7 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 | 지도 재마운트 방지 | 완료 | `apiKey`에만 의존해 1회 초기화. 선택/hover 변경 시 `setIcon`/`setZIndex`만 갱신 | — | — | `src/components/places/MapPanel.tsx:111-188` |
 | 카드 hover → 마커 | 완료 | `hoveredPlaceId` 공유, 마커 색·크기·zIndex 변경 | — | — | `PlacesClient.tsx:303-318`, `MapPanel.tsx:181-188` |
 | 카드 선택 → 미리보기 + 마커 | 완료 | `selectedPlaceId` 공유, 지도 `panTo` | — | — | `MapPanel.tsx:226-232` |
-| **마커 선택 → 카드 스크롤** | 미구현 | 마커 클릭 시 미리보기는 열리나 목록에서 해당 카드로 스크롤하지 않음 | `scrollIntoView` 동기화 | P0 | `PlacesClient.tsx:301-326` |
+| **마커 선택 → 카드 스크롤** | 완료 | 장소 id → `<li>` ref 맵으로 카드를 찾아 `scrollIntoView({block:"nearest"})`. 지도에서 고른 경우에만 동작하도록 `handleMarkerSelect`를 따로 두어 첫 렌더·카드 클릭·평범한 재렌더에서는 스크롤하지 않는다. `prefers-reduced-motion`이면 `behavior:"auto"` | 모바일(시트 `selected` 단계에서 목록이 `hidden`) 동작 미검증 | P0 | `PlacesClient.tsx` |
 | 사용자 위치 마커 | 완료 | 장소 마커와 분리 관리, 위치 변경 시에만 `panTo` | — | — | `MapPanel.tsx:191-238` |
 | 지도 오류·로딩 문구 | 부분 완료 | `no-key` / `error` / `loading` 3상태 분기 존재 | 문구가 영어 하드코딩, 재시도 수단 없음 | P0 | `MapPanel.tsx:240-267` |
 | 마커 API | 부분 완료 | `google.maps.Marker`(deprecated) 사용. `importLibrary("marker")` 호출하나 결과 미사용 | `AdvancedMarkerElement` 마이그레이션 | P2 | `MapPanel.tsx:121-122,164` |
@@ -115,7 +143,7 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 | 카드보다 많은 정보 | 완료 | 전체 주소, 목줄·입마개 포함 조건 전체, 확인 방법, 주의사항(3줄 클램프 + 더보기) | — | — | 같은 파일 `:83-130,264-300` |
 | 이미지·운영시간·연락처 제외 | 완료 | `DESIGN.md` §6 준수 | — | — | 같은 파일 전체 |
 | 선택 변경 시 포커스 이동 | 완료 | `headingRef.focus()` on `place.id` 변경 | `aria-live` 고지 추가 | P1 | 같은 파일 `:144-148` |
-| **Primary Action** | 미구현 | 길찾기가 `default`(파랑), 상세 보기가 `outline` — 기획서 v3 §6-3과 반대 | `상세 보기`를 Primary로, 길찾기를 Secondary로 반전 | P0 | 같은 파일 `:193,311-321` |
+| **Primary Action** | 완료 | `상세 보기`가 `default`(파랑), 길찾기가 `outline`. 조건부 variant(`detailsVariant`)를 없애 위치 유무와 무관하게 primary는 항상 하나다. 위치가 없으면 길찾기 버튼 자체를 만들지 않는다 | — | — | `src/components/places/PlacePreviewCard.tsx` |
 | 위치 없을 때 액션 생략 | 완료 | `directionsUrl`이 없으면 길찾기 버튼 자체를 렌더하지 않음 | — | — | 같은 파일 `:188-191,311` |
 
 ---
@@ -125,8 +153,8 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 | 영역 | 상태 | 현재 구현 | 남은 작업 | 우선순위 | 근거 파일 |
 |---|---|---|---|---|---|
 | Before You Go | 완료 | 실내·이동장·최대크기·목줄·입마개·예방접종 6행 + 주의사항 경고박스 + 준비물 + 견종 제한 | — | — | `src/components/places/BeforeYouGoCard.tsx` |
-| 예방접종 조건부 숨김 | 미구현 | `UNKNOWN`도 `Check with store`로 항상 표시 | `unknown`/`null`이면 행 미렌더 | P0 | `BeforeYouGoCard.tsx:77-84` |
-| 검증 정보 표시 | 완료 | 확인일 · 확인 방법 · 메모. 없으면 `notVerified` 문구 | 표시 순서를 `DESIGN.md` §6에 맞춤 | P1 | `src/app/[locale]/(public)/places/[id]/page.tsx:188-227` |
+| 예방접종 조건부 숨김 | 완료 | `showsVaccinationRow()`가 `required`/`not_required`일 때만 `true` → `unknown`·`null`은 행 자체를 만들지 않음. 단위 테스트 3건 | — | — | `src/lib/places/display.ts`, `BeforeYouGoCard.tsx:127`, `display.test.ts` |
+| 검증 정보 표시 | 완료 | 확인일 · 확인 방법 · 메모. 없으면 `notVerified` 문구. 90일 이상 지났으면 확인일 옆에 Amber `Recheck needed` 배지 — 목록·카드와 같은 `needsRecheck()`를 호출해 화면마다 경계가 갈라지지 않는다 | 표시 순서를 `DESIGN.md` §6에 맞추는 건 P1 | P1 | `src/app/[locale]/(public)/places/[id]/page.tsx:230-247` |
 | 디스클레이머 | 부분 완료 | 1문장(`Store policies may change…`) | 기획서 v3 §13-1 전문(확인일·확인방법 포함)으로 확장 | P1 | `messages/en.json` `places.detail.disclaimer` |
 | 연락처 | 완료 | 전화(`tel:`) · 웹사이트 · 인스타그램 · Google Maps 링크. 값 없으면 행 생략 | — | — | `places/[id]/page.tsx:129-186` |
 | 거리 표시 | 미구현 | 상세에 거리 없음 | `DESIGN.md` §6 표시 순서 2번 | P0 | 같은 파일 |
@@ -135,7 +163,7 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 | 신고 | 미구현 | UI·Action·모델 없음. `REPORT_REASONS`/`REPORT_STATUS` 상수만 잔존 | `Report` 모델 + UI + 관리자 처리 | P1 | `src/lib/constants.ts:37-42` |
 | SEO | 미구현 | `generateMetadata`·JSON-LD·OG·hreflang·`sitemap.ts`·`robots.ts` 전무. 루트 layout에 고정 한국어 metadata 1개 | 전체 구현 | P1 | `src/app/layout.tsx:10-14` |
 | 이미지 최적화 | 미구현 | `next.config.mjs`에 `images.remotePatterns` 없음 → 전 이미지 `unoptimized` | 도메인 등록 후 `unoptimized` 제거 | P1 | `next.config.mjs`, `CategoryPlaceCard.tsx:107` |
-| 상세 로딩·오류·404 | 미구현 | `notFound()` 호출만 있고 `not-found.tsx` 파일 없음 | `loading.tsx`/`error.tsx`/`not-found.tsx` | P0 | `places/[id]/page.tsx:42` |
+| 상세 로딩·오류·404 | 완료 | `places/[id]/loading.tsx`(사진→이름→조건 순 스켈레톤) · `[locale]/not-found.tsx`가 `notFound()` 수신 · `[locale]/error.tsx`가 오류 수신 | — | — | `places/[id]/loading.tsx`, `[locale]/not-found.tsx`, `[locale]/error.tsx` |
 
 ---
 
@@ -144,7 +172,7 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 | 영역 | 상태 | 현재 구현 | 남은 작업 | 우선순위 | 근거 파일 |
 |---|---|---|---|---|---|
 | 컴포넌트 | 완료 | 정적 템플릿 + 클립보드 복사 + `sonner` 토스트. 영어 로케일에서만 렌더 | — | — | `src/components/places/KoreanInquiryBox.tsx` |
-| **MVP 비노출 처리** | 미구현 | 현재 영어 상세 페이지에 노출 중 | 렌더 분기 제거(코드·메시지 키는 P1 재도입 대비 보존) | P0 | `places/[id]/page.tsx:230` |
+| **MVP 비노출 처리** | 완료 | 상세 페이지에서 `KoreanInquiryBox` import·렌더 없음. 컴포넌트 파일과 `places.detail.koreanInquiry` 키는 P1 재도입 대비 보존. `korean-inquiry.test.ts`가 비노출과 보존을 함께 고정 | — | — | `places/[id]/page.tsx`, `korean-inquiry.test.ts` |
 | 복사 실패 처리 | 부분 완료 | 실패를 `catch {}`로 삼키고도 "Copied!" 표시 | 실패 시 별도 안내 | P1 (비노출 시 유예) | `KoreanInquiryBox.tsx:23-32` |
 | 동적 생성 | 미구현 | 장소명·반려견 크기·미확인 조건 반영 없음 | P1 재도입 후보 | P1 | `KoreanInquiryBox.tsx:10-17` |
 
@@ -156,8 +184,8 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 |---|---|---|---|---|---|
 | 조회 함수 | 완료 | `getPlaces` / `getCategoryPlaces` / `getPlaceById` / `getAdminPlaces` / `getAdminPlaceById` | — | — | `src/lib/places/queries.ts` |
 | PostGIS 좌표·거리 | 완료 | `$queryRaw`로 `ST_Y`/`ST_X`/`ST_Distance` 조회 후 `id`로 join. 위치 없으면 `distanceMeters=null` | — | — | 같은 파일 `:162-189` |
-| **검증 완료 장소만 공개** | 미구현 | `visibility=VISIBLE`만 확인. 검증 이력 없는 장소도 노출됨 | 모든 사용자 조회에 `verifications: { some: {} }` 조건 추가. **D-07 확정**: 마이그레이션·임시 검증 이력 생성 없음. **DB 확인 결과 대상 0건이므로 조회 조건 추가만으로 완결** | P0 | 같은 파일 `:149,238,353` / `favorites/queries.ts:18` |
-| `Recheck needed` (90일) | 미구현 | 8주(56일) 기준 `{weeks} wk old` 문구만 존재 | **D-02 확정**: `STALE_VERIFICATION_WEEKS` 폐기 → 90일 단일 임계로 교체, `Recheck needed` 표시. 중간 경고 단계 없음 | P0 | `src/lib/places/display.ts:5` |
+| **검증 완료 장소만 공개** | 완료 | `PUBLIC_PLACE_WHERE`(= `visibility` + `verifications: { some: {} }`)를 `getPlaces`·`getCategoryPlaces`에 적용. `getPlaceById`는 `findUnique`가 관계 조건을 못 받아 조회한 검증 이력으로 같은 규칙을 적용. `getFavoritePlaces`는 중첩 `place` 조건에 적용. 마이그레이션·임시 이력 생성 없음 | — | — | `queries.ts`, `favorites/queries.ts`, `public-visibility.test.ts` |
+| `Recheck needed` (90일) | 완료 | `RECHECK_AFTER_DAYS = 90` + `needsRecheck()` 하나로 통일(`>= 90일`). `daysSinceVerified()`는 경과 일수 표시용으로 분리. 확인일이 없거나 읽을 수 없으면 재확인 대상으로 본다. 배지는 `Recheck needed`/`재확인 필요`, 확인일 표시는 그대로 유지. 중간 경고 단계 없음 | — | — | `src/lib/places/display.ts`, `display.test.ts` |
 | Server Action — 카테고리 | 완료 | `fetchCategoryPlaces(category)` 화이트리스트 파싱 | — | — | `src/lib/places/actions.ts` |
 | Server Action — 즐겨찾기 | 완료 | `toggleFavorite` + `revalidatePath` | — | — | `src/lib/favorites/actions.ts` |
 | Server Action — 반려견 | 완료 | `upsertDog` + zod + 필드 오류 + `revalidatePath` | — | — | `src/lib/dogs/actions.ts` |
@@ -219,7 +247,7 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 | 사용자 가드 | 완료 | `requireUser`(페이지) / `requireUserAction`(액션) | — | — | `src/lib/auth/current-user.ts` |
 | 관리자 가드 | 완료 | `requireAdminPage` / `requireAdminAction`. **DB의 role을 매 요청 조회**해 JWT만 믿지 않음. 미인증→로그인, 비관리자→`/forbidden` | — | — | `src/lib/auth/require-admin.ts` |
 | Open Redirect 방어 | 완료 | `getSafeCallbackUrl()` | — | — | `src/lib/auth/safe-callback-url.ts` |
-| 로그인 경로 로케일 | 미구현 | `pages.signIn`/`pages.error`가 `"/en/login"` 하드코딩 → 한국어 사용자가 영어 페이지로 이동 | 로케일 반영 | P0 | `src/auth.ts:16-19` |
+| 로그인 경로 로케일 | 완료 | `pages`를 locale 없는 `/login`으로 두고 next-intl 미들웨어가 기존 정책(NEXT_LOCALE 쿠키 → Accept-Language → `DEFAULT_LOCALE=en`)대로 `/ko/login`·`/en/login`으로 넘긴다. `?error=` 쿼리도 함께 넘어간다. 앱 쪽 진입점(`requireUser`·`requireAdminPage`·`Header`·`FavoriteButton`)은 이미 locale을 유지하고 있었다 | — | — | `src/auth.ts`, `src/middleware.ts` |
 | Rate Limiting | 미구현 | 없음 | 신고 기능 도입 시 필수 | P1 | — |
 
 ---
@@ -274,7 +302,7 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 | 로케일 라우팅 | 완료 | `next-intl` v4, `["en","ko"]`, default `en`, `localePrefix:"always"` | — | — | `src/i18n/routing.ts`, `src/middleware.ts` |
 | 메시지 키 정합성 | 완료 | **422키, en/ko 완전 일치. 누락 0건** (2026-08-18 재확인) | — | — | `messages/en.json`, `messages/ko.json` |
 | 장소명 표기 | 완료 | en: `nameEn ?? nameKr` primary / ko: `nameKr` primary | — | — | `src/lib/i18n/locale.ts:7-21` |
-| 카테고리 라벨 | 부분 완료 | 현재 영어 라벨은 `Travel Spots` | `Attractions`로 변경 (enum·내부값 유지) | P0 | `messages/en.json` `home.categories.tabs.travel` 등 |
+| 카테고리 라벨 | 완료 | en 3개 키 모두 `Attractions` — `home.categories.tabs.travel`·`places.filters.category.travel`·`places.card.category.travel`. enum `TRAVEL`·내부값 `travel`·관리자 폼 라벨은 명세서 v2 §7-1 지시대로 유지. ko `여행지`는 변경 대상 아님 | — | — | `messages/en.json` |
 | 지도 문구 i18n | 미구현 | 영어 하드코딩 3건 | i18n화 | P0 | `MapPanel.tsx:240-267` |
 | 날짜 로케일 표기 | 미구현 | 항상 `YYYY.MM.DD` | `DESIGN.md` §10 규칙 적용 | P1 | `lib/places/queries.ts:104-109` |
 | 거리 표기 | 부분 완료 | m/km 구분·위치 없을 때 미표시는 준수 | 10 m 단위 반올림 미적용, ko 공백 없음 | P1 | `src/lib/geo/distance.ts:18-31` |
@@ -290,7 +318,7 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 | 컬러 토큰 | 완료 | `DESIGN.md` §4 팔레트 전체를 `globals.css`에 반영 + shadcn 변수 alias + Tailwind 매핑 | — | — | `src/app/globals.css:12-94`, `tailwind.config.ts:11-91` |
 | z-index 토큰 | 완료 | 8단계 CSS 변수 + Tailwind zIndex 매핑. 임의 z-index 사용 없음 | — | — | `tailwind.config.ts:103-112` |
 | 모션 토큰 | 완료 | `--duration-standard`, `--ease-standard` + Tailwind 매핑 | — | — | `globals.css:42-44` |
-| `border-strong` 클래스 | 미구현 | 4개 파일 6회 사용 — Tailwind는 `border-border-strong`만 생성 → **무효 클래스** | `border-border-strong`으로 교체 | P0 | `FilterModal.tsx:25`(2회)`,165`, `SortDropdown.tsx:33`, `FavoriteButton.tsx:67`, `HeroActions.tsx:37` |
+| `border-strong` 클래스 | 완료 | 4개 파일 6회를 전부 `border-border-strong`(= `--color-border-strong`)으로 교체. 잔여 무효 참조 0건. 같은 성격의 컨트롤에 이미 쓰이던 클래스라 선례와 일치한다 | — | — | `FilterModal.tsx`, `SortDropdown.tsx`, `FavoriteButton.tsx`, `HeroActions.tsx` |
 | 다크모드 미사용 | 부분 완료 | `.dark{}` 블록 제거 완료. `next-themes`는 **`ui/sonner.tsx`가 실제로 import 중**이라 패키지만 지우면 빌드가 깨진다 | `sonner.tsx`의 `useTheme` 의존 제거 → 패키지 제거 | P0 | `src/components/ui/sonner.tsx:3`, `package.json:23` |
 | radius 스케일 | 부분 완료 | `--radius: 0.625rem`(10px) + `rounded-xl`/`rounded-2xl` 혼용 — `DESIGN.md` §4 표(8/12/16px)와 불일치 | 문서·코드 정렬 | P1 | `globals.css:80`, `PlaceCard.tsx:54` |
 
@@ -300,7 +328,7 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 
 | 영역 | 상태 | 현재 구현 | 남은 작업 | 우선순위 | 근거 파일 |
 |---|---|---|---|---|---|
-| 라우트 레벨 경계 | 미구현 | `loading.tsx`/`error.tsx`/`not-found.tsx` **프로젝트 전체 0개** | 전 라우트 추가 | P0 | `find src/app -name "loading.tsx" -o -name "error.tsx" -o -name "not-found.tsx"` → 0건 |
+| 라우트 레벨 경계 | 부분 완료 | 6개 파일: `[locale]/error.tsx`·`[locale]/not-found.tsx`(전 라우트 커버) · `(public)/loading.tsx` · `places/loading.tsx` · `places/[id]/loading.tsx` · `(admin)/admin/error.tsx` | 관리자 라우트 `loading.tsx` 없음(`admin/places`·`edit`는 동적 렌더) · 루트 `global-error.tsx` 없어 루트 레이아웃 오류는 경계 밖 | P0 | `find src/app -name "loading.tsx" -o -name "error.tsx" -o -name "not-found.tsx"` → 6건 |
 | 홈 카테고리 탭 | 완료 | 로딩 스켈레톤 / 빈 상태 / 오류 + 재시도 | — | — | `CategoryPlaceTabs.tsx:85-131` |
 | 목록 빈 상태 | 부분 완료 | 아이콘 + 문구 1종(`list.empty`)만 존재 | **D-11 확정**: ① 서비스 범위 밖 → `대전 장소 보기` ② 필터 결과 0건 → **`필터 초기화`** 2종으로 분리. 동시 성립 시 범위 밖 우선 | P0 | `PlacesClient.tsx:320-325` |
 | 위치 거부/차단 배너 | 완료 | 거부와 차단을 구분해 각각 다른 안내 | — | — | `PlacesClient.tsx:254-273`, `hooks/useUserLocationQuery.ts:40-48` |
@@ -333,9 +361,9 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 
 | 영역 | 상태 | 현재 구현 | 남은 작업 | 우선순위 | 근거 파일 |
 |---|---|---|---|---|---|
-| 테스트 | 부분 완료 | vitest + 8파일 98건. 반려견(견종·매칭·선택·검증·액션) · `getSafeCallbackUrl` · 조사 처리 · 매칭 메시지 키 계약 | 장소 쪽 순수 함수 미커버 — `eligibility`/`filtering`/`display` | P1 | `vitest.config.ts`, `src/**/*.test.ts` |
+| 테스트 | 완료 | vitest + **24파일 450건**. 08-18 시점 미커버였던 장소 순수 함수가 채워졌다 — `eligibility` 28 · `filtering` 29 · `display` 5 · `place-list-params` 15 · `policy-*` 170 | 컴포넌트 렌더 테스트는 없음(jsdom·RTL 미도입, include가 `*.test.ts`뿐) — P2 | P1 | `vitest.config.ts`, `src/**/*.test.ts` |
 | 오류 추적 | 미구현 | Sentry 미설치 | 도입 | P1 | `package.json` |
-| 빌드·타입체크 검증 | 완료 | **2026-08-18 실행: `tsc --noEmit` 통과 · `vitest run` 98/98 · `next build` 통과(21라우트) · `next lint` 0건** | — | — | — |
+| 빌드·타입체크 검증 | 완료 | **2026-09-06 실행: `tsc --noEmit` 0오류 · `vitest run` 450/450 · `next build` 통과 · `next lint` 0건** | — | — | — |
 | 미사용 코드 | 부분 완료 | `mock-places.ts`, `haversineDistance`, `formatWalkingTime`, `lib/result.ts` 참조 0건 | 정리 | P1 | grep 결과 |
 | 문서 버전 관리 | 완료 | `docs/*.md`를 git 추적으로 전환하고 원본 PDF 2건 제거 (커밋 `df2ffb3`) | — | — | `git log` |
 | 서비스 지역 제한 (대전 단독) | 완료 | 코드에 지역 개념 없음. 공개는 "검증 이력 + `visibility=VISIBLE`"로만 통제됨 | **D-08 확정**: 코드 변경 없이 **운영 규칙으로 강제**한다 — 운영자가 대전 장소만 검증·공개. 지역 필드는 2단계 확장 시 도입 | — | `prisma/schema.prisma`(지역 필드 없음), 기획서 v3 §9-5 |
@@ -344,32 +372,66 @@ D-01~D-10 결정으로 이전에 `확인 필요`였던 "필터 `unknown` 처리 
 
 ## P0 목록 (MVP 출시 차단)
 
-D-01~D-12 확정으로 **20건 전부 즉시 착수 가능**하다. 선행 결정 대기 항목은 없다.
+**2026-09-06 재대조.** 각 항목을 요구사항 원문(`개발명세서_v2` · `기획서_v3` · D-01~D-12)과 실제 코드·사용 경로·테스트로 대조했다.
+파일 존재나 import 부재만으로 완료 판정하지 않고, 요구사항이 말하는 **동작**이 성립하는지를 근거로 적었다.
 
-**2026-08-18 재확인: 20건 모두 미착수 상태 그대로다.** 각 행의 근거 파일을 다시 조회해 확인했다.
+| 상태 | 개수 |
+|---|---|
+| 완료 | 13 |
+| 부분 완료 | 1 |
+| 미착수 | 6 |
 
-| # | 항목 | 근거 절 | 착수 |
-|---|---|---|---|
-| 1 | 공개 조건에 "검증 이력 존재" 추가 (마이그레이션 없음) | §8 | ✅ 가능 |
-| 2 | 8주 임계 폐기 → **90일 단일** `Recheck needed` | §8 | ✅ 가능 |
-| 3 | 홈 장소 탐색 섹션 단일화 (중복·범위 불일치 해소) | §1 | ✅ 가능 |
-| 4 | 카테고리 라벨 `Attractions`로 변경 | §16 | ✅ 가능 |
-| 5 | `loading.tsx`/`error.tsx`/`not-found.tsx` 전면 추가 | §18 | ✅ 가능 |
-| 6 | 홈 오류 삼킴 제거 | §1 | ✅ 가능 |
-| 7 | Bottom Sheet·FilterModal 접근성(focus trap·ESC·dialog 시맨틱) | §4, §19 | ✅ 가능 |
-| 8 | 미리보기 Primary Action을 `상세 보기`로 반전 | §5 | ✅ 가능 |
-| 9 | 마커 선택 → 목록 카드 스크롤 동기화 | §3 | ✅ 가능 |
-| 10 | 상세에 거리·길찾기·공유·즐겨찾기 액션 추가 | §6 | ✅ 가능 |
-| 11 | 운영시간 저장·입력·표시 (`hours` + `hoursNote`) | §6, §9, §15 | ✅ 가능 |
-| 12 | 예방접종 `UNKNOWN` 행 숨김 | §6 | ✅ 가능 |
-| 13 | `Ask the store in Korean` 렌더 분기 제거(코드 보존) | §7 | ✅ 가능 |
-| 14 | 후보 Import **로컬 스크립트** (`Place`+`DRAFT`, 멱등 upsert) | §10 | ✅ 가능 |
-| 15 | `auth.ts`의 `/en/login` 하드코딩 제거 | §12 | ✅ 가능 |
-| 16 | 필터·정렬·카테고리 URL 반영 | §2 | ✅ 가능 |
-| 17 | `border-strong` 무효 클래스 수정 (4개 파일 6회) | §17 | ✅ 가능 |
-| 18 | 지도 문구 i18n + 재시도 / `next-themes` 제거 (`.dark` 블록은 완료, `sonner.tsx` 의존 해제 필요) | §3, §17 | ✅ 가능 |
-| **19** | 긍정 조건 필터에서 `UNKNOWN` 제외 + **`exclude-unknown` 옵션 제거** | §2 | ✅ 가능 |
-| **20** | 서비스 범위 안내: 기본 지도 중심 대전 · 범위 배너 · 범위 밖 안내 · **빈 상태 2종 분리** | §3, §18 | ✅ 가능 |
+| # | 항목 | 상태 | 근거 (2026-09-06 확인) | 남은 작업 |
+|---|---|---|---|---|
+| 1 | 공개 조건에 "검증 이력 존재" 추가 | **완료** (2026-09-06) | D-07이 지정한 4개 함수 전부 적용 — `getPlaces`·`getCategoryPlaces`는 공용 `PUBLIC_PLACE_WHERE`, `getPlaceById`는 `findUnique`가 관계 조건을 못 받아 조회한 `verifications`로 같은 판정, `getFavoritePlaces`는 중첩 `place` 조건. 관리자 조회(`getAdminPlaces`)는 의도적으로 제외 — 검증 전 후보를 못 보면 검증을 시작할 수 없다. 테스트 8건이 4개 조회의 `where`와 관리자 제외를 고정. 마이그레이션·임시 이력 생성 없음. 프로덕션 빌드에서 홈 4곳·목록 4곳으로 노출 변화 없음(대상 0건 사전 확인과 일치) | — |
+| 2 | 8주 임계 폐기 → **90일 단일** `Recheck needed` | **완료** (2026-09-06) | 판정 로직은 통일됐다 — `RECHECK_AFTER_DAYS = 90` + `needsRecheck()` 하나로 모으고 `STALE_VERIFICATION_WEEKS`·`weeksSinceVerified`는 제거(잔여 참조 0건). 사용처 3곳(홈 카드·목록/미리보기 요약·미리보기 패널)이 같은 helper만 쓴다. 경과 일수는 `daysSinceVerified()`로 분리. 배지는 `Recheck needed`/`재확인 필요`, 확인일 표시는 유지. `recent` 30/90일 필터는 별개 기능이라 미변경. **경계 `>= 90일`은 사용자 확정** — `DESIGN.md` v1.2.1에서 §6·§7 표기를 통일해 충돌 해소. 테스트 11건이 89·90·91일 경계와 56일·확인일 누락·깨진 형식·미래 날짜를 고정. **사용처는 4곳** — 홈 카드·목록/미리보기 요약·미리보기 패널·상세 Verification Info가 전부 같은 helper만 쓴다 | — |
+| 3 | 홈 장소 탐색 섹션 단일화 | **완료** (2026-09-06) | 제거 목록 5종 전부 삭제(`RecentPlacesSection`·`HomePlaceCard`·`getHomePlaces()`·`HomePlaceItem`·`home.recentPlaces` en/ko). 잔여 참조 0건. 브라우저에서 `/ko`·`/en` 홈이 카테고리 탭 1개 섹션만 렌더함을 확인 | — |
+| 4 | 카테고리 라벨 `Attractions`로 변경 | **완료** (2026-09-06) | en 3개 키 모두 `Attractions`. `/en` 홈 탭과 `/en/places` 필터 칩에서 렌더 확인. enum `TRAVEL`·내부값 `travel`·`admin...category.TRAVEL`·ko `여행지` 미변경 | 카드 라벨(`places.card.category.travel`)은 DB에 TRAVEL 장소가 0건이라 화면 확인 못 함 — 미검증 |
+| 5 | `loading.tsx`/`error.tsx`/`not-found.tsx` 전면 추가 | **부분 완료** | 6개 파일 존재. `[locale]/error.tsx`·`not-found.tsx`가 공개·관리자 전 라우트를 덮고, 공개 3개 `loading.tsx` 존재. `route-state-messages.test.ts`가 en/ko 11개 키를 고정 | 관리자 라우트 `loading.tsx` 없음 · 루트 `global-error.tsx` 없음 |
+| 6 | 홈 오류 삼킴 제거 | **완료** | `page.tsx`에 `try/catch` 없음. 조회 실패가 `[locale]/error.tsx`로 전파돼 재시도 버튼 노출 | — |
+| 7 | Bottom Sheet·FilterModal 접근성 | 미착수 | `FilterModal.tsx`에 `role`·`aria-modal`·ESC 핸들러·focus trap 전무. `PlacesClient` 시트도 동일. Radix `ui/sheet.tsx`·`ui/dialog.tsx`는 있으나 미사용 | Radix `Dialog`/`Sheet`로 교체 |
+| 8 | 미리보기 Primary Action을 `상세 보기`로 반전 | **완료** (2026-09-06) | 조건부 `detailsVariant`를 제거해 `상세 보기`는 항상 primary, 길찾기는 `outline`. 두 분기 모두 primary가 정확히 하나다 — 위치가 있으면 [즐겨찾기][길찾기 outline][상세 primary], 없으면 길찾기 버튼을 렌더하지 않는다. `/ko`·`/en` 프로덕션 빌드에서 계산 스타일로 확인(길찾기 `rgb(255,255,255)`+테두리·외부 Maps 링크·`target=_blank`, 상세 `rgb(37,99,235)`·내부 `/{locale}/places/{id}` 링크). 문구·토큰 미변경 |
+| 9 | 마커 선택 → 목록 카드 스크롤 동기화 | **완료** (2026-09-06) | 장소 **id**로 `<li>`를 잡는 ref 맵(언마운트 시 삭제) + `handleMarkerSelect`가 세운 플래그를 보고 `selectedPlaceId` 반영 후 `scrollIntoView({block:"nearest"})`. 인덱스를 쓰지 않아 정렬·필터가 바뀌어도 다른 장소를 가리키지 않고, 목록에서 걸러진 장소는 ref가 없어 무시된다. `prefers-reduced-motion`이면 `behavior:"auto"`. 실제 지도에서 마커 3개를 눌러 각각 몽베르트·화람·테스트 카페 카드로 스크롤됨을 확인했고, 카드 클릭과 첫 렌더에서는 스크롤 호출 0건 | 정렬·필터 변경 **후** 마커 재선택은 미검증(§미검증 항목) · 모바일 미검증 |
+| 10 | 상세에 거리·길찾기·공유·즐겨찾기 액션 | 미착수 | `places/[id]/page.tsx`에 `FavoriteButton`·공유·길찾기·거리 표시 전부 없음 | 액션 영역 신설 |
+| 11 | 운영시간 저장·입력·표시 (`hours`+`hoursNote`) | 미착수 | `schema.prisma`·`types/place.ts` 어디에도 `hours` 없음 | D-04 구조로 전 계층 추가 (마이그레이션 필요 — 사용자 승인 대상) |
+| 12 | 예방접종 `UNKNOWN` 행 숨김 | **완료** | `display.ts` `showsVaccinationRow()`가 `required`/`not_required`만 통과. `BeforeYouGoCard.tsx:127`에서 실제 사용. `display.test.ts` 3건이 `unknown`·`null` 미표시를 고정 | — |
+| 13 | `Ask the store in Korean` 렌더 분기 제거(코드 보존) | **완료** | 상세 페이지에 import·렌더 없음. `KoreanInquiryBox.tsx`와 메시지 키는 보존. `korean-inquiry.test.ts`가 **비노출과 보존을 동시에** 고정 | — |
+| 14 | 후보 Import 로컬 스크립트 | 미착수 | `scripts/` 디렉터리 없음. `package.json`에 import 스크립트 없음 | D-05·D-06 형태로 신규 |
+| 15 | `auth.ts`의 `/en/login` 하드코딩 제거 | **완료** (2026-09-06) | NextAuth 설정은 요청별로 달라질 수 없으므로 `pages`를 `/login`(locale 없음)으로 두고 미들웨어에 협상을 맡겼다. 프로덕션 빌드에서 확인: `Accept-Language: ko` → `/ko/login?error=...`, `en` → `/en/login?error=...`, `NEXT_LOCALE=ko` 쿠키가 `Accept-Language: en`보다 우선, 헤더 없으면 `DEFAULT_LOCALE=en`. 보호 라우트 6개가 각자 locale의 로그인으로 가며 `callbackUrl`을 유지(`/ko/favorites` → `/ko/login?callbackUrl=%2Fko%2Ffavorites`), `/ko` 응답에 `/en/login` 흔적 0건, 리다이렉트 루프 없음. `FavoriteButton`은 `callbackUrl`에 쿼리를 포함하도록 고쳐 목록 필터가 로그인 후에도 남는다 | 실제 Google OAuth 왕복은 미검증(§미검증 항목) |
+| 16 | 필터·정렬·카테고리 URL 반영 | **완료** (2026-09-06) | `place-list-params.ts`가 파싱·직렬화를 맡고 `usePlaceListState`가 `useSearchParams`에서 상태를 파생한다(state 복사 없음 → 양방향 동기화 자체가 불필요). 카테고리·정렬·필터는 `pushState`, 검색어는 300ms 디바운스 `replaceState`. 잘못된 값·중복 파라미터·삭제된 `exclude-unknown`은 기본값으로 흡수. 초기화는 필터 4개만 지운다. 브라우저에서 직접 접속·새로고침·뒤로가기·초기화 전부 확인, 필터 변경 시 서버 요청 0건 | — |
+| 17 | `border-strong` 무효 클래스 수정 | **완료** (2026-09-06) | 6곳 전부 `border-border-strong`으로 교체. 토큰 선택 근거는 이름 유사성이 아니라 (a) `tailwind.config.ts`가 `border.strong`을 `--color-border-strong`으로 매핑한다는 점과 (b) 같은 성격의 컨트롤(칩·아웃라인 버튼·입력)에서 이미 `border-border-strong`을 쓰고 있다는 선례다. 잔여 무효 참조 0건(`bg-border-strong` 1곳은 유효 클래스라 제외). `/ko`·`/en`의 히어로 입력·정렬 드롭다운·필터 칩·초기화 버튼에서 테두리가 보이고 이상 없음 | — |
+| 18 | 지도 문구 i18n + 재시도 / `next-themes` 제거 | 미착수 | `MapPanel.tsx:240-267` 영어 하드코딩 3건(`no-key`·`error`·`loading`), 재시도 버튼 없음. `ui/sonner.tsx:3`이 `next-themes`의 `useTheme` import 중 | 문구 i18n화 + 재시도 추가 · `sonner.tsx` 의존 해제 후 패키지 제거 |
+| 19 | 긍정 조건 필터에서 `UNKNOWN` 제외 + `exclude-unknown` 제거 | **완료** (2026-09-06) | `INDOOR_FILTER_MATCH`로 필터값별 확정값 하나만 인정 → 미확인·값 없음이 자연히 빠진다. `dogSize`는 D-03 예외라 그대로. `exclude-unknown`을 타입·필터 분기·모달 옵션·en/ko 키에서 제거(잔여 참조 0건). 테스트 29건이 세 규칙(긍정 조건 제외 / 크기 예외 / 필터 미선택)을 각각 고정. 브라우저에서 `carrier=not-required`가 미확인 2곳을 실제로 제외함을 확인 | — |
+| 20 | 서비스 범위 안내 (대전 중심·범위 배너·빈 상태 2종) | 미착수 | `MapPanel.tsx:19,75` fallback이 `SEOUL_CITY_HALL`. 범위 배너 없음. 빈 상태는 `list.empty` 1종만 | D-11대로 대전 좌표 fallback · 범위 배너 · 빈 상태 2종 분리 |
+
+### 판정 근거에 대한 주의
+
+- **#5**를 `완료`가 아니라 `부분 완료`로 둔 이유: §18의 요구사항이 "전 라우트"인데 관리자 라우트에 `loading.tsx`가 없고, 루트 레이아웃 오류를 받을 `global-error.tsx`도 없다. 공개 라우트만 보면 요구사항을 충족한다.
+- **#13**은 파일이 남아 있다는 이유로 미착수로 보지 않았다. 요구사항이 "렌더 분기 제거 + **코드·메시지 키 보존**"이므로 파일 존재가 오히려 요구사항의 일부다.
+- **#16**은 2026-09-06에 완료됐다. 판정 기준은 "새 주소로 직접 들어갔을 때 같은 화면이 나오는가"였고, 카테고리·필터·정렬·검색어 네 가지 모두 프로덕션 빌드에서 확인했다.
+
+### 미검증 항목
+
+브라우저·외부 서비스가 필요해 이번 재대조에서 **동작을 확인하지 못한** 항목:
+
+| 항목 | 미검증 사유 |
+|---|---|
+| #11 운영시간 · #14 Import 스크립트 | 코드가 아예 없어 대조 대상 자체가 부재 (미착수 판정은 확실) |
+| #18 `next-themes` 제거 후 빌드 영향 | 제거를 시도하지 않아 실제 파급 미확인 |
+| #20 범위 판정(공개 장소 최단 거리) | 위치 권한·실 좌표가 필요해 런타임 확인 필요 |
+| #4 카드 카테고리 라벨 | 공개 장소 4건이 전부 `CAFE` — `TRAVEL` 카드가 없어 라벨 렌더 미확인 |
+| #9 정렬·필터 변경 후 마커 재선택 | 세션 도중 Google 지도가 초기화되지 않기 시작해(`.gm-style` 자체가 생성되지 않음) 실제 마커를 더 누를 수 없었다. 지도 코드·설정은 이번에 건드리지 않았다. 변경 전 상태에서는 마커 3개 클릭이 모두 정상 동작했다 |
+| #9 모바일 Bottom Sheet 동작 | `resize_window`가 성공을 반환해도 `window.innerWidth`가 2160에서 바뀌지 않아 모바일 뷰포트가 적용되지 않았다. 시트 `selected` 단계에서 목록 컨테이너가 `hidden`이라 스크롤은 무동작이고, DESIGN.md가 요구하는 모바일 동작(선택 시 Bottom Sheet 미리보기)은 기존 구현 그대로다 |
+| #8 위치 없는 장소의 액션 분기 | 공개 장소 4건 모두 좌표가 있어 `directionsUrl == null` 분기를 화면으로 재현하지 못했다. variant가 조건부가 아니게 되어 두 분기 모두 primary 1개가 구조적으로 보장된다(코드 확인) |
+| #1 검증 이력 없는 장소가 실제로 감춰지는지 (화면) | 해당 장소가 DB에 0건이고, 화면 확인을 위해 운영 데이터를 만들지 않았다. mock 기반 테스트 8건으로만 확인 |
+| #2 89/90/91일 경계 (화면) | 공개 장소 4건의 경과일이 83·100·105·106일이라 경계 사례가 없다. 고정 시각 단위 테스트로만 확인. 실데이터로는 83일 1건이 배지 없음(구 56일 규칙이면 떴을 것), 나머지 3건이 배지 표시로 규칙 전환을 확인 |
+| #19 실내 필터의 미확인 제외 (화면) | 공개 장소 4건의 `indoor`가 전부 `allowed` — `unknown`인 장소가 없어 화면으로는 재현 불가. 단위 테스트로만 확인. 같은 규칙을 쓰는 `carrier` 쪽은 화면에서 확인됨 |
+| #16 모바일 Bottom Sheet에서의 필터·URL | 데스크톱 폭에서만 확인. 창 리사이즈가 뷰포트에 반영되지 않아 시트 레이아웃 미확인 |
+| #15 Google OAuth 왕복 후 복귀 | 실제 로그인을 수행하지 않았다. 리다이렉트 **목적지**(locale·`callbackUrl`)만 HTTP로 확인했고, 인증 성공 후 `callbackUrl`로 실제 복귀하는지는 미확인 |
+| #15 `FavoriteButton`의 쿼리 포함 `callbackUrl` | 브라우저 세션이 로그인 상태라 비로그인 분기가 실행되지 않는다. 코드로만 확인 |
+| 지도 `For development purposes only` 경고 | **원인 미확인.** 이전 보고에서 'API 키 도메인 제한'으로 단정했으나 근거가 없었다. 이번 작업에서 지도 설정은 변경하지 않았다 |
+| 홈 모바일 배치 | 브라우저 창 리사이즈가 뷰포트에 반영되지 않아 확인 실패. 이번 변경은 섹션 삭제뿐이라 잔존 섹션의 반응형 클래스는 무변경 |
+| PostGIS extension (§9) | 배포 DB 조회 필요 |
 
 ---
 
