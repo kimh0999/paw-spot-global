@@ -25,9 +25,8 @@ const badgeVariants = cva(
 
 `transition-all`은 애니메이션할 의도가 없던 속성까지 전부 전환한다. 이 두 컴포넌트에서 구체적으로 문제가 되는 것은 **포커스 링**이다.
 
-- `focus-visible:ring-3` / `focus-visible:ring-[3px]`는 `box-shadow`로 그려진다.
-- `transition-all` + Tailwind 기본 지속시간 150ms 때문에 **키보드 포커스 링이 150ms에 걸쳐 서서히 나타난다.**
-- 포커스 표시는 "지금 어디에 있는지"를 알려주는 신호다. 탭을 빠르게 눌러 이동하면 링이 따라오지 못하고 뒤처져 보인다.
+- 포커스 표시는 "지금 어디에 있는지"를 알려주는 신호다. `transition-all` + Tailwind 기본 지속시간 150ms 때문에 **키보드 포커스 표시가 150ms에 걸쳐 서서히 나타난다.** 탭을 빠르게 눌러 이동하면 표시가 따라오지 못하고 뒤처진다.
+- **2026-09-07 실측 정정**: 계획 작성 시점에는 그 표시가 `focus-visible:ring-*`(box-shadow)라고 봤으나, `ring-3`는 Tailwind v4 문법이라 v3.4.19인 이 프로젝트에서 **CSS가 생성되지 않는다.** 실제 표시는 `focus-visible:border-ring`(`border-color`)이다. 자세한 내용은 아래 Target 절의 주석 참조.
 
 `Button`은 10개 파일에서 쓰인다 — `global-error.tsx`, `[locale]/error.tsx`, `[locale]/not-found.tsx`, `(admin)/admin/error.tsx`, `(admin)/admin/places/page.tsx`, `(public)/forbidden/page.tsx`, `(public)/login/page.tsx`, `home/CategoryPlaceTabs.tsx`, `places/KoreanInquiryBox.tsx`, `places/PlacePreviewCard.tsx`. `Badge`는 2개 파일(`admin/places/page.tsx`, `places/[id]/page.tsx`)에서 쓰인다.
 
@@ -41,8 +40,24 @@ const badgeVariants = cva(
 
 ```tsx
 // src/components/ui/button.tsx:8 — 목표 (해당 토큰만 교체)
-transition-[color,background-color,border-color,text-decoration-color,opacity,transform] duration-fast ease-standard
+transition-[color,background-color,text-decoration-color,opacity,transform] duration-fast ease-standard
 ```
+
+> **2026-09-07 실행 중 수정 — `border-color`를 목록에서 뺐다.**
+>
+> 계획 작성 시점에는 포커스 링이 `focus-visible:ring-3`(box-shadow)로 그려진다고 보고
+> `box-shadow`만 제외하면 된다고 판단했다. 실제로는 **`ring-3`가 Tailwind v4 문법이라
+> v3.4.19인 이 프로젝트에서 CSS가 생성되지 않는다.** 빌드 CSS에 `.focus-visible\:ring-3`
+> 규칙이 없고, 브라우저에서 `:focus-visible`이 걸린 Button의 `boxShadow`가 `none`이다.
+>
+> Button의 포커스를 실제로 표시하는 것은 **`focus-visible:border-ring`
+> (`border-color:var(--ring)`)** 이다. 따라서 `border-color`를 전환 목록에 두면
+> 포커스 표시가 그대로 150ms 지연된다 — 이 계획이 없애려던 바로 그 증상이다.
+>
+> Button에서 `border-color`가 바뀌는 경우는 세 가지뿐이고 **전부 즉시 보여야 하는
+> 상태 표시**다: `focus-visible:border-ring`(포커스), `aria-invalid:border-destructive`(오류),
+> `dark:border-input`(테마). hover로 테두리 색이 바뀌는 variant는 없다.
+> 따라서 목록에서 빼도 잃는 것이 없다.
 
 **badge** — 누를 수 없으므로 `transform`이 없다. Tailwind 기본 `transition-colors`가 정확히 필요한 집합(`color, background-color, border-color, text-decoration-color, fill, stroke`)이다.
 
@@ -92,7 +107,7 @@ Tailwind v3 기본값은 이미 `150ms` / `cubic-bezier(0.4, 0, 0.2, 1)`이고, 
    ```
    다음으로 교체한다:
    ```
-   whitespace-nowrap transition-[color,background-color,border-color,text-decoration-color,opacity,transform] duration-fast ease-standard outline-none select-none
+   whitespace-nowrap transition-[color,background-color,text-decoration-color,opacity,transform] duration-fast ease-standard outline-none select-none
    ```
    **속성 목록 안에 공백을 넣지 않는다.** `transition-[color, background-color]`처럼 쓰면 Tailwind가 클래스를 인식하지 못한다. 쉼표 뒤 공백 없이 붙여 쓴다.
 
@@ -119,7 +134,7 @@ Tailwind v3 기본값은 이미 `150ms` / `cubic-bezier(0.4, 0, 0.2, 1)`이고, 
 - `cva()`의 `variants` 객체를 건드리지 않는다. `default`/`outline`/`ghost` 등의 색상 클래스는 그대로 둔다.
 - `button.tsx`의 `size` variant를 건드리지 않는다.
 - `active:not-aria-[haspopup]:translate-y-px`를 `scale(0.97)` 같은 다른 누름 피드백으로 바꾸지 않는다. 누름 피드백 자체의 재설계는 이 계획의 범위가 아니다.
-- `focus-visible:ring-3`(button) / `focus-visible:ring-[3px]`(badge)의 **표기 불일치를 통일하지 않는다.** 실제 값이 같고, 이 계획의 목적이 아니다. 발견 사항으로만 보고한다.
+- **`focus-visible:ring-3`를 고치지 않는다.** 이것이 v4 문법이라 v3에서 무효이고, 그 결과 Button에 링이 아예 그려지지 않는다는 사실이 2026-09-07 실행 중 확인됐다. 고치면(`ring-[3px]`) **화면 모양이 바뀌므로** 모션 계획의 범위를 넘는다. 발견 사항으로만 보고하고 별도 작업으로 남긴다. badge의 `focus-visible:ring-[3px]`도 마찬가지로 건드리지 않는다.
 - 손으로 만든 버튼들(`PlacesClient.tsx`의 칩, `FilterModal.tsx`의 칩, `HeroActions.tsx`, `DogsManager.tsx` 등)을 `Button` 컴포넌트로 바꾸지 않는다.
 - `src/components/ui/` 아래 다른 파일(`dialog.tsx`, `sheet.tsx`, `dropdown-menu.tsx`)을 건드리지 않는다 — 후속 작업 대상.
 - 새 의존성을 추가하지 않는다.
@@ -142,12 +157,20 @@ Tailwind가 대괄호 목록을 실제 CSS로 만들었는지 확인한다. `nex
 ```bash
 grep -rho "transition-property:[^;]*" .next/static/css/*.css | sort -u
 ```
-`color, background-color, border-color, text-decoration-color, opacity, transform` 조합이 보여야 한다. 없으면 클래스가 무효인 것이다(대개 목록 안 공백 때문).
+`color,background-color,text-decoration-color,opacity,transform` 조합이 보여야 한다. 없으면 클래스가 무효인 것이다(대개 목록 안 공백 때문).
+
+**목록에 `box-shadow`와 `border-color`가 없어야 한다.** 둘 중 하나라도 있으면 포커스 표시가 다시 지연된다. 브라우저에서 확인:
+```js
+const el = document.querySelector('[data-slot="button"]');
+getComputedStyle(el).transitionProperty.split(",").map(s => s.trim())
+  .filter(p => p === "box-shadow" || p === "border-color" || p === "all");   // [] 여야 한다
+```
 
 **Feel check** — `npx next start -p 3100` 후 확인한다.
 
-- **포커스 링(핵심)**: `/ko/login`에서 `Tab`을 눌러 Google 로그인 버튼에 포커스를 준다. 링이 **즉시** 나타나야 한다. Tab을 빠르게 왕복하며 눌렀을 때 링이 뒤처지거나 흐릿하게 남으면 실패다.
-  - 비교: 수정 전에는 같은 조작에서 링이 서서히 차오른다. 차이가 안 보이면 DevTools **Animations 패널 재생 속도 10%**로 낮춰 다시 본다.
+- **포커스 표시(핵심)**: `/ko/forbidden`에서 `Tab`을 눌러 `홈으로 돌아가기` 버튼에 포커스를 준다. 테두리 색이 **즉시** 바뀌어야 한다. Tab을 빠르게 왕복하며 눌렀을 때 표시가 뒤처지면 실패다.
+  - `/ko/login`은 이미 로그인한 세션에서 `/ko`로 리다이렉트되므로 `Button`이 렌더되지 않는다. `/ko/forbidden`을 쓴다.
+  - 비교: 수정 전에는 같은 조작에서 테두리 색이 서서히 차오른다. 차이가 안 보이면 DevTools **Animations 패널 재생 속도 10%**로 낮춰 다시 본다.
 - **hover**: 같은 버튼에 마우스를 올린다. 배경색은 **여전히 부드럽게** 바뀌어야 한다. 즉시 딱 바뀌면 `transition-colors` 계열 속성이 목록에서 빠진 것이다.
 - **press**: 버튼을 누른 채로 있는다. 1px 내려가는 피드백이 남아 있어야 한다(`transform`이 목록에 있는지 확인).
 - **disabled**: `/ko/places` 데스크톱에서 위치 권한 없이 정렬 드롭다운을 연다. 비활성 `거리순` 항목의 흐림(`opacity`)이 전환된다.
