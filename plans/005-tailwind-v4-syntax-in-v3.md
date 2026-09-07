@@ -268,18 +268,50 @@ grep -c "ring-3\|not-aria\|rounded-4xl" .next/static/css/*.css   # 0
 - Badge `borderRadius`가 `0px`이 아니다.
 - Mechanical 4종 통과.
 
-## 실행 중 발견 (범위 밖)
+## 후속 — variants 정리 (2026-09-07, 사용자 요청으로 범위 확대)
 
-2026-09-07 실행에서 확인했으나 **이 계획의 Boundaries에 따라 고치지 않은 것**이다.
+최초 계획은 `cva` 기본 문자열만 다루고 `variants`·`size`를 Boundaries로 제외했다.
+사용자 요청으로 두 파일의 variants 전체를 같은 방식으로 정리했다.
 
-| 발견 | 위치 | 왜 죽어 있나 |
+### 검사 방법
+
+빌드 CSS의 셀렉터에서 클래스명을 **역이스케이프해 집합으로 만든 뒤** 소스와 대조했다.
+문자열 grep은 Tailwind의 이스케이프(쉼표 → `c `, `:` → `\:`)를 재현하기 어려워
+오탐이 났다. 검사기 자체를 알려진 정답(`focus-visible:ring-2`=있음, `ring-3`=없음)으로
+먼저 검증한 뒤 사용했다. **클린 빌드(`rm -rf .next`) 필수** — 아래 "발견" 참조.
+
+### 적용 규칙
+
+> **동작하지 않던 클래스는 삭제한다. 실제 렌더되는 곳만 저장소에 이미 있는 토큰으로 대체한다.**
+> 없는 디자인을 새로 만들지 않는다.
+
+### 실사용 결함 (대체)
+
+| 결함 | 위치 | 조치 |
 |---|---|---|
-| `has-data-[icon=inline-end]:pr-2` 등 (`size` variant 4곳) | `ui/button.tsx:25-28` | v4 `has-*` 축약. 게다가 `data-icon`을 세팅하는 곳이 앱에 0건이라 살려도 실행되지 않는다 |
-| `in-data-[slot=button-group]:rounded-lg` (`xs`·`sm`) | `ui/button.tsx:26-27` | v4 `in-*` variant. `ButtonGroup` 컴포넌트가 이 저장소에 없다 |
-| `rounded-[min(var(--radius-md),10px)]` (`xs`·`sm`) | `ui/button.tsx:26-27` | `--radius-md` CSS 변수가 `globals.css`에 정의돼 있지 않다. Tailwind의 `borderRadius.md` 키와는 다른 것이다 |
+| `default` variant의 hover가 죽어 있었다 — `[a]:hover:bg-primary/80`은 v3에서 `var()` 색에 투명도를 못 붙여 무효. Button 19개 중 약 10개가 이 variant다 | `button.tsx` | `hover:bg-primary-hover` — `--color-primary-hover` 토큰이 이미 있고 앱의 손수 만든 버튼들이 쓰는 값이다 |
+| `destructive` 배지에 배경이 없었다 — `bg-destructive/10` 무효. 관리자 목록의 `HIDDEN` 배지가 이 variant다 | `badge.tsx` | `bg-danger-soft text-danger` — `--destructive`는 `--color-danger`의 alias이고 `danger.soft` 토큰이 있다 |
 
-세 항목 모두 `size` variant 안에 있고, 앱은 `default`·`lg`·`icon` 크기만 쓴다.
-`variants` 객체 정리는 별도 작업으로 남긴다.
+### 무효 클래스 삭제
+
+| 삭제 | 개수 | 왜 죽어 있었나 |
+|---|---|---|
+| `has-data-[icon=inline-*]` | 8 | v4 `has-*` 축약. `data-icon`을 세팅하는 곳 0건 |
+| `in-data-[slot=button-group]:rounded-lg` | 4 | v4 `in-*` variant. `ButtonGroup` 컴포넌트가 없다 |
+| `dark:*` (button 4 · badge 3) | 7 | 투명도 modifier 무효 + `DESIGN.md` §12 다크 모드 임의 추가 금지 |
+| `[a]:hover:*` (badge 5) | 5 | v3 arbitrary variant는 `&`가 필요하다. 이 앱에 링크 배지가 없다 |
+| `hover:bg-secondary/80` 등 투명도 modifier | 3 | 위와 같은 이유 |
+
+### 대체한 임의값
+
+`rounded-[min(var(--radius-md),10px)]` / `(...,12px)` → **`rounded-md`**.
+`--radius-md`는 `globals.css`에 **정의돼 있지 않다**(`--radius: 0.625rem`만 있다).
+정의되지 않은 변수가 들어간 `min()`은 무효값이라 브라우저가 선언을 버린다.
+Tailwind의 `borderRadius.md`(`calc(var(--radius) - 2px)`)가 정의된 값이다.
+
+### 결과
+
+두 파일의 `variants`·`size` 전 클래스가 컴파일된다 — **미컴파일 0개**(클린 빌드 대조).
 
 ## Impact and regression risk
 

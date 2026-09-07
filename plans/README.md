@@ -57,7 +57,7 @@
 | **v4 문법 클래스가 v3에서 무효** — `ring-3`(포커스 링 없음) · `not-aria-[haspopup]:translate-y-px`(누름 피드백 없음) · `rounded-4xl`(배지가 사각형, 계산된 `border-radius`가 `0px`) 등 7종 | `ui/button.tsx:8`, `ui/badge.tsx:8` | **→ 계획 [005](005-tailwind-v4-syntax-in-v3.md)로 작성됨** |
 | `ui/sheet.tsx:65`가 bare `transition`을 써서 `box-shadow`·`filter`까지 전환 목록에 넣는다 | `ui/sheet.tsx:65` | 미사용 파일. 감사 #8과 함께 처리 |
 | **`next build`만으로는 Tailwind 산출물이 갱신되지 않는다** — 클래스 문자열만 바꾸면 빌드 CSS가 stale로 남아, 새 클래스가 v3에서 무효인 것처럼 보인다 | — | 빌드 CSS를 근거로 판정할 때는 **`rm -rf .next` 후 클린 빌드**한다 (005 실행 중 확인) |
-| `button.tsx:25-28` `size` variant의 v4 문법(`has-data-[icon=*]`·`in-data-[slot=button-group]`)과 정의되지 않은 `--radius-md` 참조 | `ui/button.tsx:25-28` | 005 Boundaries가 variants를 제외해 손대지 않았다. 앱은 `default`·`lg`·`icon`만 쓴다 |
+| `size`·`variant` 전체에 남아 있던 v4 문법·무효 투명도 modifier·정의되지 않은 `--radius-md` 참조 | `ui/button.tsx`, `ui/badge.tsx` | **처리 완료** — 005에 "후속 — variants 정리"로 기록. 실사용 결함 2건(default hover 죽음 · destructive 배지 배경 없음) 포함 |
 
 ## 감사에서 나왔으나 아직 계획하지 않은 것
 
