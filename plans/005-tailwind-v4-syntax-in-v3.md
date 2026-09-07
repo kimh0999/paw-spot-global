@@ -1,6 +1,6 @@
 # 005 — v3에서 무효한 v4 문법 클래스를 되살린다 (button·badge)
 
-- **Status**: TODO
+- **Status**: DONE (`2ea62da`)
 - **Commit**: a917741
 - **Severity**: HIGH (접근성) + MEDIUM (시각)
 - **Category**: Correctness / Accessibility
