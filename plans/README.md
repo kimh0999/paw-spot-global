@@ -76,4 +76,6 @@
 
 **#5·#7은 계획 [006](006-dialog-dropdown-motion.md)에서 처리했다.** 다만 감사의 전제("올바른 처리가 `ui/dialog.tsx`·`ui/dropdown-menu.tsx`에 이미 있다")는 **틀렸다** — 그 파일들의 애니메이션 클래스도 전부 v4 문법이라 무효였다. 프리미티브를 채택하는 대신 사용 중인 컴포넌트에 v3 문법으로 직접 넣었다.
 
-`SortDropdown`의 **퇴장 모션은 여전히 없다**(조건부 언마운트). Radix `DropdownMenu`로 옮겨야 해결된다. 계획 007(P0 #7)은 `FilterModal`만 다뤘으므로 이 항목은 **남아 있다**.
+~~`SortDropdown`의 퇴장 모션은 여전히 없다~~ → **2026-09-08 해결.** 접근성 트랙에서 `SortDropdown`을 Radix `DropdownMenu`로 옮기면서 `popover-out` keyframe을 신설하고 `data-[state=closed]:animate-popover-out`을 붙였다. ESC → `data-state="closed"` + `animation-name: popover-out` → 언마운트를 브라우저에서 확인했다.
+
+> `DogCard`의 `DropdownMenu`에는 아직 모션이 없다. `animate-popover-in`/`-out` 두 클래스만 붙이면 되지만 그 작업의 범위가 아니었다.
