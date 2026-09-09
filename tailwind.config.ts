@@ -12,6 +12,8 @@ const config: Config = {
         border: {
           DEFAULT: "var(--border)",
           strong: "var(--color-border-strong)",
+          // 테두리가 곧 컨트롤의 식별 정보인 곳에만 쓴다 (DESIGN.md §4 Border color usage).
+          control: "var(--color-border-control)",
         },
         input: "var(--input)",
         ring: "var(--ring)",
@@ -29,6 +31,12 @@ const config: Config = {
           muted: "var(--color-text-muted)",
         },
         overlay: "var(--color-overlay)",
+        avatar: {
+          cool: "var(--color-avatar-cool)",
+          "cool-fg": "var(--color-avatar-cool-fg)",
+          clay: "var(--color-avatar-clay)",
+          "clay-fg": "var(--color-avatar-clay-fg)",
+        },
         danger: {
           DEFAULT: "var(--color-danger)",
           soft: "var(--color-danger-soft)",
@@ -89,10 +97,40 @@ const config: Config = {
           ring: "var(--sidebar-ring)",
         },
       },
+      // 라틴 → 한글 순으로 얹는다. 브라우저는 글자마다 지원하는 첫 폰트를 고르므로
+      // 영문은 Inter, 한글은 Noto Sans KR이 렌더된다.
+      fontFamily: {
+        sans: [
+          "var(--font-latin)",
+          "var(--font-korean)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+          "Apple Color Emoji",
+          "Segoe UI Emoji",
+        ],
+      },
+      // 값이 아니라 **역할**로 고른다 (DESIGN.md §4 Radius).
+      // lg/md/sm은 컨트롤 계열이고, card/panel/sheet는 표면 계열이다.
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        card: "var(--radius-card)",
+        panel: "var(--radius-panel)",
+        sheet: "var(--radius-sheet)",
+      },
+      // 한국어는 같은 크기에서 라틴 문자보다 행간이 더 필요하다. 본문 계열의 leading을
+      // Tailwind 기본값보다 넉넉하게 잡는다 (DESIGN.md §4 Typography).
+      fontSize: {
+        xs: ["0.75rem", { lineHeight: "1.125rem" }],
+        sm: ["0.875rem", { lineHeight: "1.375rem" }],
+        base: ["1rem", { lineHeight: "1.625rem" }],
+        lg: ["1.125rem", { lineHeight: "1.75rem" }],
+        xl: ["1.25rem", { lineHeight: "1.75rem" }],
+        "2xl": ["1.5rem", { lineHeight: "2rem" }],
+        "3xl": ["1.875rem", { lineHeight: "2.375rem" }],
+        "4xl": ["2.25rem", { lineHeight: "2.75rem" }],
       },
       // Radix는 닫힐 때 CSS **애니메이션**이 돌고 있으면 언마운트를 미룬다(transition으로는
       // 안 된다). 그래서 퇴장 모션이 필요한 곳은 keyframes로 정의한다.

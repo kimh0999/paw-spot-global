@@ -10,34 +10,52 @@
     --font-sans: var(--font-sans)
   }
   :root {
-    /* DESIGN.md §4 Colors — 디자인 토큰의 단일 출처 */
-    --color-primary: #2563eb;
-    --color-primary-hover: #1d4ed8;
-    --color-primary-soft: #eff6ff;
+    /* DESIGN.md §4 Colors — 디자인 토큰의 단일 출처
+       v2: 상태 색(초록·앰버·빨강·회색)이 화면의 의미를 나르므로, 브랜드 색은 상태와
+       가장 멀리 떨어진 색상 구간(보라-남색)에서 고르고 종이빛 바탕 위에 얹는다. */
+    --color-primary: #3e3272;
+    --color-primary-hover: #2e2456;
+    --color-primary-soft: #efecfa;
     --color-on-primary: #ffffff;
 
     --color-canvas: #ffffff;
-    --color-background: #f7f8fa;
+    --color-background: #fbf8f4;
     --color-surface: #ffffff;
-    --color-surface-subtle: #f2f4f7;
+    --color-surface-subtle: #f3eee6;
 
-    --color-text: #171719;
-    --color-text-secondary: #5f6368;
-    --color-text-muted: #6b7280;
-    --color-border: #e5e7eb;
-    --color-border-strong: #cfd4dc;
+    --color-text: #1a1815;
+    --color-text-secondary: #57514a;
+    --color-text-muted: #7a7168;
+    --color-border: #e7e0d5;
+    --color-border-strong: #d4cabb;
+    --color-border-control: #8a8175;
 
-    --color-success: #15803d;
-    --color-success-soft: #f0fdf4;
-    --color-warning: #b45309;
-    --color-warning-soft: #fffbeb;
-    --color-danger: #dc2626;
-    --color-danger-soft: #fef2f2;
-    --color-unknown: #667085;
-    --color-unknown-soft: #f2f4f7;
+    --color-success: #146c36;
+    --color-success-soft: #ebf5ee;
+    --color-warning: #a85206;
+    --color-warning-soft: #fdf4e6;
+    --color-danger: #c81e1e;
+    --color-danger-soft: #fcedeb;
+    --color-unknown: #6b6459;
+    --color-unknown-soft: #f1ece3;
 
-    --color-focus: #2563eb;
-    --color-overlay: rgb(17 24 39 / 48%);
+    /* 반려견 아바타 식별 색. 상태 색(초록·앰버·빨강)과 섞이지 않는 저채도 톤만 쓴다.
+       나머지 두 톤은 기존 primary-soft / surface-subtle을 그대로 쓴다. */
+    --color-avatar-cool: #e9eff6;
+    --color-avatar-cool-fg: #2c4a6b;
+    --color-avatar-clay: #f6ebe9;
+    --color-avatar-clay-fg: #7a3e2e;
+
+    /* 지도의 내 위치 점. 지도 관례를 따르는 파랑이며, 선택 마커(브랜드색)와 반드시 구분된다. */
+    --color-user-location: #1a73e8;
+
+    --color-focus: #3e3272;
+    --color-overlay: rgb(26 24 21 / 48%);
+
+    /* DESIGN.md §4 Radius — 역할 기준. 값이 아니라 역할로 고른다. */
+    --radius-card: 14px;
+    --radius-panel: 12px;
+    --radius-sheet: 20px;
 
     /* DESIGN.md §8 Motion */
     --duration-fast: 150ms;
@@ -139,7 +157,10 @@
     outline-color: color-mix(in oklch, var(--ring) 50%, transparent);
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-surface-page text-foreground;
+    /* 한국어는 어절 단위로 끊어야 읽힌다. 영어의 긴 URL·장소명은 그때만 강제로 끊는다. */
+    word-break: keep-all;
+    overflow-wrap: break-word;
   }
   html {
     @apply font-sans;

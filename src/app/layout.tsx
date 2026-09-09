@@ -1,11 +1,24 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Noto_Sans_KR } from "next/font/google";
 import { getLocale } from "next-intl/server";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+// 라틴은 Inter, 한글은 Noto Sans KR이 맡는다. 한 벌만 쓰면 한쪽 언어가 시스템 기본
+// 폰트로 떨어져 같은 화면에서 자간·굵기가 어긋난다 (DESIGN.md §4 Typography).
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-latin",
+  display: "swap",
+});
+
+const notoSansKr = Noto_Sans_KR({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-korean",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Paw Spot Global — 반려견 동반 장소 안내",
@@ -19,7 +32,10 @@ export default async function RootLayout({
   const locale = await getLocale();
 
   return (
-    <html lang={locale} className={cn("font-sans", inter.variable)}>
+    <html
+      lang={locale}
+      className={cn("font-sans", inter.variable, notoSansKr.variable)}
+    >
       <body>
         {children}
         <Toaster />
