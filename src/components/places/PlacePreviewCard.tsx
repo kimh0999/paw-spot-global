@@ -25,12 +25,15 @@ import { Link } from "@/i18n/navigation";
 import { formatDistance } from "@/lib/geo/distance";
 import { displayPlaceName, isSupportedLocale } from "@/lib/i18n/locale";
 import { needsRecheck, verificationMethodKey } from "@/lib/places/display";
+import { displayableAreaRecords, resolveDogAccess } from "@/lib/places/dog-access";
 import {
   getPlaceConditionBreakdown,
   getVisitEligibility,
   getVisitStatus,
   type VisitStatus,
 } from "@/lib/places/eligibility";
+import { toSpaceLines } from "@/lib/places/policy-display";
+import { buildSpaceSentence } from "@/lib/places/policy-sentences";
 import { cn } from "@/lib/utils";
 import type { DogSizeFilter, PlaceListItem } from "@/types/place";
 
@@ -158,6 +161,15 @@ export default function PlacePreviewCard({
   const StatusIcon = statusIcons[status];
   const { allowances, conditions } = getPlaceConditionBreakdown(place);
 
+  // 구역 단위로 확인된 출입 기록. 구역과 적용 대상을 그대로 보여준다 —
+  // 테라스를 전체 야외로, 특정 크기를 전체 반려견으로 넓히지 않는다.
+  // 문장은 상세와 같은 함수·문구를 쓴다.
+  const areaLines = toSpaceLines(
+    displayableAreaRecords(resolveDogAccess(place.indoor, place.policyDetails)),
+  ).map((line) =>
+    buildSpaceSentence(line, (key, values) => t(`detail.policyDetails.${key}`, values)),
+  );
+
   // 반려견 프로필이 있으면 설명 줄을 그 판정으로 바꾼다.
   // "방문 불가"의 사유(크기 제한인지 동반 불가인지)가 설명에서 빠지지 않게 한다.
   const eligibility = getVisitEligibility(place, dogSize);
@@ -185,7 +197,10 @@ export default function PlacePreviewCard({
     : null;
 
   const hasBodySections =
-    allowances.length > 0 || conditions.length > 0 || place.caution != null;
+    allowances.length > 0 ||
+    conditions.length > 0 ||
+    areaLines.length > 0 ||
+    place.caution != null;
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-surface">
@@ -268,7 +283,7 @@ export default function PlacePreviewCard({
               </section>
             )}
 
-            {conditions.length > 0 && (
+            {(conditions.length > 0 || areaLines.length > 0) && (
               <section>
                 <h3 className={sectionTitleClass}>{t("preview.conditionsTitle")}</h3>
                 <ul className="mt-2 space-y-1.5">
@@ -281,6 +296,17 @@ export default function PlacePreviewCard({
                         aria-hidden="true"
                       />
                       <span className="break-words">{t(`preview.conditions.${key}`)}</span>
+                    </li>
+                  ))}
+                  {areaLines.map((line) => (
+                    <li key={line} className="flex items-start gap-2 text-sm text-content">
+                      <CircleAlert
+                        size={16}
+                        strokeWidth={2}
+                        className="mt-0.5 shrink-0 text-warning"
+                        aria-hidden="true"
+                      />
+                      <span className="break-words">{line}</span>
                     </li>
                   ))}
                 </ul>

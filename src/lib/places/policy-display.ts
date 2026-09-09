@@ -269,7 +269,7 @@ function toHandlingLines(groups: PolicyDetails["handling"]): PolicyHandlingLine[
  * 층을 0으로 채우거나 "어떤 구역"이라고 얼버무리면 없는 사실이 생긴다. 저장 시 스키마가
  * 막지만 옛 데이터가 있을 수 있어 여기서도 확인한다.
  */
-function toSpaceLines(items: PolicyDetails["spaceExceptions"]): PolicySpaceLine[] {
+export function toSpaceLines(items: PolicyDetails["spaceExceptions"]): PolicySpaceLine[] {
   const lines = items.flatMap((item) => {
     if (item.area === "FLOOR" && item.floor == null) return [];
     if (item.area === "OTHER" && !item.label?.trim()) return [];

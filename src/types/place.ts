@@ -36,6 +36,11 @@ export interface PlaceListItem {
   muzzle: "required" | "not_required" | "conditional" | "unknown" | null;
   /** 자유 텍스트. 반려견 판정에서는 "확인 필요" 신호로만 쓴다. */
   breedRestrictions: string | null;
+  /**
+   * 구조화된 상세 조건. 요약 컬럼만으로는 `실내 불가 · 야외 미확인`을 표현할 수 없어
+   * 목록에서도 함께 읽는다. 형식이 깨졌거나 아직 구조화되지 않은 장소는 null이다(상세와 같다).
+   */
+  policyDetails: PolicyDetails | null;
   caution: string | null;
   latestVerifiedAt: string | null;
   verificationMethod: string | null;

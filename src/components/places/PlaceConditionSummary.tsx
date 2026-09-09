@@ -3,12 +3,24 @@
 import { useTranslations } from "next-intl";
 import { Check, CircleAlert, CircleSlash, History, Info, type LucideIcon } from "lucide-react";
 
+import {
+  displayableAreaRecords,
+  resolveDogAccess,
+  type DogAccessKey,
+} from "@/lib/places/dog-access";
 import { needsRecheck, verificationMethodKey } from "@/lib/places/display";
+import { toSpaceLines } from "@/lib/places/policy-display";
+import { buildSpaceSentence, type Translate } from "@/lib/places/policy-sentences";
 import { cn } from "@/lib/utils";
 import type { ConditionStatus, PlaceListItem } from "@/types/place";
 
-// 카드에서는 핵심 동반 조건만 노출한다: 실내 동반 / 이동장·유모차 / 허용 크기
-const COMPACT_CONDITIONS = 3;
+/**
+ * 카드에서는 핵심 동반 조건 세 가지만 노출한다: 동반 가능 여부 / 이동장·유모차 / 허용 크기.
+ *
+ * **항목 수이지 줄 수가 아니다.** 한 항목이 여러 줄로 늘어날 수 있고,
+ * 동반 가능 여부 항목은 구역 기록을 함께 담아 여러 줄이 되기도 한다(DESIGN.md §6).
+ */
+const COMPACT_CONDITION_GROUPS = 3;
 
 interface PlaceConditionSummaryProps {
   place: PlaceListItem;
@@ -42,65 +54,92 @@ export default function PlaceConditionSummary({
   variant = "compact",
 }: PlaceConditionSummaryProps) {
   const t = useTranslations("places.card");
+  // 구역 문장은 상세와 같은 문구를 쓴다. 같은 사실을 화면마다 다르게 옮겨 적지 않는다.
+  const tp = useTranslations("places.detail.policyDetails");
+  const translateSpace: Translate = (key, values) => tp(key, values);
 
   const isStale = needsRecheck(place.latestVerifiedAt, referenceDate);
 
-  const conditions: CoreCondition[] = [];
+  const isDetailed = variant === "detailed";
 
-  switch (place.indoor) {
-    case "allowed":
-      conditions.push({ label: t("indoor.allowed"), status: "good" });
-      break;
-    case "outdoor_only":
-      conditions.push({ label: t("indoor.outdoorOnly"), status: "warning" });
-      break;
-    case "partial_area":
-      conditions.push({ label: t("indoor.partialArea"), status: "warning" });
-      break;
-    case "not_allowed":
-      conditions.push({ label: t("indoor.notAllowed"), status: "bad" });
-      break;
-    default:
-      conditions.push({ label: t("indoor.unknown"), status: "neutral" });
+  /** 조건 항목 묶음. 한 묶음이 여러 줄이 될 수 있다. */
+  const groups: CoreCondition[][] = [];
+
+  // --- 동반 가능 여부 ---
+  const access = resolveDogAccess(place.indoor, place.policyDetails);
+  const accessLine: Record<DogAccessKey, CoreCondition> = {
+    allowed: { label: t("indoor.allowed"), status: "good" },
+    outdoorOnly: { label: t("indoor.outdoorOnly"), status: "warning" },
+    partialArea: { label: t("indoor.partialArea"), status: "warning" },
+    notAllowed: { label: t("indoor.notAllowed"), status: "bad" },
+    indoorBlockedOutdoorUnconfirmed: {
+      label: t("indoor.indoorBlockedOutdoorUnconfirmed"),
+      status: "warning",
+    },
+    conflict: { label: t("indoor.conflict"), status: "neutral" },
+    unknown: { label: t("indoor.unknown"), status: "neutral" },
+  };
+
+  /**
+   * 요약 한 줄로 동반 가능 여부가 정해지지 않는 경우에만 구역 기록을 함께 보여준다.
+   * 구역·적용 대상을 그대로 옮기므로 테라스를 전체 야외로, 대형견 제한을 전체 제한으로 넓히지 않는다.
+   */
+  const showsAreaRecords =
+    isDetailed || access.key === "unknown" || access.key === "partialArea" || access.key === "conflict";
+
+  const accessGroup: CoreCondition[] = [accessLine[access.key]];
+  if (showsAreaRecords) {
+    for (const line of toSpaceLines(displayableAreaRecords(access))) {
+      accessGroup.push({
+        label: buildSpaceSentence(line, translateSpace),
+        status: line.access === "NOT_ALLOWED" ? "bad" : "good",
+      });
+    }
   }
+  groups.push(accessGroup);
 
+  // --- 이동장·유모차 ---
   switch (place.carrierStrollerPolicy) {
     case "not_required":
-      conditions.push({ label: t("carrierStroller.notRequired"), status: "good" });
+      groups.push([{ label: t("carrierStroller.notRequired"), status: "good" }]);
       break;
     case "required_indoor":
-      conditions.push({ label: t("carrierStroller.requiredIndoor"), status: "warning" });
+      groups.push([{ label: t("carrierStroller.requiredIndoor"), status: "warning" }]);
       break;
     case "required_always":
-      conditions.push({ label: t("carrierStroller.requiredAlways"), status: "bad" });
+      groups.push([{ label: t("carrierStroller.requiredAlways"), status: "bad" }]);
       break;
     default:
-      conditions.push({ label: t("carrierStroller.unknown"), status: "neutral" });
+      groups.push([{ label: t("carrierStroller.unknown"), status: "neutral" }]);
   }
 
+  // --- 허용 크기 ---
+  // 미확인일 때도 항목을 비우지 않는다. 비우면 목줄이 세 번째 자리로 올라와 표시 순서가 흔들린다.
   if (place.maxDogSize === "small") {
-    conditions.push({ label: t("maxDogSize.small"), status: "neutral" });
+    groups.push([{ label: t("maxDogSize.small"), status: "neutral" }]);
   } else if (place.maxDogSize === "medium") {
-    conditions.push({ label: t("maxDogSize.medium"), status: "neutral" });
+    groups.push([{ label: t("maxDogSize.medium"), status: "neutral" }]);
   } else if (place.maxDogSize === "large") {
-    conditions.push({ label: t("maxDogSize.large"), status: "neutral" });
+    groups.push([{ label: t("maxDogSize.large"), status: "neutral" }]);
+  } else {
+    groups.push([{ label: t("maxDogSize.unknown"), status: "neutral" }]);
   }
 
   // 목줄·입마개는 카드에서는 생략하고 미리보기에서만 노출한다.
   if (place.leash === "required") {
-    conditions.push({ label: t("leash.required"), status: "warning" });
+    groups.push([{ label: t("leash.required"), status: "warning" }]);
   } else if (place.leash === "not_required") {
-    conditions.push({ label: t("leash.notRequired"), status: "good" });
+    groups.push([{ label: t("leash.notRequired"), status: "good" }]);
   } else if (place.leash === "partial_area") {
-    conditions.push({ label: t("leash.partialArea"), status: "warning" });
+    groups.push([{ label: t("leash.partialArea"), status: "warning" }]);
   }
 
   if (place.muzzle === "required") {
-    conditions.push({ label: t("muzzle.required"), status: "bad" });
+    groups.push([{ label: t("muzzle.required"), status: "bad" }]);
   } else if (place.muzzle === "not_required") {
-    conditions.push({ label: t("muzzle.notRequired"), status: "good" });
+    groups.push([{ label: t("muzzle.notRequired"), status: "good" }]);
   } else if (place.muzzle === "conditional") {
-    conditions.push({ label: t("muzzle.conditional"), status: "warning" });
+    groups.push([{ label: t("muzzle.conditional"), status: "warning" }]);
   }
 
   function getCheckedText() {
@@ -110,11 +149,10 @@ export default function PlaceConditionSummary({
     return checked;
   }
 
-  const isDetailed = variant === "detailed";
   const methodKey = isDetailed ? verificationMethodKey(place.verificationMethod) : null;
-  const visibleConditions = isDetailed
-    ? conditions
-    : conditions.slice(0, COMPACT_CONDITIONS);
+  const visibleConditions = (
+    isDetailed ? groups : groups.slice(0, COMPACT_CONDITION_GROUPS)
+  ).flat();
 
   return (
     <div className={cn(isDetailed ? "space-y-2.5" : "space-y-1.5", className)}>

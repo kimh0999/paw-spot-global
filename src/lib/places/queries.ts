@@ -132,6 +132,8 @@ export const placeListSelect = {
       muzzle: true,
       breedRestrictions: true,
       cautions: true,
+      // 요약 컬럼만으로는 `실내 불가 · 야외 미확인`을 표현할 수 없어 목록에서도 함께 읽는다.
+      policyDetails: true,
     },
   },
   verifications: {
@@ -236,6 +238,10 @@ export function toPlaceListItem(row: RawPlace, coord?: CoordQueryRow): PlaceList
       ? mapMuzzlePolicy(String(row.condition.muzzle))
       : null,
     breedRestrictions: row.condition?.breedRestrictions ?? null,
+    // 깨진 JSON을 "조건 없음"으로 넘기지 않는 처리는 상세와 같은 helper를 쓴다.
+    policyDetails: row.condition
+      ? readPolicyDetailsOrWarn(row.id, row.condition.policyDetails)
+      : null,
     caution: row.condition?.cautions ?? null,
     latestVerifiedAt: latestVerification
       ? formatVerifiedAt(latestVerification.verifiedAt)

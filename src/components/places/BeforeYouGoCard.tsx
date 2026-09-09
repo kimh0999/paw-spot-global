@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
+import { resolveDogAccess, type DogAccessKey } from "@/lib/places/dog-access";
 import { showsVaccinationRow } from "@/lib/places/display";
 import { toPolicyDisplay } from "@/lib/places/policy-display";
 import {
@@ -68,21 +69,28 @@ export default async function BeforeYouGoCard({ condition, locale }: Props) {
   const conditionRows: Array<{ label: string; value: string; status: ConditionStatus }> = [];
 
   if (condition) {
-    const indoorMap: Record<string, { value: string; status: ConditionStatus }> = {
+    // 실내 조건 행은 요약 컬럼만으로 판단하지 않는다. 세부 정책의 구역 기록까지
+    // 함께 읽어야 `실내 불가 · 야외 미확인`과 정보 불일치를 구분할 수 있다.
+    const access = resolveDogAccess(condition.indoor, condition.policyDetails);
+    const accessMap: Record<DogAccessKey, { value: string; status: ConditionStatus }> = {
       allowed: { value: t("indoor.allowed"), status: "good" },
-      outdoor_only: { value: t("indoor.outdoor_only"), status: "warning" },
-      partial_area: { value: t("indoor.partial_area"), status: "warning" },
-      not_allowed: { value: t("indoor.not_allowed"), status: "bad" },
+      outdoorOnly: { value: t("indoor.outdoor_only"), status: "warning" },
+      partialArea: { value: t("indoor.partial_area"), status: "warning" },
+      notAllowed: { value: t("indoor.not_allowed"), status: "bad" },
+      indoorBlockedOutdoorUnconfirmed: {
+        value: t("indoor.indoorBlockedOutdoorUnconfirmed"),
+        status: "warning",
+      },
+      conflict: { value: t("indoor.conflict"), status: "neutral" },
+      unknown: { value: t("indoor.unknown"), status: "neutral" },
     };
-    conditionRows.push({
-      label: t("indoor.label"),
-      ...(indoorMap[condition.indoor ?? ""] ?? none),
-    });
+    conditionRows.push({ label: t("indoor.label"), ...accessMap[access.key] });
 
     const carrierMap: Record<string, { value: string; status: ConditionStatus }> = {
       not_required: { value: t("carrier.not_required"), status: "good" },
       required_indoor: { value: t("carrier.required_indoor"), status: "warning" },
       required_always: { value: t("carrier.required_always"), status: "bad" },
+      unknown: { value: t("carrier.unknown"), status: "neutral" },
     };
     conditionRows.push({
       label: t("carrier.label"),
@@ -93,6 +101,7 @@ export default async function BeforeYouGoCard({ condition, locale }: Props) {
       small: { value: t("dogSize.small"), status: "bad" },
       medium: { value: t("dogSize.medium"), status: "warning" },
       large: { value: t("dogSize.large"), status: "good" },
+      unknown: { value: t("dogSize.unknown"), status: "neutral" },
     };
     conditionRows.push({
       label: t("dogSize.label"),

@@ -1,4 +1,5 @@
 import type { DogSizeFilter, PlaceListItem } from "@/types/place";
+import { resolveDogAccess } from "./dog-access";
 
 export type VisitEligibilityStatus = "allowed" | "blocked" | "unknown";
 
@@ -10,7 +11,8 @@ export interface VisitEligibility {
     | "tooLarge"
     | "dogsNotAllowed"
     | "sizeUnconfirmed"
-    | "conditionsUnconfirmed";
+    | "conditionsUnconfirmed"
+    | "accessConflict";
 }
 
 const SIZE_RANK: Record<"small" | "medium" | "large", number> = {
@@ -47,7 +49,15 @@ export function getVisitEligibility(
 ): VisitEligibility | null {
   if (dogSize === "all") return null;
 
-  if (place.indoor === "not_allowed") {
+  const access = resolveDogAccess(place.indoor, place.policyDetails);
+
+  // 요약 컬럼과 세부 정책이 명백히 어긋나면 어느 쪽도 사실로 확정하지 않는다.
+  // 방문 가능도 방문 불가도 단언하지 않고 확인이 필요하다고만 말한다.
+  if (access.key === "conflict") {
+    return { status: "unknown", messageKey: "accessConflict" };
+  }
+
+  if (access.key === "notAllowed") {
     return { status: "blocked", messageKey: "dogsNotAllowed" };
   }
 
@@ -87,7 +97,8 @@ export type AllowanceKey =
 export type VisitConditionKey =
   | "indoorOutdoorOnly"
   | "indoorPartialArea"
-  | "indoorNotAllowed"
+  | "indoorBlockedOutdoorUnconfirmed"
+  | "dogAccessConflict"
   | "carrierIndoor"
   | "carrierAlways"
   | "sizeSmallOnly"
@@ -113,10 +124,15 @@ export function getPlaceConditionBreakdown(place: PlaceListItem): PlaceCondition
   const allowances: AllowanceKey[] = [];
   const conditions: VisitConditionKey[] = [];
 
-  if (place.indoor === "allowed") allowances.push("indoorAllowed");
-  else if (place.indoor === "outdoor_only") conditions.push("indoorOutdoorOnly");
-  else if (place.indoor === "partial_area") conditions.push("indoorPartialArea");
-  else if (place.indoor === "not_allowed") conditions.push("indoorNotAllowed");
+  // 전체 동반 불가는 지켜야 할 조건이 아니라 방문 불가 판정이다.
+  // 미리보기 상태 영역(`getVisitStatus` → `notAllowed`)이 이미 단언하므로 목록에 겹쳐 넣지 않는다.
+  const access = resolveDogAccess(place.indoor, place.policyDetails);
+  if (access.key === "allowed") allowances.push("indoorAllowed");
+  else if (access.key === "outdoorOnly") conditions.push("indoorOutdoorOnly");
+  else if (access.key === "partialArea") conditions.push("indoorPartialArea");
+  else if (access.key === "indoorBlockedOutdoorUnconfirmed") {
+    conditions.push("indoorBlockedOutdoorUnconfirmed");
+  } else if (access.key === "conflict") conditions.push("dogAccessConflict");
 
   if (place.carrierStrollerPolicy === "not_required") allowances.push("noCarrier");
   else if (place.carrierStrollerPolicy === "required_indoor") conditions.push("carrierIndoor");
@@ -143,8 +159,12 @@ export function getPlaceConditionBreakdown(place: PlaceListItem): PlaceCondition
  * 아래 조건 목록과 모순되지 않도록 동반 불가와 미확인을 "조건부"보다 먼저 판정한다.
  */
 export function getVisitStatus(place: PlaceListItem, dogSize: DogSizeFilter): VisitStatus {
+  const access = resolveDogAccess(place.indoor, place.policyDetails);
+
+  // 충돌은 방문 불가보다 먼저 본다. 어긋난 정보를 근거로 불가를 단언하지 않는다.
+  if (access.key === "conflict") return "confirm";
   if (getVisitEligibility(place, dogSize)?.status === "blocked") return "notAllowed";
-  if (place.indoor === "not_allowed") return "notAllowed";
+  if (access.key === "notAllowed") return "notAllowed";
   if (hasUnconfirmedCoreCondition(place)) return "confirm";
   if (getPlaceConditionBreakdown(place).conditions.length > 0) return "conditional";
   return "available";

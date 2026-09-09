@@ -33,6 +33,7 @@ function place(overrides: Partial<PlaceListItem> = {}): PlaceListItem {
     maxDogSize: "unknown",
     leash: "unknown",
     muzzle: "unknown",
+    policyDetails: null,
     breedRestrictions: null,
     caution: null,
     latestVerifiedAt: null,

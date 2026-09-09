@@ -120,6 +120,7 @@
       }
     },
     "sort": {
+      "label": "Sort: {current}",
       "distance": "Nearest",
       "recent": "Recently verified",
       "indoorFirst": "Indoor priority",
@@ -135,7 +136,8 @@
         "tooLarge": "Too large for this place",
         "dogsNotAllowed": "Dogs not allowed here",
         "sizeUnconfirmed": "Size limit unconfirmed",
-        "conditionsUnconfirmed": "Conditions unconfirmed"
+        "conditionsUnconfirmed": "Conditions unconfirmed",
+        "accessConflict": "Conflicting dog access information"
       },
       "dogMatch": {
         "single": {
@@ -158,18 +160,21 @@
         "outdoorOnly": "Outdoor / terrace only",
         "partialArea": "Partial area only",
         "notAllowed": "Dogs not allowed",
-        "unknown": "Indoor unconfirmed"
+        "unknown": "Indoor access unconfirmed",
+        "indoorBlockedOutdoorUnconfirmed": "No indoor access · Outdoor access unconfirmed",
+        "conflict": "Conflicting dog access information"
       },
       "carrierStroller": {
-        "notRequired": "No carrier needed",
-        "requiredIndoor": "Hold or stroller indoors",
-        "requiredAlways": "Carrier/stroller required",
-        "unknown": "Needs confirmation"
+        "notRequired": "Carrier or stroller not required",
+        "requiredIndoor": "Carrier, stroller, or holding required indoors",
+        "requiredAlways": "Carrier or stroller required",
+        "unknown": "Carrier or stroller requirement unconfirmed"
       },
       "maxDogSize": {
-        "small": "Small dogs only",
+        "small": "Up to small",
         "medium": "Up to medium",
-        "large": "All sizes welcome"
+        "large": "Up to large",
+        "unknown": "Maximum dog size unconfirmed"
       },
       "leash": {
         "required": "Leash required",
@@ -237,7 +242,8 @@
       "conditions": {
         "indoorOutdoorOnly": "Outdoor seating only",
         "indoorPartialArea": "Dogs are allowed in certain areas only",
-        "indoorNotAllowed": "Dogs are not allowed here",
+        "indoorBlockedOutdoorUnconfirmed": "Dogs cannot go indoors. Whether they can use the outdoor area is unconfirmed",
+        "dogAccessConflict": "The information on dog access does not match. Check with the place before visiting",
         "carrierIndoor": "Hold your dog or use a stroller indoors",
         "carrierAlways": "A carrier or stroller is required at all times",
         "sizeSmallOnly": "Small dogs only",
@@ -333,25 +339,28 @@
         "noCondition": "Condition information is not available yet.",
         "checkWithStore": "Check with store",
         "indoor": {
-          "label": "Indoor access",
+          "label": "Dog access",
           "allowed": "Indoor access allowed",
           "outdoor_only": "Outdoor area only",
           "partial_area": "Partial indoor area",
           "not_allowed": "Dogs not allowed",
-          "unknown": "Check with store"
+          "unknown": "Dog access unconfirmed",
+          "indoorBlockedOutdoorUnconfirmed": "No indoor access · Outdoor access unconfirmed",
+          "conflict": "Conflicting dog access information"
         },
         "carrier": {
           "label": "Carrier / Stroller",
-          "not_required": "No carrier needed",
-          "required_indoor": "Hold or stroller indoors",
-          "required_always": "Carrier or stroller required"
+          "not_required": "Carrier or stroller not required",
+          "required_indoor": "Carrier, stroller, or holding required indoors",
+          "required_always": "Carrier or stroller required",
+          "unknown": "Carrier or stroller requirement unconfirmed"
         },
         "dogSize": {
           "label": "Dog size limit",
-          "small": "Small dogs only",
-          "medium": "Up to medium size",
-          "large": "All sizes welcome",
-          "unknown": "Check with store"
+          "small": "Up to small",
+          "medium": "Up to medium",
+          "large": "Up to large",
+          "unknown": "Maximum dog size unconfirmed"
         },
         "leash": {
           "label": "Leash",
@@ -534,6 +543,7 @@
     }
   },
   "header": {
+    "skipToContent": "Skip to content",
     "places": "Places",
     "category": "Category",
     "myDog": "My Dogs",

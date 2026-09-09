@@ -6,7 +6,19 @@ import {
   getVisitStatus,
   toDogSizeFilter,
 } from "@/lib/places/eligibility";
+import type { SpaceRecord } from "@/lib/places/dog-access";
+import { EMPTY_POLICY_DETAILS, type PolicyDetails } from "@/lib/places/policy-details";
 import type { PlaceListItem } from "@/types/place";
+
+function withSpace(spaceExceptions: SpaceRecord[]): PolicyDetails {
+  return { ...EMPTY_POLICY_DETAILS, spaceExceptions };
+}
+
+const indoorBlockedAll: SpaceRecord = {
+  area: "INDOOR",
+  appliesToSize: "ALL",
+  access: "NOT_ALLOWED",
+};
 
 /**
  * 조건 해석의 단일 출처인 `eligibility.ts`의 회귀 테스트.
@@ -31,6 +43,7 @@ function place(overrides: Partial<PlaceListItem> = {}): PlaceListItem {
     maxDogSize: "unknown",
     leash: "unknown",
     muzzle: "unknown",
+    policyDetails: null,
     breedRestrictions: null,
     caution: null,
     latestVerifiedAt: null,
@@ -171,10 +184,39 @@ describe("getPlaceConditionBreakdown", () => {
     ]);
   });
 
-  it("동반 불가는 조건 목록으로 들어간다", () => {
-    expect(getPlaceConditionBreakdown(place({ indoor: "not_allowed" })).conditions).toEqual([
-      "indoorNotAllowed",
-    ]);
+  // 전체 동반 불가는 지켜야 할 조건이 아니라 방문 불가 판정이다.
+  // 상태 영역(getVisitStatus)이 이미 단언하므로 조건 목록에 겹쳐 넣지 않는다.
+  it("동반 불가는 조건 목록에 넣지 않는다", () => {
+    expect(getPlaceConditionBreakdown(place({ indoor: "not_allowed" })).conditions).toEqual([]);
+  });
+
+  it("동반 불가는 상태 영역이 대신 단언한다", () => {
+    expect(getVisitStatus(place({ indoor: "not_allowed" }), "all")).toBe("notAllowed");
+  });
+
+  it("실내 불가 · 야외 미확인은 조건 목록에 한 줄로 들어간다", () => {
+    const conditions = getPlaceConditionBreakdown(
+      place({ indoor: "unknown", policyDetails: withSpace([indoorBlockedAll]) }),
+    ).conditions;
+
+    expect(conditions).toContain("indoorBlockedOutdoorUnconfirmed");
+  });
+
+  it("정보 불일치는 조건 목록에 충돌로 들어간다", () => {
+    const conditions = getPlaceConditionBreakdown(
+      place({ indoor: "allowed", policyDetails: withSpace([indoorBlockedAll]) }),
+    ).conditions;
+
+    expect(conditions).toContain("dogAccessConflict");
+    expect(conditions).not.toContain("indoorOutdoorOnly");
+  });
+
+  it("정보가 불일치하면 실내 가능을 허용 목록에 넣지 않는다", () => {
+    const { allowances } = getPlaceConditionBreakdown(
+      place({ indoor: "allowed", policyDetails: withSpace([indoorBlockedAll]) }),
+    );
+
+    expect(allowances).not.toContain("indoorAllowed");
   });
 
   // maxDogSize=large를 "대형견 환영"으로 읽는 현재 동작. docs/analysis-pet-conditions.md §D가
@@ -341,5 +383,56 @@ describe("두 판정의 정합 — 배지와 설명이 같은 뜻이어야 한�
 
     expect(getVisitEligibility(target, "small")?.status).toBe("unknown");
     expect(getVisitStatus(target, "small")).toBe("confirm");
+  });
+
+  it("실내 불가 · 야외 미확인은 방문 가능도 불가도 단언하지 않는다", () => {
+    const target = place({
+      indoor: "unknown",
+      maxDogSize: "large",
+      carrierStrollerPolicy: "not_required",
+      policyDetails: withSpace([indoorBlockedAll]),
+    });
+
+    expect(getVisitEligibility(target, "small")?.status).toBe("unknown");
+    expect(getVisitStatus(target, "small")).toBe("confirm");
+  });
+
+  it("정보가 불일치하면 크기가 맞아도 방문 가능으로 확정하지 않는다", () => {
+    const target = place({
+      indoor: "allowed",
+      maxDogSize: "large",
+      carrierStrollerPolicy: "not_required",
+      policyDetails: withSpace([indoorBlockedAll]),
+    });
+
+    expect(getVisitEligibility(target, "small")).toEqual({
+      status: "unknown",
+      messageKey: "accessConflict",
+    });
+    expect(getVisitStatus(target, "small")).toBe("confirm");
+  });
+
+  it("정보가 불일치하면 방문 불가로도 확정하지 않는다", () => {
+    const target = place({
+      indoor: "not_allowed",
+      policyDetails: withSpace([{ area: "TERRACE", appliesToSize: "ALL", access: "ALLOWED" }]),
+    });
+
+    expect(getVisitEligibility(target, "small")?.status).toBe("unknown");
+    expect(getVisitStatus(target, "small")).toBe("confirm");
+    expect(getVisitStatus(target, "all")).toBe("confirm");
+  });
+
+  it("대형견만 실내 불가인 정상 예외는 판정을 바꾸지 않는다", () => {
+    const target = fullyAllowedPlace();
+    const withSizeException = {
+      ...target,
+      policyDetails: withSpace([
+        { area: "INDOOR", appliesToSize: "LARGE", access: "NOT_ALLOWED" },
+      ]),
+    };
+
+    expect(getVisitEligibility(withSizeException, "small")?.status).toBe("allowed");
+    expect(getVisitStatus(withSizeException, "small")).toBe("available");
   });
 });
