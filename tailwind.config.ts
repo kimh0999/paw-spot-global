@@ -129,6 +129,10 @@ const config: Config = {
           from: { opacity: "0", transform: "scale(0.95)" },
           to: { opacity: "1", transform: "scale(1)" },
         },
+        "popover-out": {
+          from: { opacity: "1", transform: "scale(1)" },
+          to: { opacity: "0", transform: "scale(0.95)" },
+        },
       },
       animation: {
         "overlay-in": "overlay-in var(--duration-standard) var(--ease-enter)",
@@ -140,6 +144,7 @@ const config: Config = {
         "drawer-in": "drawer-in var(--duration-standard) var(--ease-enter)",
         "drawer-out": "drawer-out var(--duration-standard) var(--ease-exit)",
         "popover-in": "popover-in var(--duration-fast) var(--ease-enter)",
+        "popover-out": "popover-out var(--duration-fast) var(--ease-exit)",
       },
       transitionDuration: {
         fast: "var(--duration-fast)",

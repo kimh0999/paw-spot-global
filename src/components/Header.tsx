@@ -18,6 +18,14 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-header bg-surface border-b border-border">
+      {/* 페이지의 첫 초점. 평소에는 숨어 있다가 Tab 한 번에 드러나고,
+          누르면 헤더 링크 전부를 건너뛰어 본문으로 간다. */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-2.5 focus:z-header focus:inline-flex focus:h-11 focus:items-center focus:rounded-full focus:bg-primary focus:px-4 focus:text-sm focus:font-semibold focus:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        {t("skipToContent")}
+      </a>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-8">
           <Link href="/" className="flex items-center gap-2 shrink-0">

@@ -21,7 +21,7 @@ export default async function ProfileDogsPage({ params }: ProfileDogsPageProps) 
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
+      <main id="main-content" tabIndex={-1} className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
         <h1 className="text-2xl font-bold text-content">{t("title")}</h1>
         <p className="mt-2 text-sm text-content-secondary">{t("description")}</p>
 

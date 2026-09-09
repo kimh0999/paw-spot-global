@@ -262,7 +262,7 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-surface">
       <Header />
 
-      <div className="relative flex min-h-0 flex-1">
+      <main id="main-content" tabIndex={-1} className="relative flex min-h-0 flex-1">
         {/* 목록 패널 — lg 이상에서는 좌측 컬럼, 그 아래에서는 지도 위 Bottom Sheet */}
         <section
           aria-label={t("list.title")}
@@ -273,6 +273,21 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
             "lg:static lg:z-auto lg:h-auto lg:w-[340px] lg:shrink-0 lg:rounded-none lg:border-r lg:border-t-0 lg:pb-0 lg:shadow-none lg:transition-none",
           )}
         >
+          {/*
+            결과 수 고지 (`DESIGN.md` §11).
+
+            화면의 결과 수 표시는 두 곳 다 조건부로 숨는다 — 모바일 컨트롤은 `selected`
+            단계에서, 데스크톱 줄은 `lg` 미만에서. `display:none`인 요소는 live region으로
+            동작하지 않으므로, 어느 단계에서든 살아 있는 sr-only 영역을 따로 둔다.
+
+            **선택 고지는 여기서 하지 않는다.** `PlacePreviewCard`가 선택이 바뀔 때 제목
+            (`tabIndex={-1}`)으로 포커스를 옮기고 스크린리더가 그걸 읽는다. 같은 내용을
+            live region으로 또 내보내면 한 번의 선택이 두 번 읽힌다.
+          */}
+          <p role="status" className="sr-only">
+            {t("list.resultCount", { count: visiblePlaces.length })}
+          </p>
+
           {/* 시트 손잡이 — 모바일에서 끌어올릴 영역임을 알리는 장식 */}
           <span
             className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border-strong lg:hidden"
@@ -461,7 +476,7 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
               <button
                 type="button"
                 onClick={clearLocation}
-                className="shrink-0 rounded-full border border-warning px-3 py-1.5 text-xs font-semibold text-warning outline-none transition-colors hover:bg-warning/10 focus-visible:ring-2 focus-visible:ring-ring"
+                className="inline-flex h-11 shrink-0 items-center rounded-full border border-warning px-3 text-xs font-semibold text-warning outline-none transition-colors hover:bg-warning/10 focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {t("list.serviceArea.viewPlaces")}
               </button>
@@ -578,7 +593,7 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
             isLocating={isLocating}
           />
         </div>
-      </div>
+      </main>
 
       <FilterModal
         isOpen={isFilterOpen}
