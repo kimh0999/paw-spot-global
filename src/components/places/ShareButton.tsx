@@ -56,11 +56,11 @@ export default function ShareButton({ path, title, className }: ShareButtonProps
       onClick={handleShare}
       disabled={isSharing}
       className={cn(
-        "inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border border-border-strong bg-surface px-4 text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60",
+        "inline-flex h-11 items-center justify-center gap-1.5 rounded-lg border border-border-control bg-surface px-4 text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60",
         className,
       )}
     >
-      <Share2 className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+      <Share2 className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
       {t("share")}
     </button>
   );

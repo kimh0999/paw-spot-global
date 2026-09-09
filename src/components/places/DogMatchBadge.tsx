@@ -48,12 +48,12 @@ export default function DogMatchBadge({
   return (
     <p
       className={cn(
-        "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold",
+        "flex items-start gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-bold",
         statusStyles[status],
         className,
       )}
     >
-      <Icon size={16} strokeWidth={2} className="shrink-0" aria-hidden="true" />
+      <Icon size={16} strokeWidth={2} className="mt-0.5 shrink-0" aria-hidden="true" />
       {label}
     </p>
   );

@@ -3,7 +3,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Compass, LayoutList, LoaderCircle, MapIcon, MapPin, PawPrint, Search, X } from "lucide-react";
+import {
+  Compass,
+  LayoutList,
+  LoaderCircle,
+  MapIcon,
+  Navigation,
+  PawPrint,
+  Search,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 
 import Header from "@/components/Header";
 import FilterModal from "@/components/places/FilterModal";
@@ -42,12 +52,22 @@ interface PlacesClientProps {
 type SheetState = "peek" | "results" | "selected";
 
 const SHEET_HEIGHT: Record<SheetState, string> = {
-  peek: "h-24",
-  results: "h-[75vh]",
-  selected: "h-72",
+  peek: "h-20",
+  results: "h-[78%]",
+  selected: "h-[70%]",
 };
 
-export default function PlacesClient({ initialPlaces, userLocation, favoritePlaceIds, matchDogs, hasStaleDogSelection = false }: PlacesClientProps) {
+/** 칩·토글처럼 목록 위쪽에 줄지어 서는 컨트롤의 공통 모양. */
+const controlChipClass =
+  "inline-flex h-11 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring";
+
+export default function PlacesClient({
+  initialPlaces,
+  userLocation,
+  favoritePlaceIds,
+  matchDogs,
+  hasStaleDogSelection = false,
+}: PlacesClientProps) {
   const t = useTranslations("places");
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -255,22 +275,33 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
       userLocation={userLocation}
       isFavorite={isSelectedFavorite}
       dogSize={previewDogSize}
+      dogName={matchDogName}
     />
   ) : null;
+
+  /** 목록 위쪽 컨트롤·배너는 모바일에서 `results` 단계에서만 보인다. */
+  const listOnlyFlex = sheetState === "results" ? "flex" : "hidden";
+  const listOnlyBlock = sheetState === "results" ? "block" : "hidden";
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-surface">
       <Header />
 
       <main id="main-content" tabIndex={-1} className="relative flex min-h-0 flex-1">
-        {/* 목록 패널 — lg 이상에서는 좌측 컬럼, 그 아래에서는 지도 위 Bottom Sheet */}
+        {/*
+          탐색 컬럼 — lg 이상에서는 지도 왼쪽의 고정 컬럼, 그 아래에서는 지도 위 Bottom Sheet.
+          선택한 장소는 **이 컬럼을 덮는다**. 세 번째 컬럼을 만들면 지도가 비교할 수 없을
+          만큼 좁아지고, 미리보기도 조건 문장을 한 줄에 담지 못한다 (`DESIGN.md` §5).
+        */}
         <section
           aria-label={t("list.title")}
           className={cn(
-            "absolute inset-x-0 bottom-0 z-bottom-sheet flex flex-col overflow-hidden rounded-t-2xl border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] shadow-lg",
+            "absolute inset-x-0 bottom-0 z-bottom-sheet flex flex-col overflow-hidden rounded-t-sheet border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] shadow-lg",
             "transition-[height] duration-standard ease-standard motion-reduce:transition-none",
             SHEET_HEIGHT[sheetState],
-            "lg:static lg:z-auto lg:h-auto lg:w-[340px] lg:shrink-0 lg:rounded-none lg:border-r lg:border-t-0 lg:pb-0 lg:shadow-none lg:transition-none",
+            // lg에서는 컬럼이 되지만 `relative`는 유지한다 — 선택한 장소 패널이 이 컬럼
+            // 안에만 덮여야 하고, 기준이 없으면 화면 전체를 덮는다.
+            "lg:relative lg:inset-auto lg:z-auto lg:h-auto lg:w-[400px] lg:shrink-0 lg:rounded-none lg:border-r lg:border-t-0 lg:pb-0 lg:shadow-none lg:transition-none xl:w-[440px]",
           )}
         >
           {/*
@@ -301,41 +332,49 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
               sheetState === "selected" && "hidden",
             )}
           >
-            <p className="text-sm font-semibold text-content">
+            <p className="text-sm font-bold text-content">
               {t("list.resultCount", { count: visiblePlaces.length })}
             </p>
             <button
               type="button"
               onClick={() => setIsSheetListOpen((prev) => !prev)}
               aria-expanded={isSheetListOpen}
-              className="flex h-11 items-center gap-1.5 rounded-full border border-border-strong bg-surface px-4 text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring"
+              className={cn(
+                controlChipClass,
+                "border-border-control bg-surface font-semibold text-content hover:bg-surface-subtle",
+              )}
             >
               {isSheetListOpen ? (
-                <MapIcon size={16} strokeWidth={1.5} aria-hidden="true" />
+                <MapIcon size={16} strokeWidth={2} aria-hidden="true" />
               ) : (
-                <LayoutList size={16} strokeWidth={1.5} aria-hidden="true" />
+                <LayoutList size={16} strokeWidth={2} aria-hidden="true" />
               )}
               {isSheetListOpen ? t("sheet.showMap") : t("sheet.showList")}
             </button>
           </div>
 
           {/* 선택한 장소 요약 — 모바일에서는 시트 안에 표시 */}
-          <div className={cn("min-h-0 flex-1 lg:hidden", sheetState !== "selected" && "hidden")}>
+          <div
+            className={cn(
+              "min-h-0 flex-1 lg:hidden",
+              sheetState !== "selected" && "hidden",
+            )}
+          >
             {previewCard}
           </div>
 
-          {/* 검색 · 카테고리 · 필터 · 정렬 */}
+          {/* 검색 · 카테고리 · 위치 · 필터 */}
           <div
             className={cn(
-              "shrink-0 flex-col gap-2 border-b border-border px-4 pb-3 pt-1 lg:flex lg:pt-3",
-              sheetState === "results" ? "flex" : "hidden",
+              "shrink-0 flex-col gap-2 border-b border-border px-4 pb-3 pt-1 lg:flex lg:pt-4",
+              listOnlyFlex,
             )}
           >
             {/* 입력과 동시에 필터링되므로 별도 검색 버튼을 두지 않는다 */}
             <div className="relative">
               <Search
                 size={16}
-                strokeWidth={1.5}
+                strokeWidth={2}
                 className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-content-muted"
                 aria-hidden="true"
               />
@@ -345,27 +384,29 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t("list.searchPlaceholder")}
                 aria-label={t("list.searchPlaceholder")}
-                className="h-11 w-full rounded-xl border border-border-strong pl-10 pr-4 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring"
+                className="h-11 w-full rounded-lg border border-border-control bg-surface pl-10 pr-4 text-sm text-content outline-none transition-colors placeholder:text-content-muted focus:border-primary focus:ring-2 focus:ring-ring"
               />
             </div>
 
-            <div className="flex flex-wrap gap-1.5">
-              {CATEGORIES.map(({ value, label }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setSelectedCategory(value)}
-                  aria-pressed={selectedCategory === value}
-                  className={cn(
-                    "rounded-full px-4 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
-                    selectedCategory === value
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-surface-subtle text-content hover:bg-border",
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
+            <div className="-mx-4 overflow-x-auto px-4">
+              <div className="flex w-max gap-1.5">
+                {CATEGORIES.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setSelectedCategory(value)}
+                    aria-pressed={selectedCategory === value}
+                    className={cn(
+                      controlChipClass,
+                      selectedCategory === value
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border-control bg-surface text-content hover:bg-surface-subtle",
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-1.5">
@@ -373,18 +414,23 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
                 type="button"
                 onClick={handleMyLocation}
                 disabled={isLocating}
+                aria-pressed={hasLocationInUrl}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+                  controlChipClass,
                   hasLocationInUrl
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border-strong bg-surface text-content hover:bg-surface-subtle",
+                    ? "border-primary bg-primary-soft text-primary"
+                    : "border-border-control bg-surface text-content hover:bg-surface-subtle",
                   isLocating && "cursor-not-allowed opacity-60",
                 )}
               >
                 {isLocating ? (
-                  <LoaderCircle className="h-4 w-4 animate-spin motion-reduce:animate-none" strokeWidth={1.5} aria-hidden="true" />
+                  <LoaderCircle
+                    className="h-4 w-4 animate-spin motion-reduce:animate-none"
+                    strokeWidth={2}
+                    aria-hidden="true"
+                  />
                 ) : (
-                  <MapPin className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+                  <Navigation className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
                 )}
                 {t("list.myLocation")}
               </button>
@@ -393,15 +439,16 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
                 type="button"
                 onClick={() => setIsFilterOpen(true)}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+                  controlChipClass,
                   activeFilterCount > 0
                     ? "border-primary bg-primary-soft text-primary"
-                    : "border-border-strong bg-surface text-content hover:bg-surface-subtle",
+                    : "border-border-control bg-surface text-content hover:bg-surface-subtle",
                 )}
               >
+                <SlidersHorizontal className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
                 {t("list.filter")}
                 {activeFilterCount > 0 && (
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold leading-none text-primary-foreground">
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs font-bold leading-none text-primary-foreground">
                     {activeFilterCount}
                   </span>
                 )}
@@ -414,7 +461,7 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
             <div
               className={cn(
                 "shrink-0 items-center justify-between gap-2 border-b border-border bg-primary-soft px-4 py-2 lg:flex",
-                sheetState === "results" ? "flex" : "hidden",
+                listOnlyFlex,
               )}
             >
               <p className="min-w-0 truncate text-sm font-semibold text-primary">
@@ -430,7 +477,7 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
                     { scroll: false },
                   )
                 }
-                className="flex h-9 shrink-0 items-center gap-1 rounded-full px-2 text-sm font-semibold text-primary outline-none hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex h-11 shrink-0 items-center gap-1 rounded-md px-2 text-sm font-semibold text-primary outline-none hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <X size={14} strokeWidth={2} aria-hidden="true" />
                 {t("list.dogSelection.clear")}
@@ -442,7 +489,7 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
             <p
               className={cn(
                 "shrink-0 border-b border-border bg-warning-soft px-4 py-2 text-xs text-warning lg:block",
-                sheetState === "results" ? "block" : "hidden",
+                listOnlyBlock,
               )}
             >
               {t("list.locationDenied")}
@@ -452,7 +499,7 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
             <p
               className={cn(
                 "shrink-0 border-b border-border bg-warning-soft px-4 py-2 text-xs text-warning lg:block",
-                sheetState === "results" ? "block" : "hidden",
+                listOnlyBlock,
               )}
             >
               {t("list.locationBlocked")}
@@ -467,7 +514,7 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
             <div
               className={cn(
                 "shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border bg-warning-soft px-4 py-2 lg:flex",
-                sheetState === "results" ? "flex" : "hidden",
+                listOnlyFlex,
               )}
             >
               <p className="min-w-0 text-xs text-warning">
@@ -476,35 +523,31 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
               <button
                 type="button"
                 onClick={clearLocation}
-                className="inline-flex h-11 shrink-0 items-center rounded-full border border-warning px-3 text-xs font-semibold text-warning outline-none transition-colors hover:bg-warning/10 focus-visible:ring-2 focus-visible:ring-ring"
+                className="inline-flex h-11 shrink-0 items-center rounded-md border border-warning px-3 text-xs font-semibold text-warning outline-none transition-colors hover:bg-warning/10 focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {t("list.serviceArea.viewPlaces")}
               </button>
             </div>
           )}
 
-          {/* 대전 단독 공개 기간 동안의 상시 안내. 조용한 정보라 경고 색을 쓰지 않는다. */}
-          {!outOfServiceArea && (
-            <p
-              className={cn(
-                "shrink-0 border-b border-border bg-surface-subtle px-4 py-2 text-xs text-content-secondary lg:block",
-                sheetState === "results" ? "block" : "hidden",
-              )}
-            >
-              {t("list.serviceArea.notice")}
-            </p>
-          )}
-
           {/* 결과 수와 정렬은 서로를 설명하므로 같은 줄에 둔다. 모바일 결과 수는 시트 헤더에 이미 있다. */}
           <div
             className={cn(
               "shrink-0 items-center justify-between gap-2 px-4 py-2 lg:flex",
-              sheetState === "results" ? "flex" : "hidden",
+              listOnlyFlex,
             )}
           >
-            <p className="hidden text-sm text-content-secondary lg:block">
-              {t("list.resultCount", { count: visiblePlaces.length })}
-            </p>
+            <div className="hidden min-w-0 lg:block">
+              <p className="text-sm font-bold text-content">
+                {t("list.resultCount", { count: visiblePlaces.length })}
+              </p>
+              {/* 대전 단독 공개 기간 동안의 상시 안내. 조용한 정보라 경고 색을 쓰지 않는다. */}
+              {!outOfServiceArea && (
+                <p className="truncate text-xs text-content-secondary">
+                  {t("list.serviceArea.notice")}
+                </p>
+              )}
+            </div>
             <div className="ml-auto">
               <SortDropdown
                 value={sortOption}
@@ -516,13 +559,12 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
 
           {/* 장소 목록 — 패널 안에서만 독립적으로 스크롤한다 */}
           <div
-            className={cn(
-              "min-h-0 flex-1 overflow-y-auto px-4 pb-4 lg:block",
-              sheetState === "results" ? "block" : "hidden",
-            )}
+            className={cn("min-h-0 flex-1 overflow-y-auto lg:block", listOnlyBlock)}
           >
             {visiblePlaces.length > 0 ? (
-              <ul className="space-y-2">
+              // 행 사이는 카드 테두리가 아니라 구분선으로 나눈다. 목록의 목적은 비교인데
+              // 테두리 상자 여러 개는 비교할 내용을 각자의 상자 안에 가둔다 (DESIGN.md §6).
+              <ul className="divide-y divide-border border-t border-border">
                 {visiblePlaces.map((place) => (
                   <li
                     key={place.id}
@@ -538,7 +580,7 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
                       place={place}
                       referenceDate={referenceDate}
                       onClick={() => handlePlaceSelect(place.id)}
-                      action="select"
+                      variant="list"
                       isSelected={selectedPlaceId === place.id}
                       dogMatch={getDogMatch(place.id)}
                     />
@@ -546,14 +588,18 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
                 ))}
               </ul>
             ) : (
-              <div className="px-4 py-20 text-center text-content-muted">
-                <EmptyIcon className="mx-auto mb-3 h-6 w-6" strokeWidth={1.5} aria-hidden="true" />
-                <p className="text-sm">{emptyState.message}</p>
+              <div className="px-6 py-16 text-center">
+                <EmptyIcon
+                  className="mx-auto mb-3 h-6 w-6 text-content-muted"
+                  strokeWidth={1.5}
+                  aria-hidden="true"
+                />
+                <p className="text-sm text-content-secondary">{emptyState.message}</p>
                 {emptyState.onAction && (
                   <button
                     type="button"
                     onClick={emptyState.onAction}
-                    className="mt-4 inline-flex h-11 items-center rounded-full border border-border-strong bg-surface px-4 text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring"
+                    className="mt-4 inline-flex h-11 items-center rounded-lg border border-border-control bg-surface px-4 text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {emptyState.actionLabel}
                   </button>
@@ -561,24 +607,14 @@ export default function PlacesClient({ initialPlaces, userLocation, favoritePlac
               </div>
             )}
           </div>
-        </section>
 
-        {/* 선택한 장소 상세 — xl 이상은 목록 옆 컬럼, lg 구간은 지도 폭을 지키려고 지도 위 overlay로 띄운다 */}
-        <section
-          aria-label={t("preview.title")}
-          className={cn(
-            "hidden overflow-hidden bg-surface",
-            // lg overlay — 목록 폭 340px + 여백 16px 만큼 띄운다
-            "lg:absolute lg:inset-y-4 lg:left-[356px] lg:z-map-control lg:w-[360px] lg:rounded-xl lg:border lg:border-border lg:shadow-lg",
-            // xl 3분할 컬럼 — 미선택 시 폭 0으로 닫히고 지도가 확장된다
-            "xl:static xl:inset-auto xl:z-auto xl:shrink-0 xl:rounded-none xl:border-0 xl:shadow-none",
-            "xl:transition-[width] xl:duration-standard xl:ease-standard motion-reduce:xl:transition-none",
-            selectedPlace
-              ? "lg:block xl:w-[380px] xl:border-r"
-              : "xl:block xl:w-0",
+          {/* 데스크톱에서 선택한 장소는 목록 컬럼을 덮는다. 목록은 그대로 남아 있어
+              닫으면 스크롤 위치까지 원래대로 돌아온다. */}
+          {selectedPlace && (
+            <div className="absolute inset-0 z-10 hidden bg-surface lg:block">
+              {previewCard}
+            </div>
           )}
-        >
-          {previewCard}
         </section>
 
         {/* 지도 — 남은 너비를 모두 쓰고, 선택이 바뀌어도 재마운트하지 않는다 */}

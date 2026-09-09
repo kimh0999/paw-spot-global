@@ -69,13 +69,13 @@ export default function FavoriteButton({
       aria-pressed={favorited}
       title={label}
       className={cn(
-        "inline-flex items-center justify-center rounded-md border border-border-strong text-content-muted transition-colors hover:text-content disabled:opacity-60",
-        favorited && "border-primary text-primary hover:text-primary-hover",
+        "inline-flex items-center justify-center rounded-lg border border-border-control bg-surface text-content-secondary outline-none transition-colors hover:bg-surface-subtle hover:text-content focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60",
+        favorited && "border-primary bg-primary-soft text-primary hover:bg-primary-soft",
         className,
       )}
     >
       <Heart
-        className="w-4 h-4"
+        className="h-5 w-5"
         aria-hidden="true"
         fill={favorited ? "currentColor" : "none"}
       />

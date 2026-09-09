@@ -43,7 +43,7 @@ function SubmitBar({
         type="button"
         onClick={onCancel}
         disabled={pending}
-        className="h-11 flex-1 rounded-lg border border-border-strong bg-surface text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+        className="h-11 flex-1 rounded-lg border border-border-control bg-surface text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
       >
         {cancelLabel}
       </button>
@@ -114,7 +114,7 @@ export default function DogForm({ mode, dog, onResult, onCancel }: DogFormProps)
             aria-describedby={fieldErrors?.name ? nameErrorId : undefined}
             className={cn(
               inputClass,
-              fieldErrors?.name ? "border-danger" : "border-border-strong",
+              fieldErrors?.name ? "border-danger" : "border-border-control",
             )}
           />
           {fieldErrors?.name && (
@@ -132,7 +132,7 @@ export default function DogForm({ mode, dog, onResult, onCancel }: DogFormProps)
             {DOG_SIZES.map((size) => (
               <label
                 key={size}
-                className="relative flex min-h-[4.5rem] cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-border-strong bg-surface px-2 text-center text-sm font-medium text-content transition-colors hover:bg-surface-subtle has-[:checked]:border-primary has-[:checked]:bg-primary-soft has-[:checked]:text-primary [&:has(:focus-visible)]:ring-2 [&:has(:focus-visible)]:ring-ring"
+                className="relative flex min-h-[4.5rem] cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-border-control bg-surface px-2 text-center text-sm font-medium text-content transition-colors hover:bg-surface-subtle has-[:checked]:border-primary has-[:checked]:bg-primary-soft has-[:checked]:text-primary [&:has(:focus-visible)]:ring-2 [&:has(:focus-visible)]:ring-ring"
               >
                 <input
                   type="radio"
@@ -181,7 +181,7 @@ export default function DogForm({ mode, dog, onResult, onCancel }: DogFormProps)
               aria-describedby={fieldErrors?.breedCustom ? customErrorId : undefined}
               className={cn(
                 inputClass,
-                fieldErrors?.breedCustom ? "border-danger" : "border-border-strong",
+                fieldErrors?.breedCustom ? "border-danger" : "border-border-control",
               )}
             />
             <p className="mt-1 text-xs text-content-muted">{t("breedCustomHint")}</p>

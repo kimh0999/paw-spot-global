@@ -3,12 +3,20 @@
 import { useEffect, useRef, useState } from "react";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 import { useTranslations } from "next-intl";
+import { LoaderCircle, LocateFixed, MapPinned } from "lucide-react";
 
 import {
   SERVICE_AREA_CENTER,
   SERVICE_AREA_ZOOM,
 } from "@/lib/places/service-area";
 import type { PlaceListItem } from "@/types/place";
+
+declare global {
+  interface Window {
+    /** Maps SDK가 인증·결제 거부 시 부르는 전역 콜백. 이름은 SDK가 정한다. */
+    gm_authFailure?: () => void;
+  }
+}
 
 interface MapPanelProps {
   places: PlaceListItem[];
@@ -28,15 +36,21 @@ const PIN_PATH =
   "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z";
 
 // Tokens are read once on the client; the palette is light-mode only (DESIGN.md §4).
-let markerColors: { default: string; hover: string; selected: string } | null = null;
+let markerColors: {
+  default: string;
+  hover: string;
+  selected: string;
+  userLocation: string;
+} | null = null;
 
 function getMarkerColors() {
   if (!markerColors) {
     const root = getComputedStyle(document.documentElement);
     markerColors = {
       default: root.getPropertyValue("--color-unknown").trim(),
-      hover: root.getPropertyValue("--color-primary-hover").trim(),
+      hover: root.getPropertyValue("--color-text").trim(),
       selected: root.getPropertyValue("--color-primary").trim(),
+      userLocation: root.getPropertyValue("--color-user-location").trim(),
     };
   }
   return markerColors;
@@ -120,7 +134,9 @@ export default function MapPanel({
   const t = useTranslations("places.map");
   const tCommon = useTranslations("common");
 
-  const [mapState, setMapState] = useState<"loading" | "ready" | "error" | "no-key">("loading");
+  const [mapState, setMapState] = useState<
+    "loading" | "ready" | "error" | "no-key" | "auth-error"
+  >("loading");
   // 재시도 버튼이 올리는 값. 초기화 effect가 이 값에 의존해 다시 돈다.
   const [loadAttempt, setLoadAttempt] = useState(0);
 
@@ -134,6 +150,16 @@ export default function MapPanel({
     }
 
     let cancelled = false;
+
+    /**
+     * 인증·결제 거부는 Promise로 오지 않는다. Maps SDK는 스크립트를 정상적으로 내려준 뒤
+     * 콘솔에만 이유를 적고(예: BillingNotEnabledMapError) 타일 없는 회색 판을 남긴다.
+     * SDK가 그럴 때 부르는 전역 콜백을 걸어, 설명 없는 회색 화면 대신 사실을 알린다.
+     * 오류를 가리는 것이 아니라 **무엇이 필요한지 말하는** 처리다.
+     */
+    window.gm_authFailure = () => {
+      if (!cancelled) setMapState("auth-error");
+    };
 
     setOptions({ key: apiKey, v: "weekly" });
 
@@ -224,8 +250,9 @@ export default function MapPanel({
       map: mapRef.current,
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
-        scale: 10,
-        fillColor: "#4285F4",
+        scale: 9,
+        // 선택한 장소 마커(브랜드색)와 반드시 구분돼야 해서 별도 토큰을 쓴다.
+        fillColor: getMarkerColors().userLocation,
         fillOpacity: 1,
         strokeColor: "#ffffff",
         strokeWeight: 2,
@@ -271,26 +298,37 @@ export default function MapPanel({
     mapRef.current.setZoom(SERVICE_AREA_ZOOM);
   }, [userLocation, mapState]);
 
-  // 키가 없는 것은 설정 문제라 다시 시도해도 결과가 같다. 재시도 버튼을 주지 않는다.
-  if (mapState === "no-key") {
+  // 키가 없는 것도, 키가 거부된 것도 설정 문제라 다시 시도해도 결과가 같다.
+  // 재시도 버튼을 주지 않고 무엇이 막혔는지만 말한다. 목록은 그대로 쓸 수 있다.
+  if (mapState === "no-key" || mapState === "auth-error") {
     return (
-      <div className="w-full h-full bg-surface-subtle flex items-center justify-center p-4">
-        <p className="text-sm text-content-secondary text-center">{t("noKey")}</p>
+      <div className="flex h-full w-full items-center justify-center bg-surface-page p-6">
+        <div className="max-w-sm text-center">
+          <MapPinned
+            className="mx-auto h-6 w-6 text-content-muted"
+            strokeWidth={1.5}
+            aria-hidden="true"
+          />
+          <p className="mt-3 text-sm text-content-secondary">
+            {mapState === "no-key" ? t("noKey") : t("authError")}
+          </p>
+          <p className="mt-1 text-xs text-content-muted">{t("listStillAvailable")}</p>
+        </div>
       </div>
     );
   }
 
   if (mapState === "error") {
     return (
-      <div className="w-full h-full bg-surface-subtle flex flex-col items-center justify-center gap-3 p-4">
-        <p className="text-sm text-content-secondary text-center">{t("error")}</p>
+      <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-surface-page p-6">
+        <p className="text-center text-sm text-content-secondary">{t("error")}</p>
         <button
           type="button"
           onClick={() => {
             setMapState("loading");
             setLoadAttempt((attempt) => attempt + 1);
           }}
-          className="inline-flex h-11 items-center rounded-full border border-border-strong bg-surface px-4 text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring"
+          className="inline-flex h-11 items-center rounded-lg border border-border-control bg-surface px-4 text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring"
         >
           {tCommon("retry")}
         </button>
@@ -303,13 +341,14 @@ export default function MapPanel({
   return (
     <div className="w-full h-full relative">
       {mapState === "loading" && (
-        <div className="absolute inset-0 bg-surface-subtle flex items-center justify-center z-map-control">
+        <div className="absolute inset-0 z-map-control flex items-center justify-center bg-surface-page">
           <p className="text-sm text-content-secondary">{t("loading")}</p>
         </div>
       )}
       {mapState === "ready" && placesWithLocation.length === 0 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none z-map-control">
-          <div className="bg-surface rounded-xl border border-border shadow-sm px-4 py-2.5">
+        <div className="pointer-events-none absolute bottom-6 left-1/2 z-map-control -translate-x-1/2">
+          {/* 지도 위에 떠 있는 요소라 그림자를 쓴다 (DESIGN.md §4 그림자 기준) */}
+          <div className="rounded-panel border border-border bg-surface px-4 py-2.5 shadow-md">
             <p className="text-sm text-content-secondary">{t("noCoordinates")}</p>
           </div>
         </div>
@@ -322,27 +361,16 @@ export default function MapPanel({
           onClick={onRequestUserLocation}
           disabled={isLocating}
           aria-label={t("myLocation")}
-          className="absolute bottom-28 right-2 z-map-control w-11 h-11 flex items-center justify-center bg-surface rounded shadow-md hover:bg-surface-subtle active:bg-surface-subtle transition-colors disabled:opacity-60 disabled:cursor-not-allowed lg:bottom-16"
+          className="absolute bottom-28 right-3 z-map-control flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-surface text-content-secondary shadow-md outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 lg:bottom-6"
         >
           {isLocating ? (
-            <span className="text-sm text-content-muted select-none leading-none">…</span>
-          ) : (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-content-secondary"
+            <LoaderCircle
+              className="h-5 w-5 animate-spin motion-reduce:animate-none"
+              strokeWidth={2}
               aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
-            </svg>
+            />
+          ) : (
+            <LocateFixed className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
           )}
         </button>
       )}

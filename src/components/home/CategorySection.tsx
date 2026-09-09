@@ -1,24 +1,24 @@
 import { getTranslations } from "next-intl/server";
 
 import CategoryPlaceTabs from "@/components/home/CategoryPlaceTabs";
-import { getCurrentUser } from "@/lib/auth/current-user";
-import { getFavoritePlaceIds } from "@/lib/favorites/queries";
-import { getCategoryPlaces } from "@/lib/places/queries";
+import type { CategoryPlacesResult } from "@/types/place";
 
-export default async function CategorySection() {
+interface CategorySectionProps {
+  initialResult: CategoryPlacesResult;
+  favoritePlaceIds: string[];
+}
+
+export default async function CategorySection({
+  initialResult,
+  favoritePlaceIds,
+}: CategorySectionProps) {
   const t = await getTranslations("home.categories");
 
-  // 첫 화면은 `전체` 탭이므로 그만큼만 서버에서 조회한다. 나머지 탭은 선택할 때 Server Action으로 가져온다.
-  const user = await getCurrentUser();
-  const [initialResult, favoritePlaceIds] = await Promise.all([
-    getCategoryPlaces("all"),
-    user ? getFavoritePlaceIds(user.id) : Promise.resolve<string[]>([]),
-  ]);
-
   return (
-    <section id="categories" className="scroll-mt-16 bg-surface py-16">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h2 className="text-2xl font-bold text-content">{t("title")}</h2>
+    // `#categories`는 예전 헤더 메뉴가 가리키던 앵커다. 기존 링크가 깨지지 않도록 남긴다.
+    <section id="categories" className="scroll-mt-16 bg-surface py-10 lg:py-12">
+      <div className="mx-auto max-w-[1200px] px-4 sm:px-6">
+        <h2 className="mb-5 text-xl font-bold text-content">{t("title")}</h2>
 
         <CategoryPlaceTabs
           initialResult={initialResult}

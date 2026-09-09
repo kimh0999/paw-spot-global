@@ -155,7 +155,7 @@ export default function BreedCombobox({
           onKeyDown={handleKeyDown}
           className={cn(
             "h-11 w-full rounded-lg border bg-surface pl-3 pr-20 text-sm text-content outline-none focus:border-primary focus:ring-2 focus:ring-ring",
-            invalid ? "border-danger" : "border-border-strong",
+            invalid ? "border-danger" : "border-border-control",
             disabled && "opacity-60",
           )}
         />

@@ -26,8 +26,10 @@ interface PlaceConditionSummaryProps {
   place: PlaceListItem;
   referenceDate: Date;
   className?: string;
-  /** compact는 카드용 인라인 요약, detailed는 미리보기용 전체 조건 목록이다. */
+  /** compact는 카드용 핵심 조건 3개, detailed는 미리보기용 전체 조건 목록이다. */
   variant?: "compact" | "detailed";
+  /** 확인일 줄을 이 컴포넌트가 그릴지. 화면이 확인 정보를 따로 두면 끈다. */
+  showVerification?: boolean;
 }
 
 type CoreCondition = { label: string; status: ConditionStatus };
@@ -52,6 +54,7 @@ export default function PlaceConditionSummary({
   referenceDate,
   className,
   variant = "compact",
+  showVerification = true,
 }: PlaceConditionSummaryProps) {
   const t = useTranslations("places.card");
   // 구역 문장은 상세와 같은 문구를 쓴다. 같은 사실을 화면마다 다르게 옮겨 적지 않는다.
@@ -154,41 +157,41 @@ export default function PlaceConditionSummary({
     isDetailed ? groups : groups.slice(0, COMPACT_CONDITION_GROUPS)
   ).flat();
 
+  /**
+   * 조건은 한 항목당 한 줄로 세로로 쌓는다. 가로로 흘리면 카드마다 줄바꿈 위치가 달라져
+   * 같은 자리의 조건을 비교할 수 없다 — 비교가 이 목록의 목적이다 (DESIGN.md §6).
+   */
   return (
-    <div className={cn(isDetailed ? "space-y-2.5" : "space-y-1.5", className)}>
-      <ul
-        className={cn(
-          isDetailed
-            ? "space-y-1.5"
-            : "flex flex-wrap items-center gap-x-3 gap-y-1",
-        )}
-      >
+    <div className={cn("space-y-2", className)}>
+      <ul className={cn(isDetailed ? "space-y-1.5" : "space-y-1")}>
         {visibleConditions.map(({ label, status }) => {
           const Icon = statusIcons[status];
           return (
-            <li key={label} className="flex items-center gap-1.5 text-sm text-content">
+            <li key={label} className="flex items-start gap-2 text-sm text-content">
               <Icon
                 size={16}
                 strokeWidth={2}
-                className={cn("shrink-0", statusColors[status])}
+                className={cn("mt-0.5 shrink-0", statusColors[status])}
                 aria-hidden="true"
               />
-              <span>{label}</span>
+              <span className="min-w-0">{label}</span>
             </li>
           );
         })}
       </ul>
 
-      <p
-        className={cn(
-          "flex items-center gap-1 text-xs",
-          isStale ? "text-warning" : "text-content-muted",
-        )}
-      >
-        {isStale && <History size={12} className="shrink-0" aria-hidden="true" />}
-        {getCheckedText()}
-        {methodKey && <span>· {t(`verificationPath.${methodKey}`)}</span>}
-      </p>
+      {showVerification && (
+        <p
+          className={cn(
+            "flex items-center gap-1 text-xs",
+            isStale ? "text-warning" : "text-content-muted",
+          )}
+        >
+          {isStale && <History size={12} className="shrink-0" aria-hidden="true" />}
+          {getCheckedText()}
+          {methodKey && <span>· {t(`verificationPath.${methodKey}`)}</span>}
+        </p>
+      )}
     </div>
   );
 }

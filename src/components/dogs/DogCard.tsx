@@ -3,8 +3,9 @@
 import { useRef } from "react";
 import { DropdownMenu } from "radix-ui";
 import { useLocale, useTranslations } from "next-intl";
-import { EllipsisVertical, MapPin, PawPrint, Pencil, Trash2 } from "lucide-react";
+import { EllipsisVertical, MapPin, Pencil, Trash2 } from "lucide-react";
 
+import DogAvatar from "@/components/dogs/DogAvatar";
 import { Link } from "@/i18n/navigation";
 import type { DogSize } from "@/lib/constants";
 import { formatDogBreed } from "@/lib/dogs/breeds";
@@ -35,21 +36,16 @@ export default function DogCard({ dog, onEdit, onDelete }: DogCardProps) {
   const breedLabel = formatDogBreed(dog, locale);
 
   return (
-    <li className="flex items-start gap-3 rounded-2xl border border-border bg-surface p-4">
-      {/* 사진 없이 시작한다. 기본 아바타는 장식이므로 screen reader에서 감춘다. */}
-      <span
-        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary"
-        aria-hidden="true"
-      >
-        <PawPrint size={22} strokeWidth={1.5} />
-      </span>
+    <li className="flex items-start gap-3 rounded-card border border-border bg-surface p-4">
+      {/* 사진 업로드가 없으므로 이름으로 서로 구분되는 아바타를 만든다. */}
+      <DogAvatar name={dog.name} />
 
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <h3 className="truncate text-base font-semibold text-content">{dog.name}</h3>
+            <h3 className="truncate text-base font-bold text-content">{dog.name}</h3>
             <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-content-secondary">
-              <span className="inline-flex items-center rounded-full bg-surface-subtle px-2 py-0.5 text-xs font-medium text-content">
+              <span className="inline-flex items-center rounded-full bg-surface-subtle px-2 py-0.5 text-xs font-semibold text-content">
                 {sizeLabels[dog.size]}
               </span>
               {breedLabel && <span className="truncate">{breedLabel}</span>}
@@ -94,10 +90,11 @@ export default function DogCard({ dog, onEdit, onDelete }: DogCardProps) {
 
         <Link
           href={buildDogPlacesHref([dog.id])}
-          className="mt-3 inline-flex h-11 items-center gap-1.5 rounded-lg border border-border-strong bg-surface px-3 text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring"
+          className="mt-3 inline-flex h-11 items-center gap-1.5 rounded-lg border border-border-control bg-surface px-3 text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <MapPin size={16} strokeWidth={1.5} aria-hidden="true" />
-          {t("card.viewPlaces")}
+          <MapPin size={16} strokeWidth={2} aria-hidden="true" />
+          {/* 어떤 아이 기준으로 목록을 여는지 버튼 안에서 밝힌다. */}
+          {t("card.viewPlacesFor", { name: dog.name })}
         </Link>
       </div>
     </li>

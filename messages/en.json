@@ -1,14 +1,12 @@
 {
   "home": {
     "hero": {
-      "titleLine1": "Find pet-friendly places",
-      "titleLine2": "Check the rules before you go",
-      "subtitleLine1": "Browse cafes, restaurants, and travel spots by category.",
-      "subtitleLine2": "Check indoor access, carrier policies, dog size limits,",
-      "subtitleLine3": "and entry requirements before you visit.",
+      "serviceArea": "Daejeon · {count} places verified",
+      "title": "Check the conditions before you go",
+      "subtitle": "Indoor access, carrier and stroller rules, and size limits — confirmed before you visit.",
+      "searchLabel": "Search places",
       "searchPlaceholder": "Search cafes, restaurants, and travel spots",
       "searchButton": "Search",
-      "illustrationCaption": "Dog + map illustration",
       "myLocation": "Near me"
     },
     "categories": {
@@ -19,11 +17,11 @@
         "cafe": "Cafes",
         "travel": "Attractions"
       },
-      "recommended": "{count} recommended places",
       "viewAll": "View all",
       "empty": "No places have been added to this category yet.",
       "error": "We couldn't load places.",
-      "retry": "Try again"
+      "retry": "Try again",
+      "verifiedCount": "{count} places verified"
     },
     "info": {
       "title": "What to check before you visit",
@@ -46,7 +44,8 @@
       "lastVerified": {
         "title": "Last verified date",
         "description": "See when and how information was last confirmed"
-      }
+      },
+      "description": "We confirm the items below with each place and record what we hear. Anything we could not confirm is marked unconfirmed."
     },
     "footer": "© 2026 Paw Spot Global. Place information is subject to change."
   },
@@ -81,7 +80,9 @@
       "error": "Map failed to load.",
       "noKey": "Map unavailable. Please check Google Maps API key.",
       "noCoordinates": "No places with coordinates to show on the map.",
-      "myLocation": "Move to my location"
+      "myLocation": "Move to my location",
+      "authError": "Google Maps rejected this API key. Check billing and API settings in Google Cloud.",
+      "listStillAvailable": "The place list and conditions still work."
     },
     "filters": {
       "title": "Filters",
@@ -132,12 +133,13 @@
       "detail": "Details",
       "conditions": "Conditions",
       "eligibility": {
-        "canVisit": "Your dog can visit",
+        "canVisit": "Can visit",
         "tooLarge": "Too large for this place",
         "dogsNotAllowed": "Dogs not allowed here",
         "sizeUnconfirmed": "Size limit unconfirmed",
         "conditionsUnconfirmed": "Conditions unconfirmed",
-        "accessConflict": "Conflicting dog access information"
+        "accessConflict": "Conflicting dog access information",
+        "scope": "based on {name}"
       },
       "dogMatch": {
         "single": {
@@ -184,7 +186,7 @@
       "muzzle": {
         "required": "Muzzle required",
         "notRequired": "No muzzle required",
-        "conditional": "Muzzle for some breeds"
+        "conditional": "Muzzle in some cases"
       },
       "category": {
         "cafe": "Cafe",
@@ -232,30 +234,31 @@
       },
       "allowancesTitle": "Good to know",
       "allowances": {
-        "indoorAllowed": "Indoor allowed",
-        "noCarrier": "No carrier needed",
-        "largeDogs": "Large dogs allowed",
-        "noLeash": "No leash required",
+        "indoorAllowed": "Indoor access allowed",
+        "noCarrier": "Carrier or stroller not required",
+        "largeDogs": "Maximum dog size: Large",
+        "noLeash": "Leash not required",
         "noMuzzle": "No muzzle required"
       },
       "conditionsTitle": "Conditions",
       "conditions": {
-        "indoorOutdoorOnly": "Outdoor seating only",
-        "indoorPartialArea": "Dogs are allowed in certain areas only",
-        "indoorBlockedOutdoorUnconfirmed": "Dogs cannot go indoors. Whether they can use the outdoor area is unconfirmed",
-        "dogAccessConflict": "The information on dog access does not match. Check with the place before visiting",
-        "carrierIndoor": "Hold your dog or use a stroller indoors",
-        "carrierAlways": "A carrier or stroller is required at all times",
-        "sizeSmallOnly": "Small dogs only",
-        "sizeMediumOnly": "Up to medium-sized dogs",
-        "leashRequired": "A leash is required",
-        "leashPartialArea": "A leash is required in some areas",
-        "muzzleRequired": "A muzzle is required",
-        "muzzleConditional": "A muzzle may be required"
+        "indoorOutdoorOnly": "Outdoor area only",
+        "indoorPartialArea": "Partial indoor area",
+        "indoorBlockedOutdoorUnconfirmed": "No indoor access · Outdoor access unconfirmed",
+        "dogAccessConflict": "Conflicting dog access information",
+        "carrierIndoor": "Carrier, stroller, or holding required indoors",
+        "carrierAlways": "Carrier or stroller required",
+        "sizeSmallOnly": "Maximum dog size: Small",
+        "sizeMediumOnly": "Maximum dog size: Medium",
+        "leashRequired": "Leash required",
+        "leashPartialArea": "Leash required in some areas",
+        "muzzleRequired": "Muzzle required",
+        "muzzleConditional": "Muzzle required in some cases"
       },
       "additionalInfoTitle": "Additional information",
       "more": "More",
-      "less": "Show less"
+      "less": "Show less",
+      "backToList": "Back to list"
     },
     "sheet": {
       "showList": "Show list",
@@ -321,8 +324,13 @@
         "closed": "Closed",
         "notProvided": "Opening hours have not been added yet.",
         "days": {
-          "mon": "Mon", "tue": "Tue", "wed": "Wed", "thu": "Thu",
-          "fri": "Fri", "sat": "Sat", "sun": "Sun"
+          "mon": "Mon",
+          "tue": "Tue",
+          "wed": "Wed",
+          "thu": "Thu",
+          "fri": "Fri",
+          "sat": "Sat",
+          "sun": "Sun"
         }
       },
       "actions": {
@@ -356,7 +364,7 @@
           "unknown": "Carrier or stroller requirement unconfirmed"
         },
         "dogSize": {
-          "label": "Dog size limit",
+          "label": "Maximum dog size",
           "small": "Up to small",
           "medium": "Up to medium",
           "large": "Up to large",
@@ -373,7 +381,7 @@
           "label": "Muzzle",
           "required": "Muzzle required",
           "not_required": "No muzzle required",
-          "conditional": "Muzzle for some breeds",
+          "conditional": "Required in some cases",
           "unknown": "Check with store"
         },
         "breedRestriction": "Breed restriction",
@@ -545,18 +553,21 @@
   "header": {
     "skipToContent": "Skip to content",
     "places": "Places",
-    "category": "Category",
     "myDog": "My Dogs",
     "favorites": "Favorites",
     "vets": "Vets",
     "comingSoon": "Soon",
     "login": "Log in",
     "logout": "Log out",
-    "account": "Account"
+    "account": "Account",
+    "primaryNav": "Main menu",
+    "language": "Language"
   },
   "favorites": {
     "title": "Favorites",
-    "empty": "No saved places yet. Tap the heart on a place to save it here."
+    "empty": "No saved places yet. Tap the heart on a place to save it here.",
+    "count": "{count} saved places",
+    "browsePlaces": "Browse places"
   },
   "dogs": {
     "title": "My Dogs",
@@ -572,7 +583,7 @@
       "menuLabel": "Open menu for {name}",
       "edit": "Edit",
       "delete": "Delete",
-      "viewPlaces": "View matching places"
+      "viewPlacesFor": "Find places for {name}"
     },
     "delete": {
       "title": "Delete this dog?",

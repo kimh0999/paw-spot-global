@@ -30,7 +30,7 @@ export default function LocaleError({
 
   return (
     <main className="mx-auto flex min-h-[70vh] max-w-md items-center px-4 py-12">
-      <section className="w-full rounded-xl border border-border bg-surface p-8 text-center shadow-sm">
+      <section className="w-full rounded-card border border-border bg-surface p-8 text-center">
         <h1 className="text-2xl font-bold text-content">{t("errorPage.title")}</h1>
         <p className="mt-2 text-sm text-content-secondary">
           {t("errorPage.description")}

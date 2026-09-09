@@ -8,25 +8,30 @@ import type { DogSizeFilter, PlaceListItem } from "@/types/place";
 
 interface FavoritesListProps {
   places: PlaceListItem[];
-  dogSize?: DogSizeFilter;
+  /**
+   * 크기 기준 방문 판정에 쓰는 반려견. 이름을 함께 받아 카드가 **누구 기준인지**
+   * 밝힐 수 있게 한다. 등록된 반려견이 없으면 판정하지 않는다.
+   */
+  dog?: { size: DogSizeFilter; name: string | null };
 }
 
-export default function FavoritesList({ places, dogSize }: FavoritesListProps) {
+export default function FavoritesList({ places, dog }: FavoritesListProps) {
   const router = useRouter();
   const [referenceDate] = useState(() => new Date());
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {places.map((place) => (
-        <PlaceCard
-          key={place.id}
-          place={place}
-          referenceDate={referenceDate}
-          onClick={() => router.push(`/places/${place.id}`)}
-          action="openDetails"
-          dogSize={dogSize}
-        />
+        <li key={place.id}>
+          <PlaceCard
+            place={place}
+            referenceDate={referenceDate}
+            onClick={() => router.push(`/places/${place.id}`)}
+            variant="saved"
+            dog={dog}
+          />
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }

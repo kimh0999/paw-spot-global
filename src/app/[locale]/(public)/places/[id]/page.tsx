@@ -1,26 +1,23 @@
-import Image from "next/image";
 import { notFound } from "next/navigation";
 
 import { getTranslations } from "next-intl/server";
 import {
-  Coffee,
-  Utensils,
-  Compass,
-  MapPin,
+  ArrowLeft,
   BadgeCheck,
-  Phone,
-  Globe,
   Camera,
   Clock,
-  Navigation,
+  Globe,
   History,
-  type LucideIcon,
+  MapPin,
+  Navigation,
+  Phone,
 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import BeforeYouGoCard from "@/components/places/BeforeYouGoCard";
 import DogMatchBadge from "@/components/places/DogMatchBadge";
 import FavoriteButton from "@/components/places/FavoriteButton";
+import Header from "@/components/Header";
+import PlaceThumb from "@/components/places/PlaceThumb";
 import ShareButton from "@/components/places/ShareButton";
 import { Link } from "@/i18n/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -33,14 +30,6 @@ import { getFavoritePlaceIds } from "@/lib/favorites/queries";
 import { needsRecheck } from "@/lib/places/display";
 import { groupConsecutiveDays } from "@/lib/places/operating-hours";
 import { getPlaceById } from "@/lib/places/queries";
-import type { PlaceListItem } from "@/types/place";
-
-const categoryIcon: Record<PlaceListItem["category"], LucideIcon> = {
-  cafe: Coffee,
-  restaurant: Utensils,
-  travel: Compass,
-  etc: MapPin,
-};
 
 /** 범위를 벗어난 값·형식이 틀린 값은 없는 것으로 본다. `places/page.tsx`와 같은 규칙이다. */
 function parseCoord(
@@ -52,6 +41,24 @@ function parseCoord(
   const n = parseFloat(value);
   if (!Number.isFinite(n) || n < min || n > max) return undefined;
   return n;
+}
+
+/** 사이드바 한 묶음. 상자를 겹겹이 두르지 않고 제목과 구분선으로만 나눈다. */
+function AsideBlock({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="border-t border-border pt-4 first:border-t-0 first:pt-0">
+      <h2 className="text-xs font-bold uppercase tracking-wide text-content-muted">
+        {title}
+      </h2>
+      <div className="mt-2.5">{children}</div>
+    </section>
+  );
 }
 
 interface Props {
@@ -105,8 +112,6 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
           ? tCard("category.travel")
           : place.category.toUpperCase();
 
-  const CategoryIcon = categoryIcon[place.category];
-
   // 목록·카드와 같은 판정을 쓴다. 기준이 되는 확인일도 같은 `formatVerifiedAt` 결과다.
   // 여기서 90일을 다시 세지 않는다 — 화면마다 경계가 갈라지면 같은 장소가 다르게 보인다.
   const showRecheckBadge =
@@ -132,136 +137,154 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
 
   // 공유에는 사용자 좌표가 붙지 않은 정규 경로를 넘긴다.
   const canonicalPath = `/${safeLocale}/places/${place.id}`;
+  const hasPhoto = place.thumbnailUrl != null && place.thumbnailUrl !== "";
+  const hasContact = place.phone || place.website || place.instagram;
 
   return (
-    <div className="min-h-screen bg-surface-subtle">
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
-        {/* Back */}
-        <Link
-          href="/places"
-          className="inline-flex items-center gap-1.5 text-sm text-content-secondary hover:text-content transition-colors"
-        >
-          ← {t("back")}
-        </Link>
+    <>
+      {/* 상세도 공통 헤더를 갖는다. 없으면 사용자는 뒤로 가기 말고 이동할 길을 잃는다
+          (DESIGN.md §5 Header와 main의 소유 위치). */}
+      <Header />
 
-        {/* Header */}
-        <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
-          {place.thumbnailUrl ? (
-            <div className="relative w-full h-52 bg-surface-subtle">
-              <Image
-                src={place.thumbnailUrl}
-                alt={placeName}
-                fill
-                unoptimized
-                className="object-cover"
-              />
-            </div>
-          ) : (
-            <div className="w-full h-52 bg-surface-subtle flex items-center justify-center">
-              <CategoryIcon
-                className="w-6 h-6 text-content-muted"
-                strokeWidth={1.5}
-                aria-hidden="true"
-              />
-            </div>
-          )}
-          <div className="px-5 py-4 space-y-2">
-            <Badge variant="secondary" className="text-xs">
-              {categoryLabel}
-            </Badge>
-            <h1 className="text-xl font-bold text-content leading-snug">{placeName}</h1>
-            {placeNameSecondary && (
-              <p className="text-sm text-content-muted">{placeNameSecondary}</p>
-            )}
-            <div className="flex items-start gap-2 pt-1">
-              <MapPin className="w-4 h-4 shrink-0 mt-0.5 text-content-muted" strokeWidth={1.5} aria-hidden="true" />
-              <p className="text-sm text-content-secondary leading-relaxed">{place.address}</p>
-            </div>
-            {distanceText && (
-              <div className="flex items-center gap-2">
-                <Navigation className="w-4 h-4 shrink-0 text-content-muted" strokeWidth={1.5} aria-hidden="true" />
-                <p className="text-sm text-content-secondary">
-                  {t("actions.distanceFromYou", { distance: distanceText })}
-                </p>
-              </div>
-            )}
-            {place.latestVerification && (
-              <div className="flex items-center gap-2">
-                <BadgeCheck className="w-4 h-4 shrink-0 mt-0.5 text-content-muted" strokeWidth={1.5} aria-hidden="true" />
-                <p className="text-sm text-content-secondary">
+      <main id="main-content" tabIndex={-1} className="bg-surface-page pb-16">
+        <div className="mx-auto max-w-[1200px] px-4 py-5 sm:px-6">
+          <Link
+            href="/places"
+            className="inline-flex h-11 items-center gap-1.5 rounded-md text-sm font-semibold text-content-secondary outline-none transition-colors hover:text-content focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <ArrowLeft size={16} strokeWidth={2} aria-hidden="true" />
+            {t("back")}
+          </Link>
+
+          {/* 장소 머리말 — 이름·위치·확인 상태·행동을 한 덩어리로 읽는다.
+              사진은 있을 때만 자리를 차지한다. */}
+          <div className="mt-2 gap-6 lg:flex lg:items-start">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-primary">{categoryLabel}</p>
+              <h1 className="mt-1 text-2xl font-bold leading-tight text-content sm:text-3xl">
+                {placeName}
+              </h1>
+              {placeNameSecondary && (
+                <p className="mt-1 text-base text-content-secondary">{placeNameSecondary}</p>
+              )}
+
+              <p className="mt-3 flex items-start gap-1.5 text-sm text-content-secondary">
+                <MapPin
+                  className="mt-0.5 h-4 w-4 shrink-0"
+                  strokeWidth={2}
+                  aria-hidden="true"
+                />
+                <span>
+                  {place.address}
+                  {distanceText && (
+                    <>
+                      <span aria-hidden="true"> · </span>
+                      <span className="font-semibold tabular-nums text-content">
+                        {t("actions.distanceFromYou", { distance: distanceText })}
+                      </span>
+                    </>
+                  )}
+                </span>
+              </p>
+
+              {place.latestVerification && (
+                <p
+                  className={`mt-1.5 flex items-center gap-1.5 text-sm ${
+                    showRecheckBadge ? "text-warning" : "text-content-secondary"
+                  }`}
+                >
+                  {showRecheckBadge ? (
+                    <History className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+                  ) : (
+                    <BadgeCheck
+                      className="h-4 w-4 shrink-0"
+                      strokeWidth={2}
+                      aria-hidden="true"
+                    />
+                  )}
                   {tCard("verifiedAt")} {place.latestVerification.verifiedAt}
+                  {/* 신선도 경고다. 동반 불가 판정으로 읽히지 않도록 danger가 아닌 amber를 쓴다
+                      (DESIGN.md §7 Stale verification). */}
+                  {showRecheckBadge && <span>· {tCard("staleBadge")}</span>}
                 </p>
+              )}
+
+              {/* 액션 (DESIGN.md §6 표시 순서 3). 길찾기가 primary, 전화·공유는 secondary다.
+                  값이 없는 액션은 비활성 버튼을 두지 않고 아예 그리지 않는다. */}
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                {googleMapsUrl && (
+                  <a
+                    href={googleMapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-11 items-center justify-center gap-1.5 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground outline-none transition-colors hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <Navigation className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                    {t("actions.directions")}
+                  </a>
+                )}
+                {place.phone && (
+                  <a
+                    href={`tel:${place.phone}`}
+                    className="inline-flex h-11 items-center justify-center gap-1.5 rounded-lg border border-border-control bg-surface px-4 text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <Phone className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                    {t("actions.call")}
+                  </a>
+                )}
+                <ShareButton path={canonicalPath} title={placeName} />
+                <FavoriteButton
+                  placeId={place.id}
+                  initialFavorite={isFavorite}
+                  className="h-11 w-11 shrink-0"
+                />
+              </div>
+            </div>
+
+            {hasPhoto && (
+              <div className="mt-5 shrink-0 lg:mt-0 lg:w-[320px]">
+                <PlaceThumb
+                  category={place.category}
+                  src={place.thumbnailUrl}
+                  alt={placeName}
+                  variant="band"
+                  className="rounded-card"
+                />
               </div>
             )}
           </div>
 
-          {/* 액션 (DESIGN.md §6 표시 순서 3). 길찾기가 primary, 전화·공유는 secondary다.
-              값이 없는 액션은 비활성 버튼을 두지 않고 아예 그리지 않는다. */}
-          <div className="flex flex-wrap items-center gap-2 border-t border-border px-5 py-4">
-            {googleMapsUrl && (
-              <a
-                href={googleMapsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground outline-none transition-colors hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <Navigation className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
-                {t("actions.directions")}
-              </a>
-            )}
-            {place.phone && (
-              <a
-                href={`tel:${place.phone}`}
-                className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border border-border-strong bg-surface px-4 text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <Phone className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
-                {t("actions.call")}
-              </a>
-            )}
-            <ShareButton path={canonicalPath} title={placeName} />
-            <FavoriteButton
-              placeId={place.id}
-              initialFavorite={isFavorite}
-              className="h-11 w-11 shrink-0 rounded-xl"
+          {dogMatch && (
+            <DogMatchBadge
+              status={dogMatch.status}
+              reason={dogMatch.reason}
+              dogName={selectedDogs.length === 1 ? selectedDogs[0].name : null}
+              className="mt-5"
             />
-          </div>
-        </div>
+          )}
 
-        {dogMatch && (
-          <DogMatchBadge
-            status={dogMatch.status}
-            reason={dogMatch.reason}
-            dogName={selectedDogs.length === 1 ? selectedDogs[0].name : null}
-          />
-        )}
+          {/*
+            본문 2열 — 왼쪽은 **방문 여부를 판단하는 정보**, 오른쪽은 가기로 정한 뒤에
+            필요한 실용 정보다. 좁은 폭에서는 판단이 먼저 오도록 한 열로 접힌다.
+          */}
+          <div className="mt-8 gap-10 lg:flex lg:items-start">
+            <div className="min-w-0 flex-1">
+              <BeforeYouGoCard condition={place.condition} locale={safeLocale} />
+              <p className="mt-5 text-xs text-content-muted">{t("disclaimer")}</p>
+            </div>
 
-        {/* Before You Go (most prominent) */}
-        <BeforeYouGoCard condition={place.condition} locale={safeLocale} />
-
-        {/* Disclaimer */}
-        <p className="text-xs text-content-muted text-center px-2">{t("disclaimer")}</p>
-
-        {/* Place Info */}
-        <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
-          <div className="px-5 py-3 border-b border-border">
-            <h2 className="text-sm font-semibold text-content">{t("info.title")}</h2>
-          </div>
-          <div className="px-5 py-4 space-y-3">
-            {/* 운영시간 (DESIGN.md §6 표시 순서 6). 이어지는 같은 시간대는 묶어서 줄인다. */}
-            <div className="flex items-start gap-2">
-              <Clock className="w-4 h-4 shrink-0 mt-0.5 text-content-muted" strokeWidth={1.5} aria-hidden="true" />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-content">{t("hours.title")}</p>
+            <aside className="mt-10 shrink-0 space-y-5 rounded-card border border-border bg-surface p-5 lg:mt-0 lg:w-[320px]">
+              <AsideBlock title={t("hours.title")}>
                 {place.hours ? (
-                  <dl className="mt-1 space-y-0.5">
+                  <dl className="space-y-1">
                     {groupConsecutiveDays(place.hours).map((group) => (
-                      <div key={group.days.join("-")} className="flex gap-2 text-sm">
-                        <dt className="w-24 shrink-0 text-content-muted">
+                      <div key={group.days.join("-")} className="flex gap-3 text-sm">
+                        <dt className="w-20 shrink-0 text-content-secondary">
                           {group.days.length > 1
                             ? `${t(`hours.days.${group.days[0]}`)}–${t(`hours.days.${group.days[group.days.length - 1]}`)}`
                             : t(`hours.days.${group.days[0]}`)}
                         </dt>
-                        <dd className="text-content-secondary">
+                        <dd className="tabular-nums text-content">
                           {group.hours
                             ? `${group.hours.open}–${group.hours.close}`
                             : t("hours.closed")}
@@ -270,108 +293,117 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
                     ))}
                   </dl>
                 ) : (
-                  <p className="mt-1 text-sm text-content-muted">{t("hours.notProvided")}</p>
+                  // 미등록은 사실대로 말하되 한 줄로 끝낸다. 없는 정보에 큰 자리를 주지 않는다.
+                  <p className="flex items-center gap-1.5 text-sm text-content-muted">
+                    <Clock className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+                    {t("hours.notProvided")}
+                  </p>
                 )}
                 {place.hoursNote && (
                   <p className="mt-1.5 text-sm text-content-secondary">{place.hoursNote}</p>
                 )}
-              </div>
-            </div>
+              </AsideBlock>
 
-            {place.phone && (
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 shrink-0 mt-0.5 text-content-muted" strokeWidth={1.5} aria-hidden="true" />
-                <a
-                  href={`tel:${place.phone}`}
-                  className="text-sm text-content-secondary hover:text-content transition-colors"
-                >
-                  {place.phone}
-                </a>
-              </div>
-            )}
-            {place.website && (
-              <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4 shrink-0 mt-0.5 text-content-muted" strokeWidth={1.5} aria-hidden="true" />
-                <a
-                  href={place.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline truncate"
-                >
-                  {t("info.website")}
-                </a>
-              </div>
-            )}
-            {place.instagram && (
-              <div className="flex items-center gap-2">
-                <Camera className="w-4 h-4 shrink-0 mt-0.5 text-content-muted" strokeWidth={1.5} aria-hidden="true" />
-                <a
-                  href={`https://instagram.com/${place.instagram.replace(/^@/, "")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline"
-                >
-                  @{place.instagram.replace(/^@/, "")}
-                </a>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Verification Info */}
-        <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
-          <div className="px-5 py-3 border-b border-border">
-            <h2 className="text-sm font-semibold text-content">{t("verification.title")}</h2>
-          </div>
-          <div className="px-5 py-4">
-            {place.latestVerification ? (
-              <div className="divide-y divide-border">
-                <div className="flex items-center gap-3 py-2.5">
-                  <span className="text-xs font-medium text-content-muted w-28 shrink-0">
-                    {t("verification.lastVerified")}
-                  </span>
-                  <span className="flex flex-wrap items-center gap-2 text-sm text-content">
-                    {place.latestVerification.verifiedAt}
-                    {/* 신선도 경고다. 동반 불가 판정으로 읽히지 않도록 danger가 아닌 amber를 쓰고
-                        확인일 옆에 붙인다 (DESIGN.md §7 Stale verification). */}
-                    {showRecheckBadge && (
-                      <Badge
-                        variant="outline"
-                        className="border-transparent bg-warning-soft text-warning"
-                      >
-                        <History className="shrink-0" aria-hidden="true" />
-                        {tCard("staleBadge")}
-                      </Badge>
+              {hasContact && (
+                <AsideBlock title={t("info.title")}>
+                  <ul className="space-y-2">
+                    {place.phone && (
+                      <li className="flex items-center gap-2">
+                        <Phone
+                          className="h-4 w-4 shrink-0 text-content-muted"
+                          strokeWidth={2}
+                          aria-hidden="true"
+                        />
+                        <a
+                          href={`tel:${place.phone}`}
+                          className="rounded text-sm text-content outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          {place.phone}
+                        </a>
+                      </li>
                     )}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 py-2.5">
-                  <span className="text-xs font-medium text-content-muted w-28 shrink-0">
-                    {t("verification.method")}
-                  </span>
-                  <span className="text-sm text-content">
-                    {place.latestVerification.method}
-                  </span>
-                </div>
-                {place.latestVerification.note && (
-                  <div className="flex items-start gap-3 py-2.5">
-                    <span className="text-xs font-medium text-content-muted w-28 shrink-0">
-                      {t("verification.note")}
-                    </span>
-                    <span className="text-sm text-content">
-                      {place.latestVerification.note}
-                    </span>
-                  </div>
+                    {place.website && (
+                      <li className="flex items-center gap-2">
+                        <Globe
+                          className="h-4 w-4 shrink-0 text-content-muted"
+                          strokeWidth={2}
+                          aria-hidden="true"
+                        />
+                        <a
+                          href={place.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="truncate rounded text-sm text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          {t("info.website")}
+                        </a>
+                      </li>
+                    )}
+                    {place.instagram && (
+                      <li className="flex items-center gap-2">
+                        <Camera
+                          className="h-4 w-4 shrink-0 text-content-muted"
+                          strokeWidth={2}
+                          aria-hidden="true"
+                        />
+                        <a
+                          href={`https://instagram.com/${place.instagram.replace(/^@/, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="truncate rounded text-sm text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          @{place.instagram.replace(/^@/, "")}
+                        </a>
+                      </li>
+                    )}
+                  </ul>
+                </AsideBlock>
+              )}
+
+              <AsideBlock title={t("verification.title")}>
+                {place.latestVerification ? (
+                  <dl className="space-y-2 text-sm">
+                    <div className="flex gap-3">
+                      <dt className="w-24 shrink-0 text-content-secondary">
+                        {t("verification.lastVerified")}
+                      </dt>
+                      <dd className="flex flex-wrap items-center gap-1.5 tabular-nums text-content">
+                        {place.latestVerification.verifiedAt}
+                        {showRecheckBadge && (
+                          <span className="inline-flex items-center gap-1 rounded-sm bg-warning-soft px-1.5 py-0.5 text-xs font-semibold text-warning">
+                            <History className="h-3 w-3 shrink-0" aria-hidden="true" />
+                            {tCard("staleBadge")}
+                          </span>
+                        )}
+                      </dd>
+                    </div>
+                    <div className="flex gap-3">
+                      <dt className="w-24 shrink-0 text-content-secondary">
+                        {t("verification.method")}
+                      </dt>
+                      <dd className="text-content">{place.latestVerification.method}</dd>
+                    </div>
+                    {place.latestVerification.note && (
+                      <div className="flex gap-3">
+                        <dt className="w-24 shrink-0 text-content-secondary">
+                          {t("verification.note")}
+                        </dt>
+                        <dd className="min-w-0 text-content">
+                          {place.latestVerification.note}
+                        </dd>
+                      </div>
+                    )}
+                  </dl>
+                ) : (
+                  <p className="text-sm text-content-muted">
+                    {t("verification.notVerified")}
+                  </p>
                 )}
-              </div>
-            ) : (
-              <p className="text-sm text-content-muted py-2">{t("verification.notVerified")}</p>
-            )}
+              </AsideBlock>
+            </aside>
           </div>
         </div>
-
-        <div className="h-4" />
-      </div>
-    </div>
+      </main>
+    </>
   );
 }

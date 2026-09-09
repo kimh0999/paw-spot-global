@@ -125,13 +125,13 @@ export default function DogsManager({ dogs }: DogsManagerProps) {
       )}
 
       {dogs.length === 0 ? (
-        <div className="mt-6 rounded-2xl border border-border bg-surface p-8 text-center">
+        <div className="mt-6 rounded-card border border-dashed border-border-strong p-8 text-center">
           <p className="text-sm font-semibold text-content">{t("empty.title")}</p>
           <p className="mt-1 text-sm text-content-secondary">{t("empty.description")}</p>
           <button
             type="button"
             onClick={openCreate}
-            className="mt-4 inline-flex h-11 items-center gap-1.5 rounded-lg border border-border-strong bg-surface px-4 text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring"
+            className="mt-4 inline-flex h-11 items-center gap-1.5 rounded-lg border border-border-control bg-surface px-4 text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Plus size={16} strokeWidth={2} aria-hidden="true" />
             {t("addDog")}
@@ -185,7 +185,7 @@ export default function DogsManager({ dogs }: DogsManagerProps) {
               event.preventDefault();
               triggerRef.current.focus();
             }}
-            className="fixed left-1/2 top-1/2 z-dialog w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-surface p-5 shadow-lg outline-none data-[state=open]:animate-dialog-in data-[state=closed]:animate-dialog-out motion-reduce:animate-none"
+            className="fixed left-1/2 top-1/2 z-dialog w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-sheet border border-border bg-surface p-5 shadow-lg outline-none data-[state=open]:animate-dialog-in data-[state=closed]:animate-dialog-out motion-reduce:animate-none"
           >
             <Dialog.Title className="text-base font-bold text-content">
               {t("delete.title")}
@@ -197,7 +197,7 @@ export default function DogsManager({ dogs }: DogsManagerProps) {
             <div className="mt-5 flex gap-2">
               <Dialog.Close
                 disabled={isDeleting}
-                className="h-11 flex-1 rounded-lg border border-border-strong bg-surface text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+                className="h-11 flex-1 rounded-lg border border-border-control bg-surface text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
               >
                 {t("form.cancel")}
               </Dialog.Close>

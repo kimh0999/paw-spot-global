@@ -21,9 +21,12 @@ interface FilterModalProps {
   onApply: () => void;
 }
 
-const chipBase = "px-3 py-1.5 rounded-full text-sm border transition-colors";
-const chipActive = "bg-primary border-primary text-primary-foreground";
-const chipInactive = "border-border-strong text-content hover:border-border-strong bg-surface";
+// 보이는 크기가 작아도 조작 영역은 44px을 채운다 (DESIGN.md §6 크기와 조작 영역).
+const chipBase =
+  "inline-flex h-11 items-center rounded-full border px-4 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring";
+const chipActive = "border-primary bg-primary text-primary-foreground";
+const chipInactive =
+  "border-border-control bg-surface text-content hover:bg-surface-subtle";
 
 export default function FilterModal({
   isOpen,
@@ -80,30 +83,31 @@ export default function FilterModal({
         <Dialog.Content
           // 설명 문단이 없는 필터 패널이라 Radix의 aria-describedby 연결을 끈다.
           aria-describedby={undefined}
-          className="fixed top-0 right-0 z-drawer flex h-full w-full max-w-sm flex-col bg-surface shadow-2xl outline-none data-[state=open]:animate-drawer-in data-[state=closed]:animate-drawer-out motion-reduce:animate-none"
+          className="fixed right-0 top-0 z-drawer flex h-full w-full max-w-sm flex-col bg-surface shadow-lg outline-none data-[state=open]:animate-drawer-in data-[state=closed]:animate-drawer-out motion-reduce:animate-none"
         >
-          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <div className="flex items-center justify-between border-b border-border px-5 py-3">
             <Dialog.Title className="font-bold text-content text-base">
               {t("filters.title")}
             </Dialog.Title>
             <Dialog.Close
               aria-label={tCommon("close")}
-              className="rounded-md text-content-muted outline-none transition-colors hover:text-content-secondary focus-visible:ring-2 focus-visible:ring-ring"
+              className="-mr-2 flex h-11 w-11 items-center justify-center rounded-md text-content-secondary outline-none transition-colors hover:bg-surface-subtle hover:text-content focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <X className="w-5 h-5" strokeWidth={1.5} aria-hidden="true" />
+              <X className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
             </Dialog.Close>
           </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-5 space-y-7">
           {/* 실내 동반 여부 */}
           <section>
-            <p className="text-sm font-semibold text-content mb-2.5">{t("filters.indoor.title")}</p>
+            <p className="mb-2.5 text-sm font-bold text-content">{t("filters.indoor.title")}</p>
             <div className="flex flex-wrap gap-2">
               {INDOOR_OPTIONS.map(({ value, label }) => (
                 <button
                   key={value}
                   type="button"
                   onClick={() => onChange({ ...filters, indoor: value })}
+                  aria-pressed={filters.indoor === value}
                   className={`${chipBase} ${filters.indoor === value ? chipActive : chipInactive}`}
                 >
                   {label}
@@ -114,13 +118,14 @@ export default function FilterModal({
 
           {/* 이동장/유모차 */}
           <section>
-            <p className="text-sm font-semibold text-content mb-2.5">{t("filters.carrier.title")}</p>
+            <p className="mb-2.5 text-sm font-bold text-content">{t("filters.carrier.title")}</p>
             <div className="flex flex-wrap gap-2">
               {CARRIER_OPTIONS.map(({ value, label }) => (
                 <button
                   key={value}
                   type="button"
                   onClick={() => onChange({ ...filters, carrier: value })}
+                  aria-pressed={filters.carrier === value}
                   className={`${chipBase} ${filters.carrier === value ? chipActive : chipInactive}`}
                 >
                   {label}
@@ -131,13 +136,14 @@ export default function FilterModal({
 
           {/* 반려견 크기 (단일 선택) */}
           <section>
-            <p className="text-sm font-semibold text-content mb-2.5">{t("filters.dogSize.title")}</p>
+            <p className="mb-2.5 text-sm font-bold text-content">{t("filters.dogSize.title")}</p>
             <div className="flex flex-wrap gap-2">
               {DOG_SIZE_OPTIONS.map(({ value, label }) => (
                 <button
                   key={value}
                   type="button"
                   onClick={() => onChange({ ...filters, dogSize: value })}
+                  aria-pressed={filters.dogSize === value}
                   className={`${chipBase} ${filters.dogSize === value ? chipActive : chipInactive}`}
                 >
                   {label}
@@ -148,13 +154,14 @@ export default function FilterModal({
 
           {/* 정보 신뢰도 */}
           <section>
-            <p className="text-sm font-semibold text-content mb-2.5">{t("filters.reliability.title")}</p>
+            <p className="mb-2.5 text-sm font-bold text-content">{t("filters.reliability.title")}</p>
             <div className="flex flex-wrap gap-2">
               {RECENT_OPTIONS.map(({ value, label }) => (
                 <button
                   key={value}
                   type="button"
                   onClick={() => toggleRecent(value)}
+                  aria-pressed={filters.recent === value}
                   className={`${chipBase} ${filters.recent === value ? chipActive : chipInactive}`}
                 >
                   {label}
@@ -168,14 +175,14 @@ export default function FilterModal({
           <button
             type="button"
             onClick={onReset}
-            className="flex-1 py-2.5 border border-border-strong rounded-xl text-sm font-semibold text-content hover:bg-surface-subtle transition-colors"
+            className="h-11 flex-1 rounded-lg border border-border-control bg-surface text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring"
           >
             {t("filters.reset")}
           </button>
           <button
             type="button"
             onClick={onApply}
-            className="flex-1 py-2.5 bg-primary rounded-xl text-sm font-semibold text-primary-foreground hover:bg-primary-hover transition-colors"
+            className="h-11 flex-1 rounded-lg bg-primary text-sm font-semibold text-primary-foreground outline-none transition-colors hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             {t("filters.apply")}
           </button>

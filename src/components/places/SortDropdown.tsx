@@ -35,7 +35,7 @@ export default function SortDropdown({ value, onChange, hasLocation = false }: S
           타이핑 검색)와 ESC, 바깥 클릭, 닫힌 뒤 트리거로의 포커스 복귀까지 맡는다. */}
       <DropdownMenu.Trigger
         aria-label={t("sort.label", { current: selectedLabel })}
-        className="group flex h-11 items-center gap-1.5 rounded-full border border-border-strong bg-surface px-4 text-sm font-medium text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring"
+        className="group flex h-11 items-center gap-1.5 rounded-lg border border-border-control bg-surface px-3 text-sm font-medium text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring"
       >
         {selectedLabel}
         {/* 예전에는 `▲`/`▼` 문자였다. 스크린리더가 읽어 버리므로 아이콘 + `aria-hidden`으로 바꿨다. */}
@@ -51,7 +51,7 @@ export default function SortDropdown({ value, onChange, hasLocation = false }: S
         <DropdownMenu.Content
           align="end"
           sideOffset={4}
-          className="z-dropdown w-52 origin-top-right overflow-hidden rounded-xl border border-border bg-surface p-1 shadow-lg data-[state=open]:animate-popover-in data-[state=closed]:animate-popover-out motion-reduce:animate-none"
+          className="z-dropdown w-52 origin-top-right overflow-hidden rounded-panel border border-border bg-surface p-1 shadow-lg data-[state=open]:animate-popover-in data-[state=closed]:animate-popover-out motion-reduce:animate-none"
         >
           {/* 하나만 고르는 값이므로 RadioGroup이다 — 각 항목이 `aria-checked`를 갖는다. */}
           <DropdownMenu.RadioGroup

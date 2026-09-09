@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { Check, CircleAlert, CircleSlash, Info, TriangleAlert, type LucideIcon } from "lucide-react";
 
 import { resolveDogAccess, type DogAccessKey } from "@/lib/places/dog-access";
 import { showsVaccinationRow } from "@/lib/places/display";
@@ -14,28 +15,44 @@ import {
   type Translate,
 } from "@/lib/places/policy-sentences";
 import type { ConditionStatus, PlaceDetail } from "@/types/place";
-import ConditionBadge from "./ConditionBadge";
-import { TriangleAlert } from "lucide-react";
 
 interface Props {
   condition: PlaceDetail["condition"];
   locale: string;
 }
 
+// 조건 상태는 카드·미리보기와 같은 아이콘·색을 쓴다. 같은 사실이 화면마다 다른 모양이면
+// 사용자는 둘을 다른 정보로 읽는다 (DESIGN.md §4 Icons·§9).
+const statusIcons: Record<ConditionStatus, LucideIcon> = {
+  good: Check,
+  warning: CircleAlert,
+  bad: CircleSlash,
+  neutral: Info,
+};
+
+const statusColors: Record<ConditionStatus, string> = {
+  good: "text-success",
+  warning: "text-warning",
+  bad: "text-danger",
+  neutral: "text-content-muted",
+};
+
 /** 내용이 있을 때만 나타나는 항목 목록. 긴 안내문 대신 짧은 줄로 나눠 보여준다. */
 function PolicyBlock({ title, lines }: { title: string; lines: string[] }) {
   if (lines.length === 0) return null;
 
   return (
-    <div className="mt-4 pt-4 border-t">
-      <h3 className="text-xs font-semibold text-content-secondary">{title}</h3>
+    <div className="border-t border-border pt-4">
+      <h3 className="text-xs font-bold uppercase tracking-wide text-content-muted">
+        {title}
+      </h3>
       <ul className="mt-2 space-y-1.5">
         {lines.map((line) => (
           <li key={line} className="flex gap-2 text-sm text-content-secondary">
             <span aria-hidden="true" className="text-content-muted">
               ·
             </span>
-            <span className="leading-relaxed">{line}</span>
+            <span>{line}</span>
           </li>
         ))}
       </ul>
@@ -97,15 +114,22 @@ export default async function BeforeYouGoCard({ condition, locale }: Props) {
       ...(carrierMap[condition.carrierStrollerPolicy ?? ""] ?? none),
     });
 
-    const dogSizeMap: Record<string, { value: string; status: ConditionStatus }> = {
-      small: { value: t("dogSize.small"), status: "bad" },
-      medium: { value: t("dogSize.medium"), status: "warning" },
-      large: { value: t("dogSize.large"), status: "good" },
-      unknown: { value: t("dogSize.unknown"), status: "neutral" },
+    /**
+     * 최대 허용 크기는 **상한을 알려주는 사실**이지 그 자체로 좋고 나쁜 조건이 아니다.
+     * 소형견 보호자에게 `소형견까지`는 통과이고, 대형견 보호자에게는 제한이다.
+     * 반려견 기준 판정은 방문 가능 배너가 따로 하므로 여기서는 중립으로 둔다 —
+     * 카드의 조건 요약도 이미 중립이라 두 화면이 같은 색으로 읽힌다.
+     */
+    const dogSizeMap: Record<string, string> = {
+      small: t("dogSize.small"),
+      medium: t("dogSize.medium"),
+      large: t("dogSize.large"),
+      unknown: t("dogSize.unknown"),
     };
     conditionRows.push({
       label: t("dogSize.label"),
-      ...(dogSizeMap[condition.maxDogSize ?? ""] ?? none),
+      value: dogSizeMap[condition.maxDogSize ?? ""] ?? none.value,
+      status: "neutral",
     });
 
     const leashMap: Record<string, { value: string; status: ConditionStatus }> = {
@@ -142,70 +166,88 @@ export default async function BeforeYouGoCard({ condition, locale }: Props) {
   }
 
   return (
-    <div className="bg-surface rounded-2xl border shadow-sm overflow-hidden">
-      <div className="px-5 py-4 bg-surface-subtle border-b">
-        <h2 className="text-lg font-bold text-content">{t("title")}</h2>
-        <p className="text-sm text-content-secondary mt-0.5">{t("subtitle")}</p>
+    <section aria-labelledby="before-you-go-title">
+      <div className="border-b-2 border-content pb-3">
+        <h2 id="before-you-go-title" className="text-xl font-bold text-content">
+          {t("title")}
+        </h2>
+        <p className="mt-1 text-sm text-content-secondary">{t("subtitle")}</p>
       </div>
 
       {!condition ? (
-        <div className="px-5 py-8 text-center">
-          <p className="text-sm text-content-muted">{t("noCondition")}</p>
-        </div>
+        <p className="py-8 text-center text-sm text-content-muted">{t("noCondition")}</p>
       ) : (
-        <div className="px-5 py-4">
-          <div className="divide-y">
-            {conditionRows.map((row) => (
-              <div
-                key={row.label}
-                className="flex items-center justify-between gap-4 py-3"
-              >
-                <span className="text-sm text-content-secondary shrink-0">{row.label}</span>
-                <ConditionBadge label={row.value} status={row.status} />
-              </div>
-            ))}
-          </div>
+        <>
+          {/*
+            라벨과 값을 두 컬럼으로 나눈다. 값이 배지 안에 들어가 있으면 조건마다 색 상자가
+            늘어서서 어느 것이 제한인지 읽히지 않는다 — 상태는 아이콘과 색으로만 말한다.
+          */}
+          <dl className="divide-y divide-border">
+            {conditionRows.map((row) => {
+              const Icon = statusIcons[row.status];
+              return (
+                <div
+                  key={row.label}
+                  // 좁은 폭에서는 라벨을 값 위로 올린다. 두 컬럼을 유지하면 영어 조건 문장이
+                  // 매번 두세 줄로 접힌다 — 조건은 줄이지 않고 폭을 주는 쪽을 택한다.
+                  className="py-3 sm:grid sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-3"
+                >
+                  <dt className="text-xs text-content-secondary sm:text-sm">{row.label}</dt>
+                  <dd className="mt-1 flex items-start gap-2 text-sm font-medium text-content sm:mt-0">
+                    <Icon
+                      size={16}
+                      strokeWidth={2}
+                      className={`mt-0.5 shrink-0 ${statusColors[row.status]}`}
+                      aria-hidden="true"
+                    />
+                    <span className="min-w-0">{row.value}</span>
+                  </dd>
+                </div>
+              );
+            })}
+          </dl>
 
-          {(condition.cautions ||
-            condition.requiredItems.length > 0 ||
-            condition.breedRestrictions) && (
-            <div className="mt-4 pt-4 border-t space-y-3">
-              {condition.cautions && (
-                <div className="bg-warning-soft rounded-xl px-4 py-3">
-                  <p className="flex items-center gap-1 text-xs font-semibold text-warning mb-1">
-                    <TriangleAlert className="w-4 h-4 shrink-0" strokeWidth={2} aria-hidden="true" />
-                    {t("cautions")}
-                  </p>
-                  <p className="text-sm text-warning leading-relaxed">
-                    {condition.cautions}
-                  </p>
-                </div>
-              )}
-              {condition.requiredItems.length > 0 && (
-                <div className="flex items-start gap-3">
-                  <span className="text-xs font-medium text-content-secondary shrink-0 pt-0.5 min-w-[80px]">
-                    {t("requiredItems")}
-                  </span>
-                  <p className="text-sm text-content-secondary">
-                    {condition.requiredItems
-                      .map((item) => (item === "POOP_BAG" ? t("poopBag") : item))
-                      .join(", ")}
-                  </p>
-                </div>
-              )}
-              {condition.breedRestrictions && (
-                <div className="flex items-start gap-3">
-                  <span className="text-xs font-medium text-content-secondary shrink-0 pt-0.5 min-w-[80px]">
-                    {t("breedRestriction")}
-                  </span>
-                  <p className="text-sm text-content-secondary">{condition.breedRestrictions}</p>
-                </div>
-              )}
+          {condition.cautions && (
+            <div className="mt-5 rounded-panel bg-warning-soft px-4 py-3">
+              <p className="flex items-center gap-1.5 text-xs font-bold text-warning">
+                <TriangleAlert className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+                {t("cautions")}
+              </p>
+              <p className="mt-1 whitespace-pre-line text-sm text-warning">
+                {condition.cautions}
+              </p>
             </div>
           )}
 
+          {(condition.requiredItems.length > 0 || condition.breedRestrictions) && (
+            <dl className="mt-5 divide-y divide-border border-t border-border">
+              {condition.requiredItems.length > 0 && (
+                <div className="py-3 sm:grid sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-3">
+                  <dt className="text-xs text-content-secondary sm:text-sm">
+                    {t("requiredItems")}
+                  </dt>
+                  <dd className="mt-1 text-sm text-content sm:mt-0">
+                    {condition.requiredItems
+                      .map((item) => (item === "POOP_BAG" ? t("poopBag") : item))
+                      .join(", ")}
+                  </dd>
+                </div>
+              )}
+              {condition.breedRestrictions && (
+                <div className="py-3 sm:grid sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-3">
+                  <dt className="text-xs text-content-secondary sm:text-sm">
+                    {t("breedRestriction")}
+                  </dt>
+                  <dd className="mt-1 text-sm text-content sm:mt-0">
+                    {condition.breedRestrictions}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          )}
+
           {policy && (
-            <>
+            <div className="mt-6 space-y-4">
               {policy.entry && (
                 <PolicyBlock
                   title={tp("entryTitle")}
@@ -254,10 +296,10 @@ export default async function BeforeYouGoCard({ condition, locale }: Props) {
                   buildUncertaintySentence(line, translate),
                 )}
               />
-            </>
+            </div>
           )}
-        </div>
+        </>
       )}
-    </div>
+    </section>
   );
 }
