@@ -46,6 +46,9 @@ export interface VetItemState {
  *
  * 폼은 빈 칸을 `""`로 보내고 DB는 `NULL`을 돌려주므로 정규화 없이는 같은 값도 매번
  * 달라 보인다. 저장·비교 양쪽이 이 함수를 쓴다.
+ *
+ * 구분자는 U+0001(제어문자)이다. 사용자가 입력할 수 없는 문자라야 `"AB"+"C"`와
+ * `"A"+"BC"`가 같은 스냅샷이 되는 일을 막는다.
  */
 export function vetValueSnapshot(...parts: (string | null | undefined)[]): string {
   return parts.map((part) => (part ?? "").trim()).join("");
