@@ -31,6 +31,12 @@ interface PlaceConditionSummaryProps {
   variant?: "compact" | "detailed";
   /** 확인일 줄을 이 컴포넌트가 그릴지. 화면이 확인 정보를 따로 두면 끈다. */
   showVerification?: boolean;
+  /**
+   * 확인일 앞에 가는 선을 둘지. 그리드 카드는 조건과 확인 기록이 같은 상자 안에
+   * 붙어 있어 선 하나로 **읽는 순서**를 나눈다. 위아래가 구분선으로 이미 나뉜
+   * 목록 행에서는 선이 한 겹 더 생기므로 쓰지 않는다.
+   */
+  verificationDivider?: boolean;
 }
 
 type CoreCondition = { label: string; status: ConditionStatus };
@@ -41,6 +47,7 @@ export default function PlaceConditionSummary({
   className,
   variant = "compact",
   showVerification = true,
+  verificationDivider = false,
 }: PlaceConditionSummaryProps) {
   const t = useTranslations("places.card");
   // 구역 문장은 상세와 같은 문구를 쓴다. 같은 사실을 화면마다 다르게 옮겨 적지 않는다.
@@ -148,7 +155,7 @@ export default function PlaceConditionSummary({
    * 같은 자리의 조건을 비교할 수 없다 — 비교가 이 목록의 목적이다 (DESIGN.md §6).
    */
   return (
-    <div className={cn(isDetailed ? "space-y-2" : "space-y-1.5", className)}>
+    <div className={className}>
       <ul className={cn(isDetailed ? "space-y-1.5" : "space-y-0.5")}>
         {visibleConditions.map(({ label, status }) => (
           <li key={label} className="flex items-start gap-2 text-sm text-content">
@@ -162,6 +169,11 @@ export default function PlaceConditionSummary({
         <p
           className={cn(
             "flex items-center gap-1 text-xs",
+            verificationDivider
+              ? "mt-3 border-t border-border pt-2.5"
+              : isDetailed
+                ? "mt-2"
+                : "mt-1.5",
             isStale ? "text-warning" : "text-content-muted",
           )}
         >

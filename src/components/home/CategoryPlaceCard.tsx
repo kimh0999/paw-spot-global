@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
+import CategoryIcon from "@/components/places/CategoryIcon";
 import FavoriteButton from "@/components/places/FavoriteButton";
 import PlaceConditionSummary from "@/components/places/PlaceConditionSummary";
 import PlaceThumb from "@/components/places/PlaceThumb";
@@ -10,6 +10,7 @@ import VisitVerdict from "@/components/places/VisitVerdict";
 import { Link } from "@/i18n/navigation";
 import { displayPlaceName, isSupportedLocale } from "@/lib/i18n/locale";
 import { getVisitStatus } from "@/lib/places/eligibility";
+import { hasUsablePhoto } from "@/lib/places/photo";
 import type { PlaceListItem } from "@/types/place";
 
 interface CategoryPlaceCardProps {
@@ -24,6 +25,10 @@ interface CategoryPlaceCardProps {
  * 가로형이다. 세로형 카드는 사진이 없으면 위쪽 절반이 비고, 3열 격자에서는 장소 수가
  * 3의 배수가 아닐 때 빈 칸이 남는다. 가로형 2열은 **개수와 무관하게** 줄이 차고,
  * 넓어진 폭 덕분에 조건 문장이 접히지 않는다.
+ *
+ * **사진이 없으면 사진 자리를 만들지 않는다.** 모든 장소에 같은 무늬 띠를 달면 카드의
+ * 5분의 1이 장소를 구분하지 못하는 면적이 된다. 카테고리는 업종 이름 옆의 작은 표식이
+ * 맡고, 카드의 완성도는 이름·판정·조건의 위계와 확인 기록을 나누는 가는 선이 만든다.
  *
  * 읽는 순서는 **장소명이 먼저다.** 업종·주소는 그 장소를 이미 알아본 다음에 필요한 정보다.
  */
@@ -40,7 +45,6 @@ export default function CategoryPlaceCard({
   const categoryLabel = t(`card.category.${place.category}`);
   // 판정은 공용 helper를 그대로 쓴다. 카드에서 조건을 다시 해석하지 않는다.
   const status = getVisitStatus(place, "all");
-  const [, setPhotoFailed] = useState(false);
 
   return (
     <article className="group relative flex h-full overflow-hidden rounded-card border border-border bg-surface transition-colors hover:border-border-strong">
@@ -52,27 +56,37 @@ export default function CategoryPlaceCard({
         <span className="sr-only">{t("card.openDetails", { name: placeName })}</span>
       </Link>
 
-      {/* 사진이 오면 이 자리에 얹힌다. 없으면 카테고리 패턴이 그대로 남는다. */}
-      <PlaceThumb
-        category={place.category}
-        src={place.thumbnailUrl}
-        alt={placeName}
-        onLoadError={() => setPhotoFailed(true)}
-        className="w-24 shrink-0 self-stretch sm:w-28"
-      />
+      {/* 사진이 있을 때만 자리를 만든다. 없으면 폭 전부를 이름과 조건이 쓴다(§6 Place Thumb). */}
+      {hasUsablePhoto(place.thumbnailUrl) && (
+        <PlaceThumb
+          category={place.category}
+          src={place.thumbnailUrl}
+          alt={placeName}
+          className="w-28 shrink-0 self-stretch sm:w-32"
+        />
+      )}
 
-      <div className="min-w-0 flex-1 p-4 pr-14">
-        <h3 className="text-base font-bold leading-snug text-content">{placeName}</h3>
-        <p className="mt-0.5 truncate text-xs text-content-secondary">
-          {categoryLabel} · {place.address}
-        </p>
+      <div className="min-w-0 flex-1 p-4">
+        {/* 즐겨찾기 버튼은 카드 오른쪽 위에만 있다. 여백을 이름 묶음에만 주어 조건과 구분선이 폭 전부를 쓴다 */}
+        <div className="pr-10">
+          <h3 className="text-lg font-bold leading-snug tracking-tight text-content">
+            {placeName}
+          </h3>
+          <p className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-content-secondary">
+            <CategoryIcon category={place.category} />
+            <span className="truncate">
+              {categoryLabel} · {place.address}
+            </span>
+          </p>
+        </div>
 
         <VisitVerdict status={status} className="mt-2.5" />
 
         <PlaceConditionSummary
           place={place}
           referenceDate={referenceDate}
-          className="mt-2"
+          verificationDivider
+          className="mt-3"
         />
       </div>
 

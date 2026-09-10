@@ -36,6 +36,7 @@ import {
 import { needsRecheck, verificationMethodKey } from "@/lib/places/display";
 import { getVisitStatus } from "@/lib/places/eligibility";
 import { groupConsecutiveDays } from "@/lib/places/operating-hours";
+import { hasUsablePhoto } from "@/lib/places/photo";
 import { getPlaceById } from "@/lib/places/queries";
 import type { PlaceListItem } from "@/types/place";
 
@@ -185,7 +186,8 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
 
   // 공유에는 사용자 좌표가 붙지 않은 정규 경로를 넘긴다.
   const canonicalPath = `/${safeLocale}/places/${place.id}`;
-  const hasPhoto = place.thumbnailUrl != null && place.thumbnailUrl !== "";
+  // 사진 자리를 만들지 말지는 카드와 같은 판정을 쓴다 — 예시 주소면 자리 자체를 두지 않는다.
+  const hasPhoto = hasUsablePhoto(place.thumbnailUrl);
   const hasContact = place.phone || place.website || place.instagram;
 
   return (

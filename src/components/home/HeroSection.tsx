@@ -24,8 +24,11 @@ export default async function HeroSection({ placeCount }: HeroSectionProps) {
 
   return (
     <section className="border-b border-border bg-surface-page">
-      {/* 모바일 — 장면은 인상만 남기고 바닥 쪽으로 잘린다 */}
-      <div className="aspect-[16/7] w-full sm:aspect-[21/6] lg:hidden">
+      {/*
+        모바일 — 장면은 바닥 쪽으로 잘려 인상만 남는다. 비율 상한은 `16/5`(3.2:1)이며
+        그보다 납작하게 만들면 크롭이 보호자의 머리를 자른다(§6 Neighborhood Scene 좌표 기준선).
+      */}
+      <div className="aspect-[16/7] w-full sm:aspect-[16/5] lg:hidden">
         <NeighborhoodScene />
       </div>
 
@@ -47,8 +50,12 @@ export default async function HeroSection({ placeCount }: HeroSectionProps) {
             </div>
           </div>
 
-          {/* 데스크톱 — 장면 전체가 보이도록 원래 비율을 지킨다 */}
-          <div className="hidden aspect-[26/17] overflow-hidden rounded-card lg:block">
+          {/*
+            데스크톱 — 하늘을 조금 덜어 낸 비율. 장면의 원래 비율(26:17)을 그대로 두면
+            위쪽 3분의 1이 빈 하늘이 되고 그만큼 탐색이 아래로 밀린다. 아래를 기준으로
+            자르므로 가게·인물·반려견은 전부 남는다.
+          */}
+          <div className="hidden aspect-[26/15] overflow-hidden rounded-card lg:block">
             <NeighborhoodScene />
           </div>
         </div>

@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 
+import CategoryIcon from "@/components/places/CategoryIcon";
 import PlaceThumb from "@/components/places/PlaceThumb";
 import VisitVerdict from "@/components/places/VisitVerdict";
 import { getVisitEligibility, getVisitStatus } from "@/lib/places/eligibility";
 import { formatDistance } from "@/lib/geo/distance";
 import { displayPlaceName, isSupportedLocale } from "@/lib/i18n/locale";
+import { hasUsablePhoto } from "@/lib/places/photo";
 import { cn } from "@/lib/utils";
 import type { DogMatchResult } from "@/lib/dogs/matching";
 import type { DogSizeFilter, PlaceListItem } from "@/types/place";
@@ -20,7 +21,7 @@ import PlaceConditionSummary from "./PlaceConditionSummary";
  * - `list`: 지도 옆 탐색 목록의 행. 여러 장소의 조건을 **견주는** 것이 목적이라
  *   사진 자리를 두지 않고 폭 전부를 이름과 조건에 준다. 누르면 그 장소를 **선택**한다.
  * - `saved`: 즐겨찾기 그리드의 가로형 카드. 저장해 둔 곳을 **알아보는** 것이 목적이라
- *   사진(또는 카테고리 패턴) 자리를 둔다. 누르면 **상세로 이동**한다.
+ *   **사진이 있으면** 그 자리를 둔다. 누르면 **상세로 이동**한다.
  */
 type PlaceCardVariant = "list" | "saved";
 
@@ -51,7 +52,6 @@ export default function PlaceCard({
   const t = useTranslations("places");
   const rawLocale = useLocale();
   const locale = isSupportedLocale(rawLocale) ? rawLocale : "en";
-  const [, setPhotoFailed] = useState(false);
 
   const categoryLabels: Partial<Record<PlaceListItem["category"], string>> = {
     cafe: t("card.category.cafe"),
@@ -79,7 +79,16 @@ export default function PlaceCard({
   const body = (
     <>
       <div className="flex items-start justify-between gap-2">
-        <h3 className="min-w-0 text-base font-bold leading-snug text-content">
+        {/*
+          장소명이 첫 기준점이다. 그리드 카드는 **알아보는** 자리라 한 단 크게 두고,
+          여러 행을 견주는 목록은 밀도가 목적이라 기본 크기를 유지한다.
+        */}
+        <h3
+          className={cn(
+            "min-w-0 font-bold leading-snug tracking-tight text-content",
+            isSaved ? "text-lg" : "text-base",
+          )}
+        >
           {placeName}
         </h3>
         {distanceText && (
@@ -88,8 +97,11 @@ export default function PlaceCard({
           </span>
         )}
       </div>
-      <p className="mt-0.5 truncate text-xs text-content-secondary">
-        {categoryLabel} · {place.address}
+      <p className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-content-secondary">
+        <CategoryIcon category={place.category} />
+        <span className="truncate">
+          {categoryLabel} · {place.address}
+        </span>
       </p>
 
       {/*
@@ -122,7 +134,8 @@ export default function PlaceCard({
         place={place}
         referenceDate={referenceDate}
         variant={isSaved ? "detailed" : "compact"}
-        className="mt-1.5"
+        verificationDivider={isSaved}
+        className={isSaved ? "mt-3" : "mt-1.5"}
       />
     </>
   );
@@ -137,13 +150,15 @@ export default function PlaceCard({
         >
           <span className="sr-only">{actionLabel}</span>
         </button>
-        <PlaceThumb
-          category={place.category}
-          src={place.thumbnailUrl}
-          alt={placeName}
-          onLoadError={() => setPhotoFailed(true)}
-          className="w-24 shrink-0 self-stretch sm:w-28"
-        />
+        {/* 사진이 있을 때만 자리를 만든다. 없으면 폭 전부를 이름과 조건이 쓴다(§6 Place Thumb). */}
+        {hasUsablePhoto(place.thumbnailUrl) && (
+          <PlaceThumb
+            category={place.category}
+            src={place.thumbnailUrl}
+            alt={placeName}
+            className="w-28 shrink-0 self-stretch sm:w-32"
+          />
+        )}
         <div className="min-w-0 flex-1 p-4">{body}</div>
       </div>
     );

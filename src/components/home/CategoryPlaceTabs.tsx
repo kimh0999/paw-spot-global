@@ -23,21 +23,23 @@ interface CategoryPlaceTabsProps {
   referenceDate: Date;
 }
 
-/** 자리를 대신하는 요소와 같은 구조·크기·radius를 쓴다 (DESIGN.md §7 Initial loading). */
+/**
+ * 자리를 대신하는 요소와 같은 구조·크기·radius를 쓴다 (DESIGN.md §7 Initial loading).
+ * 사진이 없는 카드가 기본형이라 사진 자리는 두지 않는다 — 두면 사진 없는 장소가
+ * 도착할 때 띠 하나가 사라지며 카드가 흔들린다.
+ */
 function CardSkeleton() {
   return (
-    <div className="flex overflow-hidden rounded-card border border-border bg-surface">
-      <Skeleton className="w-24 shrink-0 rounded-none sm:w-28" />
-      <div className="flex-1 space-y-2 p-4">
-        <Skeleton className="h-6 w-2/3 rounded-sm" />
-        <Skeleton className="h-4 w-3/4 rounded-sm" />
-        <Skeleton className="h-5 w-28 rounded-sm" />
-        <div className="space-y-1 pt-1">
-          <Skeleton className="h-5 w-2/3 rounded-sm" />
-          <Skeleton className="h-5 w-1/2 rounded-sm" />
-          <Skeleton className="h-5 w-3/5 rounded-sm" />
-        </div>
+    <div className="overflow-hidden rounded-card border border-border bg-surface p-4">
+      <Skeleton className="h-7 w-2/3 rounded-sm" />
+      <Skeleton className="mt-1 h-4 w-3/4 rounded-sm" />
+      <Skeleton className="mt-2.5 h-6 w-32 rounded-sm" />
+      <div className="mt-3 space-y-1">
+        <Skeleton className="h-5 w-2/3 rounded-sm" />
+        <Skeleton className="h-5 w-1/2 rounded-sm" />
+        <Skeleton className="h-5 w-3/5 rounded-sm" />
       </div>
+      <Skeleton className="mt-6 h-4 w-40 rounded-sm" />
     </div>
   );
 }
@@ -140,6 +142,33 @@ export default function CategoryPlaceTabs({
         if (next) loadCategory(next);
       }}
     >
+      {/*
+        머리말 — 섹션 제목·확인된 장소 수·전체 보기를 한 덩어리로 읽는다. 셋이 탭과 카드
+        사이에 층층이 쌓이면 검색에서 장소 결과까지 가는 길이 그만큼 길어진다(DESIGN.md §5 Home).
+
+        개수는 고른 카테고리에 따라 바뀌는데 이 자리는 탭 패널 밖이라 패널 전환만으로는
+        읽히지 않는다. 그래서 `aria-live`로 바뀐 값을 알린다.
+
+        `전체 보기`는 제목이 아니라 **개수와 같은 줄**에 둔다. 제목 줄에 붙이면 영어처럼
+        제목이 길어질 때 아래로 밀려 홀로 한 줄을 차지한다. 개수와 짝지으면 제목이 몇 줄이
+        되든 머리말은 늘 `제목 / 개수 · 전체 보기` 두 줄이다.
+      */}
+      <div className="mb-4">
+        <h2 className="text-xl font-bold text-content">{t("title")}</h2>
+        <div className="mt-1 flex items-center justify-between gap-4">
+          <p className="min-w-0 text-sm text-content-secondary" aria-live="polite">
+            {t("verifiedCount", { count: result?.totalCount ?? 0 })}
+          </p>
+          <Link
+            href={viewAllHref}
+            className="-my-2 flex h-11 shrink-0 items-center gap-1 rounded-md text-sm font-semibold text-primary outline-none hover:text-primary-hover focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {t("viewAll")}
+            <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
+          </Link>
+        </div>
+      </div>
+
       {/* 모바일에서는 줄바꿈 대신 가로 스크롤한다. 좌우 여백을 유지해 첫·마지막 탭이 잘리지 않는다. */}
       <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <Tabs.List className="flex w-max gap-2">
@@ -155,20 +184,7 @@ export default function CategoryPlaceTabs({
         </Tabs.List>
       </div>
 
-      <Tabs.Content value={category} className="outline-none">
-        <div className="mb-4 mt-6 flex items-baseline justify-between gap-3 border-b border-border pb-3">
-          <p className="text-sm font-semibold text-content">
-            {t("verifiedCount", { count: result?.totalCount ?? 0 })}
-          </p>
-          <Link
-            href={viewAllHref}
-            className="-my-2 flex h-11 shrink-0 items-center gap-1 rounded-md text-sm font-semibold text-primary outline-none hover:text-primary-hover focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            {t("viewAll")}
-            <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
-          </Link>
-        </div>
-
+      <Tabs.Content value={category} className="mt-4 outline-none">
         {renderContent()}
       </Tabs.Content>
     </Tabs.Root>
