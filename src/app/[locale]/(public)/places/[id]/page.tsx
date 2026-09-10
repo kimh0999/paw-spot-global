@@ -14,11 +14,13 @@ import {
 } from "lucide-react";
 
 import BeforeYouGoCard from "@/components/places/BeforeYouGoCard";
+import ConditionStatusIcon from "@/components/places/ConditionStatusIcon";
 import DogMatchBadge from "@/components/places/DogMatchBadge";
 import FavoriteButton from "@/components/places/FavoriteButton";
 import Header from "@/components/Header";
 import PlaceThumb from "@/components/places/PlaceThumb";
 import ShareButton from "@/components/places/ShareButton";
+import VisitVerdict from "@/components/places/VisitVerdict";
 import { Link } from "@/i18n/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { matchDogsToPlace } from "@/lib/dogs/matching";
@@ -27,9 +29,15 @@ import { parseDogSelection } from "@/lib/dogs/selection";
 import { formatDistance, haversineDistance } from "@/lib/geo/distance";
 import { displayPlaceName, isSupportedLocale } from "@/lib/i18n/locale";
 import { getFavoritePlaceIds } from "@/lib/favorites/queries";
-import { needsRecheck } from "@/lib/places/display";
+import {
+  buildConditionRows,
+  CORE_CONDITION_COUNT,
+} from "@/lib/places/condition-rows";
+import { needsRecheck, verificationMethodKey } from "@/lib/places/display";
+import { getVisitStatus } from "@/lib/places/eligibility";
 import { groupConsecutiveDays } from "@/lib/places/operating-hours";
 import { getPlaceById } from "@/lib/places/queries";
+import type { PlaceListItem } from "@/types/place";
 
 /** 범위를 벗어난 값·형식이 틀린 값은 없는 것으로 본다. `places/page.tsx`와 같은 규칙이다. */
 function parseCoord(
@@ -135,6 +143,46 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
         )
       : null;
 
+  /**
+   * 목록·카드와 **같은 판정 함수**를 쓰기 위해 상세의 조건을 목록 항목 모양으로 맞춘다.
+   * 판정 로직을 이 화면에서 다시 쓰지 않는다 — 다시 쓰면 같은 장소가 화면마다 달라진다.
+   */
+  const judgmentInput: PlaceListItem = {
+    id: place.id,
+    nameKr: place.nameKr,
+    nameEn: place.nameEn,
+    category: place.category,
+    address: place.address,
+    phone: place.phone,
+    location: place.location,
+    distanceMeters: null,
+    thumbnailUrl: place.thumbnailUrl,
+    indoor: place.condition?.indoor ?? null,
+    carrierStrollerPolicy: place.condition?.carrierStrollerPolicy ?? null,
+    maxDogSize: place.condition?.maxDogSize ?? null,
+    leash: place.condition?.leash ?? null,
+    muzzle: place.condition?.muzzle ?? null,
+    breedRestrictions: place.condition?.breedRestrictions ?? null,
+    policyDetails: place.condition?.policyDetails ?? null,
+    caution: place.condition?.cautions ?? null,
+    latestVerifiedAt: place.latestVerification?.verifiedAt ?? null,
+    verificationMethod: place.latestVerification?.method ?? null,
+  };
+  const visitStatus = getVisitStatus(judgmentInput, "all");
+
+  const tBeforeYouGo = await getTranslations({
+    locale: safeLocale,
+    namespace: "places.detail.beforeYouGo",
+  });
+  // 아래 전체 표와 같은 함수에서 만든다. 요약과 표가 다른 말을 하지 않게 하기 위해서다.
+  const coreConditions = buildConditionRows(place.condition, tBeforeYouGo).slice(
+    0,
+    CORE_CONDITION_COUNT,
+  );
+
+  // 확인 방식은 저장된 영어 라벨이라 그대로 두면 한국어 화면에 `Phone`이 남는다.
+  const methodKey = verificationMethodKey(place.latestVerification?.method ?? null);
+
   // 공유에는 사용자 좌표가 붙지 않은 정규 경로를 넘긴다.
   const canonicalPath = `/${safeLocale}/places/${place.id}`;
   const hasPhoto = place.thumbnailUrl != null && place.thumbnailUrl !== "";
@@ -156,9 +204,21 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
             {t("back")}
           </Link>
 
-          {/* 장소 머리말 — 이름·위치·확인 상태·행동을 한 덩어리로 읽는다.
-              사진은 있을 때만 자리를 차지한다. */}
-          <div className="mt-2 gap-6 lg:flex lg:items-start">
+          {/*
+            장소 머리말 — 이름·위치·확인 기록·행동, 그리고 **핵심 방문 조건**을 한 덩어리로 묶는다.
+            오른쪽을 비워 두거나 사진으로만 채우지 않는다. 이 화면에 온 이유가 방문 판단이라
+            그 판단이 머리말 안에서 시작되어야 한다.
+          */}
+          <div className="mt-2 overflow-hidden rounded-card border border-border bg-surface">
+            {hasPhoto && (
+              <PlaceThumb
+                category={place.category}
+                src={place.thumbnailUrl}
+                alt={placeName}
+                className="aspect-[21/6] w-full"
+              />
+            )}
+            <div className="gap-8 p-5 sm:p-6 lg:flex lg:items-start">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-primary">{categoryLabel}</p>
               <h1 className="mt-1 text-2xl font-bold leading-tight text-content sm:text-3xl">
@@ -241,17 +301,33 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
               </div>
             </div>
 
-            {hasPhoto && (
-              <div className="mt-5 shrink-0 lg:mt-0 lg:w-[320px]">
-                <PlaceThumb
-                  category={place.category}
-                  src={place.thumbnailUrl}
-                  alt={placeName}
-                  variant="band"
-                  className="rounded-card"
-                />
+            {/*
+              핵심 방문 조건 — 입장을 가르는 셋만 머리말에 올린다. 아래 전체 표와 **같은
+              함수·같은 문구**를 쓰므로 요약에서 자세한 조건으로 넘어갈 때 뜻이 달라지지 않는다.
+            */}
+            {coreConditions.length > 0 && (
+              <div className="mt-6 shrink-0 rounded-panel bg-surface-page p-4 lg:mt-0 lg:w-[300px]">
+                <VisitVerdict status={visitStatus} />
+                <dl className="mt-3 space-y-2 border-t border-border pt-3">
+                  {coreConditions.map((row) => (
+                    <div key={row.key}>
+                      <dt className="text-xs text-content-secondary">{row.label}</dt>
+                      <dd className="mt-0.5 flex items-start gap-2 text-sm font-medium text-content">
+                        <ConditionStatusIcon status={row.status} className="mt-0.5" />
+                        <span className="min-w-0">{row.value}</span>
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                <a
+                  href="#before-you-go-title"
+                  className="mt-3 inline-flex h-11 items-center rounded-md text-sm font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {t("seeAllConditions")}
+                </a>
               </div>
             )}
+            </div>
           </div>
 
           {dogMatch && (
@@ -381,7 +457,11 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
                       <dt className="w-24 shrink-0 text-content-secondary">
                         {t("verification.method")}
                       </dt>
-                      <dd className="text-content">{place.latestVerification.method}</dd>
+                      <dd className="text-content">
+                        {methodKey
+                          ? tCard(`verificationPath.${methodKey}`)
+                          : place.latestVerification.method}
+                      </dd>
                     </div>
                     {place.latestVerification.note && (
                       <div className="flex gap-3">

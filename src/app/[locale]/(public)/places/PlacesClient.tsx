@@ -159,6 +159,27 @@ export default function PlacesClient({
   }, [selectedPlaceId]);
 
   /**
+   * 미리보기를 닫고 **방금 보던 카드로 포커스를 돌려준다.**
+   * 되돌려 주지 않으면 포커스가 문서 처음으로 튀어, 키보드 사용자는 목록을 처음부터
+   * 다시 훑어야 한다 (`DESIGN.md` §11 오버레이와 포커스).
+   */
+  const pendingFocusPlaceId = useRef<string | null>(null);
+
+  const closePreview = useCallback(() => {
+    pendingFocusPlaceId.current = selectedPlaceId;
+    clearSelectedPlace();
+  }, [selectedPlaceId, clearSelectedPlace]);
+
+  // 목록이 **다시 보이게 된 뒤에** 포커스를 옮긴다. 렌더 전에는 카드가 아직
+  // `visibility: hidden`이라 focus()가 아무 일도 하지 않는다.
+  useEffect(() => {
+    const placeId = pendingFocusPlaceId.current;
+    if (!placeId || selectedPlaceId) return;
+    pendingFocusPlaceId.current = null;
+    cardRefs.current.get(placeId)?.querySelector("button")?.focus();
+  }, [selectedPlaceId]);
+
+  /**
    * 선택한 장소를 ESC로 닫는다.
    *
    * Bottom Sheet는 **닫히는 패널이 아니다** — 1단계(결과 개수)가 항상 떠 있고 지도가 그
@@ -172,12 +193,12 @@ export default function PlacesClient({
     if (!selectedPlaceId || isFilterOpen) return;
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") clearSelectedPlace();
+      if (event.key === "Escape") closePreview();
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [selectedPlaceId, isFilterOpen, clearSelectedPlace]);
+  }, [selectedPlaceId, isFilterOpen, closePreview]);
 
   const dogMatchByPlaceId = useMemo(() => {
     const map = new Map<string, DogMatchResult>();
@@ -271,7 +292,7 @@ export default function PlacesClient({
     <PlacePreviewCard
       place={selectedPlace}
       referenceDate={referenceDate}
-      onClose={clearSelectedPlace}
+      onClose={closePreview}
       userLocation={userLocation}
       isFavorite={isSelectedFavorite}
       dogSize={previewDogSize}
@@ -319,6 +340,18 @@ export default function PlacesClient({
             {t("list.resultCount", { count: visiblePlaces.length })}
           </p>
 
+          {/*
+            미리보기가 덮는 동안 목록은 **보이지 않게** 둔다.
+            `display:none`이 아니라 `visibility:hidden`이라 스크롤 위치가 그대로 남고,
+            동시에 가려진 카드가 Tab 순서와 스크린리더에서 빠진다 — 덮인 목록으로 포커스가
+            들어가면 사용자는 보이지 않는 곳을 조작하게 된다.
+          */}
+          <div
+            className={cn(
+              "flex min-h-0 flex-1 flex-col",
+              selectedPlace && "lg:invisible",
+            )}
+          >
           {/* 시트 손잡이 — 모바일에서 끌어올릴 영역임을 알리는 장식 */}
           <span
             className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border-strong lg:hidden"
@@ -606,6 +639,8 @@ export default function PlacesClient({
                 )}
               </div>
             )}
+          </div>
+
           </div>
 
           {/* 데스크톱에서 선택한 장소는 목록 컬럼을 덮는다. 목록은 그대로 남아 있어

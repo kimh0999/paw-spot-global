@@ -90,7 +90,7 @@ export default function DogCard({ dog, onEdit, onDelete }: DogCardProps) {
 
         <Link
           href={buildDogPlacesHref([dog.id])}
-          className="mt-3 inline-flex h-11 items-center gap-1.5 rounded-lg border border-border-control bg-surface px-3 text-sm font-semibold text-content outline-none transition-colors hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring"
+          className="mt-3 inline-flex h-11 items-center gap-1.5 rounded-lg bg-primary-soft px-3 text-sm font-semibold text-primary outline-none transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:ring-2 focus-visible:ring-ring"
         >
           <MapPin size={16} strokeWidth={2} aria-hidden="true" />
           {/* 어떤 아이 기준으로 목록을 여는지 버튼 안에서 밝힌다. */}

@@ -1,6 +1,7 @@
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { auth } from "@/auth";
+import DocumentLocale from "@/components/i18n/DocumentLocale";
 import SessionProvider from "@/components/providers/SessionProvider";
 import { SUPPORTED_LOCALES } from "@/lib/constants";
 
@@ -20,6 +21,7 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
+      <DocumentLocale />
       <SessionProvider session={session}>{children}</SessionProvider>
     </NextIntlClientProvider>
   );

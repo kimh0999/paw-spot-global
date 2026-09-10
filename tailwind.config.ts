@@ -31,6 +31,11 @@ const config: Config = {
           muted: "var(--color-text-muted)",
         },
         overlay: "var(--color-overlay)",
+        scene: {
+          sky: "var(--color-scene-sky)",
+          leaf: "var(--color-scene-leaf)",
+          fur: "var(--color-scene-fur)",
+        },
         avatar: {
           cool: "var(--color-avatar-cool)",
           "cool-fg": "var(--color-avatar-cool-fg)",

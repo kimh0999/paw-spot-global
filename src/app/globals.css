@@ -46,6 +46,12 @@
     --color-avatar-clay: #f6ebe9;
     --color-avatar-clay-fg: #7a3e2e;
 
+    /* 일러스트 전용 색. 상태(초록·앰버·빨강)도 브랜드도 아니며, 장면을 그리는 데만 쓴다.
+       UI 요소에 이 색을 쓰지 않는다. */
+    --color-scene-sky: #eef2f7;
+    --color-scene-leaf: #cfe0d2;
+    --color-scene-fur: #c8a179;
+
     /* 지도의 내 위치 점. 지도 관례를 따르는 파랑이며, 선택 마커(브랜드색)와 반드시 구분된다. */
     --color-user-location: #1a73e8;
 

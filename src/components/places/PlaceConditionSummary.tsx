@@ -1,8 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Check, CircleAlert, CircleSlash, History, Info, type LucideIcon } from "lucide-react";
+import { History } from "lucide-react";
 
+import ConditionStatusIcon from "@/components/places/ConditionStatusIcon";
 import {
   displayableAreaRecords,
   resolveDogAccess,
@@ -33,21 +34,6 @@ interface PlaceConditionSummaryProps {
 }
 
 type CoreCondition = { label: string; status: ConditionStatus };
-
-// 상태는 색상만으로 구분하지 않고 아이콘을 함께 사용한다 (DESIGN.md §4)
-const statusIcons: Record<ConditionStatus, LucideIcon> = {
-  good: Check,
-  warning: CircleAlert,
-  bad: CircleSlash,
-  neutral: Info,
-};
-
-const statusColors: Record<ConditionStatus, string> = {
-  good: "text-success",
-  warning: "text-warning",
-  bad: "text-danger",
-  neutral: "text-content-muted",
-};
 
 export default function PlaceConditionSummary({
   place,
@@ -162,22 +148,14 @@ export default function PlaceConditionSummary({
    * 같은 자리의 조건을 비교할 수 없다 — 비교가 이 목록의 목적이다 (DESIGN.md §6).
    */
   return (
-    <div className={cn("space-y-2", className)}>
-      <ul className={cn(isDetailed ? "space-y-1.5" : "space-y-1")}>
-        {visibleConditions.map(({ label, status }) => {
-          const Icon = statusIcons[status];
-          return (
-            <li key={label} className="flex items-start gap-2 text-sm text-content">
-              <Icon
-                size={16}
-                strokeWidth={2}
-                className={cn("mt-0.5 shrink-0", statusColors[status])}
-                aria-hidden="true"
-              />
-              <span className="min-w-0">{label}</span>
-            </li>
-          );
-        })}
+    <div className={cn(isDetailed ? "space-y-2" : "space-y-1.5", className)}>
+      <ul className={cn(isDetailed ? "space-y-1.5" : "space-y-0.5")}>
+        {visibleConditions.map(({ label, status }) => (
+          <li key={label} className="flex items-start gap-2 text-sm text-content">
+            <ConditionStatusIcon status={status} className="mt-0.5" />
+            <span className="min-w-0">{label}</span>
+          </li>
+        ))}
       </ul>
 
       {showVerification && (

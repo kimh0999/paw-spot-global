@@ -20,7 +20,7 @@ export default function FavoritesList({ places, dog }: FavoritesListProps) {
   const [referenceDate] = useState(() => new Date());
 
   return (
-    <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       {places.map((place) => (
         <li key={place.id}>
           <PlaceCard

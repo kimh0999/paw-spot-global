@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useSession, signOut } from "next-auth/react";
 import { Heart, MapPin, PawPrint } from "lucide-react";
 
+import PawSpotMark from "@/components/brand/PawSpotMark";
 import { Link, usePathname } from "@/i18n/navigation";
 import LocaleSwitcher from "@/components/i18n/LocaleSwitcher";
 import { cn } from "@/lib/utils";
@@ -48,9 +49,8 @@ export default function Header() {
           href="/"
           className="flex h-11 shrink-0 items-center gap-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-panel bg-primary text-primary-foreground">
-            <PawPrint className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
-          </span>
+          {/* 로고는 아이콘이 아니다. 핀 안에 발자국을 넣은 서비스 고유 마크를 쓴다. */}
+          <PawSpotMark className="h-7 w-7 shrink-0 text-primary" />
           <span className="text-base font-bold tracking-tight text-content">
             Paw Spot
           </span>

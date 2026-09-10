@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 
 import FavoriteButton from "@/components/places/FavoriteButton";
-import PlaceThumb from "@/components/places/PlaceThumb";
 import VisitVerdict from "@/components/places/VisitVerdict";
 import { Link } from "@/i18n/navigation";
 import { formatDistance } from "@/lib/geo/distance";
@@ -223,33 +222,25 @@ export default function PlacePreviewCard({
           />
         </div>
 
-        <div className="mt-1 flex items-start gap-3">
-          <PlaceThumb
-            category={place.category}
-            src={place.thumbnailUrl}
-            alt={placeName}
-            variant="crest"
-          />
-          <div className="min-w-0 flex-1">
-            <h2
-              ref={headingRef}
-              tabIndex={-1}
-              className="break-words rounded text-lg font-bold leading-snug text-content outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {placeName}
-            </h2>
-            <p className="mt-0.5 text-sm text-content-secondary">
-              {categoryLabel}
-              {distanceText && (
-                <>
-                  <span aria-hidden="true"> · </span>
-                  <span className="font-semibold tabular-nums text-content">
-                    {distanceText}
-                  </span>
-                </>
-              )}
-            </p>
-          </div>
+        <div className="mt-1">
+          <h2
+            ref={headingRef}
+            tabIndex={-1}
+            className="break-words rounded text-xl font-bold leading-tight text-content outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {placeName}
+          </h2>
+          <p className="mt-1 text-sm text-content-secondary">
+            {categoryLabel}
+            {distanceText && (
+              <>
+                <span aria-hidden="true"> · </span>
+                <span className="font-semibold tabular-nums text-content">
+                  {distanceText}
+                </span>
+              </>
+            )}
+          </p>
         </div>
 
         <p className="mt-2 flex items-start gap-1.5 text-sm text-content-secondary">

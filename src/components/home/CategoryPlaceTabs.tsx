@@ -26,11 +26,11 @@ interface CategoryPlaceTabsProps {
 /** 자리를 대신하는 요소와 같은 구조·크기·radius를 쓴다 (DESIGN.md §7 Initial loading). */
 function CardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-card border border-border bg-surface">
-      <Skeleton className="aspect-[16/9] w-full rounded-none" />
-      <div className="space-y-2 p-4">
-        <Skeleton className="h-4 w-32 rounded-sm" />
-        <Skeleton className="h-6 w-3/4 rounded-sm" />
+    <div className="flex overflow-hidden rounded-card border border-border bg-surface">
+      <Skeleton className="w-24 shrink-0 rounded-none sm:w-28" />
+      <div className="flex-1 space-y-2 p-4">
+        <Skeleton className="h-6 w-2/3 rounded-sm" />
+        <Skeleton className="h-4 w-3/4 rounded-sm" />
         <Skeleton className="h-5 w-28 rounded-sm" />
         <div className="space-y-1 pt-1">
           <Skeleton className="h-5 w-2/3 rounded-sm" />
@@ -87,7 +87,7 @@ export default function CategoryPlaceTabs({
   function renderContent() {
     if (isLoading) {
       return (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:gap-5">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {Array.from({ length: skeletonCount }, (_, index) => (
             <CardSkeleton key={index} />
           ))}
@@ -119,7 +119,7 @@ export default function CategoryPlaceTabs({
     }
 
     return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:gap-5">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {places.map((place) => (
           <CategoryPlaceCard
             key={place.id}

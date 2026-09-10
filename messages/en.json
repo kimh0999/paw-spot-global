@@ -547,7 +547,8 @@
         "copy": "Copy",
         "copied": "Copied!"
       },
-      "disclaimer": "Store policies may change. Please confirm with the store before your visit."
+      "disclaimer": "Store policies may change. Please confirm with the store before your visit.",
+      "seeAllConditions": "See all conditions"
     }
   },
   "header": {
