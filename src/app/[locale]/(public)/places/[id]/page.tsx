@@ -102,6 +102,7 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
     indoor: place.condition?.indoor ?? null,
     maxDogSize: place.condition?.maxDogSize ?? null,
     breedRestrictions: place.condition?.breedRestrictions ?? null,
+    policyDetails: place.condition?.policyDetails ?? null,
   });
 
   const t = await getTranslations({ locale: safeLocale, namespace: "places.detail" });

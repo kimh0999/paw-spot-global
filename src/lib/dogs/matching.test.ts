@@ -7,13 +7,38 @@ import {
   resolveWorstMatch,
   type MatchablePlace,
 } from "@/lib/dogs/matching";
+import type { PolicyDetails } from "@/lib/places/policy-details";
 
 const place = (overrides: Partial<MatchablePlace> = {}): MatchablePlace => ({
   indoor: "allowed",
   maxDogSize: "large",
   breedRestrictions: null,
+  policyDetails: null,
   ...overrides,
 });
+
+/** 구역 기록 하나만 담은 상세 조건. 나머지 그룹은 판정과 무관해 비워 둔다. */
+const withSpaceException = (
+  record: PolicyDetails["spaceExceptions"][number],
+): PolicyDetails =>
+  ({
+    version: 1,
+    entry: { vaccinationCompletionPolicy: "UNKNOWN" },
+    preparation: [],
+    handling: [],
+    admission: [],
+    hygiene: [],
+    behaviorRestrictions: [],
+    spaceExceptions: [record],
+    uncertainties: [],
+  }) as unknown as PolicyDetails;
+
+const INDOOR_BLOCKED_FOR_ALL = withSpaceException({
+  area: "INDOOR",
+  access: "NOT_ALLOWED",
+  appliesToSize: "ALL",
+  note: null,
+} as PolicyDetails["spaceExceptions"][number]);
 
 describe("getAllowedSizes", () => {
   it("상한값을 허용 크기 목록으로 펼친다", () => {
@@ -75,10 +100,60 @@ describe("matchDogToPlace", () => {
     ).toEqual({ status: "CHECK_REQUIRED", reason: "UNKNOWN_CONDITION" });
   });
 
-  it("실내 조건이 미확인이어도 동반 불가로 보지 않는다", () => {
+  /**
+   * 동반 가능 여부가 미확인이면 **불가도 일치도 아니다.**
+   * 예전에는 MATCH(`조건 일치`)를 단언해서, 같은 장소를 두고 상세·즐겨찾기는
+   * `동반 조건 미확인`이라고 하는데 지도 목록만 `조건 일치`라고 말했다.
+   */
+  it("동반 가능 여부가 미확인이면 동반 불가도 조건 일치도 아니다", () => {
     expect(
       matchDogToPlace({ size: "SMALL" }, place({ indoor: "unknown" })),
-    ).toEqual({ status: "MATCH", reason: null });
+    ).toEqual({ status: "CHECK_REQUIRED", reason: "UNKNOWN_CONDITION" });
+  });
+
+  it("구역 기록이 실내 전체 불가인데 요약이 미확인이면 조건 일치로 단언하지 않는다", () => {
+    expect(
+      matchDogToPlace(
+        { size: "SMALL" },
+        place({ indoor: "unknown", policyDetails: INDOOR_BLOCKED_FOR_ALL }),
+      ),
+    ).toEqual({ status: "CHECK_REQUIRED", reason: "UNKNOWN_CONDITION" });
+  });
+
+  it("요약과 구역 기록이 어긋나면 조건 일치로 단언하지 않는다", () => {
+    // 요약은 `실내 가능`인데 구역 기록은 `실내 전체 불가` — 어느 쪽도 사실로 확정하지 않는다.
+    expect(
+      matchDogToPlace(
+        { size: "SMALL" },
+        place({ indoor: "allowed", policyDetails: INDOOR_BLOCKED_FOR_ALL }),
+      ),
+    ).toEqual({ status: "CHECK_REQUIRED", reason: "UNKNOWN_CONDITION" });
+  });
+
+  it("요약과 구역 기록이 어긋나면 동반 불가도 단언하지 않는다", () => {
+    // 요약은 `동반 불가`인데 구역 기록은 전체 반려견 실내 허용이다.
+    const indoorAllowedForAll = withSpaceException({
+      area: "INDOOR",
+      access: "ALLOWED",
+      appliesToSize: "ALL",
+      note: null,
+    } as PolicyDetails["spaceExceptions"][number]);
+
+    expect(
+      matchDogToPlace(
+        { size: "SMALL" },
+        place({ indoor: "not_allowed", policyDetails: indoorAllowedForAll }),
+      ),
+    ).toEqual({ status: "CHECK_REQUIRED", reason: "UNKNOWN_CONDITION" });
+  });
+
+  it("크기 상한이 확인됐다면 동반 여부가 미확인이어도 크기 제한은 그대로 단언한다", () => {
+    expect(
+      matchDogToPlace(
+        { size: "LARGE" },
+        place({ indoor: "unknown", maxDogSize: "small" }),
+      ),
+    ).toEqual({ status: "MISMATCH", reason: "SIZE_LIMIT" });
   });
 
   it("실외만 가능한 장소는 동반 불가가 아니다", () => {

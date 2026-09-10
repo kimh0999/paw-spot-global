@@ -1,4 +1,6 @@
 import type { DogSize } from "@/lib/constants";
+import { resolveDogAccess, type DogAccessKey } from "@/lib/places/dog-access";
+import type { PolicyDetails } from "@/lib/places/policy-details";
 
 /**
  * 반려견 한 마리와 장소 조건을 대조한 결과.
@@ -46,7 +48,26 @@ export type MatchablePlace = {
     | null;
   maxDogSize: "small" | "medium" | "large" | "unknown" | null;
   breedRestrictions: string | null;
+  /**
+   * 구조화된 상세 조건. **선택 항목이 아니다** — 요약 컬럼만 보면 구역 기록이 말하는
+   * 실내 전체 불가나 요약과의 불일치를 놓치고 `조건 일치`를 단언하게 된다.
+   * 아직 구조화되지 않은 장소는 `null`이다.
+   */
+  policyDetails: PolicyDetails | null;
 };
+
+/**
+ * 동반 가능 여부가 **확정된** 상태인지.
+ *
+ * `outdoor_only`·`partial_area`는 동반이 확인된 상태다 — 구역이 제한될 뿐이고,
+ * 그 제한은 카드의 조건 목록이 따로 말한다. 반대로 미확인·불일치·`실내 불가 + 야외 미확인`은
+ * 동반 가능 여부 자체가 정해지지 않은 상태라 프로필 대조 결과를 단언할 수 없다.
+ */
+const CONFIRMED_ACCESS_KEYS: readonly DogAccessKey[] = [
+  "allowed",
+  "outdoorOnly",
+  "partialArea",
+];
 
 /**
  * 스키마는 허용 크기를 목록이 아니라 상한값 하나(`PlaceCondition.maxDogSize`)로 갖는다.
@@ -72,11 +93,6 @@ function hasBreedRestrictions(place: MatchablePlace): boolean {
   return (place.breedRestrictions ?? "").trim() !== "";
 }
 
-/** 반려견 동반 자체가 불가능한 장소인지. 크기를 보기 전에 먼저 걸러야 한다. */
-function isPetNotAllowed(place: MatchablePlace): boolean {
-  return place.indoor === "not_allowed";
-}
-
 /**
  * 반려견 한 마리 판정.
  *
@@ -85,12 +101,19 @@ function isPetNotAllowed(place: MatchablePlace): boolean {
  *
  * 견종 제한은 지금 자유 텍스트라서 breedCode와 기계적으로 대조할 수 없다.
  * 제한 문구가 있으면 크기가 허용되더라도 CHECK_REQUIRED로 남긴다.
+ *
+ * **동반 가능 여부는 `resolveDogAccess`로 읽는다.** 요약 컬럼(`indoor`)만 보면
+ * 구역 기록이 말하는 실내 전체 불가와 요약·세부의 불일치를 놓쳐, 같은 장소를 두고
+ * 상세·즐겨찾기는 `확인 필요`라고 하는데 목록만 `조건 일치`라고 말하게 된다.
+ * 판정 근거를 `getVisitEligibility`와 같은 함수에서 가져와 두 화면이 어긋나지 않게 한다.
  */
 export function matchDogToPlace(
   dog: Pick<MatchableDog, "size">,
   place: MatchablePlace,
 ): DogMatchResult {
-  if (isPetNotAllowed(place)) {
+  const access = resolveDogAccess(place.indoor, place.policyDetails);
+
+  if (access.key === "notAllowed") {
     return { status: "MISMATCH", reason: "PET_NOT_ALLOWED" };
   }
 
@@ -103,7 +126,8 @@ export function matchDogToPlace(
   if (hasBreedRestrictions(place)) {
     return { status: "CHECK_REQUIRED", reason: "BREED_RESTRICTION" };
   }
-  if (!isSizeConfirmed) {
+  // 크기 상한과 동반 가능 여부 중 하나라도 확정되지 않았으면 일치를 단언하지 않는다.
+  if (!isSizeConfirmed || !CONFIRMED_ACCESS_KEYS.includes(access.key)) {
     return { status: "CHECK_REQUIRED", reason: "UNKNOWN_CONDITION" };
   }
 
