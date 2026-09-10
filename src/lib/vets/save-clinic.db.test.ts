@@ -116,7 +116,9 @@ suite("VetClinic DB 왕복 (격리 DB)", () => {
   it("일부 필드만 고치면 나머지 값은 유지된다", async () => {
     const id = await m.createVetClinic(input(), admin, NOW);
     // 진료시간은 제출하지 않는다(`hours` 키 자체를 뺀다) — 폼의 "건드리지 않음"과 같다.
-    const { hours: _h, hoursNote: _n, ...rest } = input() as Record<string, unknown>;
+    const rest = input() as Record<string, unknown>;
+    delete rest.hours;
+    delete rest.hoursNote;
     await m.updateVetClinic(id, m.vetClinicInputSchema.parse({ ...rest, address: "대전 서구 둔산동 2" }), admin, NOW);
 
     const saved = await m.getVetClinicForAdmin(id);
