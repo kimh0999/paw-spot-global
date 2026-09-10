@@ -224,11 +224,24 @@ export async function getAdminVetClinics(): Promise<AdminVetClinicRow[]> {
   });
 }
 
-/** 관리자 수정 화면용. 공개 상태와 무관하게 읽고 `adminNote`도 포함한다. */
+/**
+ * 관리자 수정 화면용. 공개 상태와 무관하게 읽고 `adminNote`와 **확인한 사람**도 포함한다.
+ *
+ * `verifiedBy`는 공개 select에는 없다 — 운영자 이메일을 사용자 화면으로 내보내지 않는다.
+ * 관리자에게는 누가 언제 무엇을 확인했는지 보여야 확인 기록을 관리할 수 있다.
+ */
 export async function getVetClinicForAdmin(id: string) {
   const row = await prisma.vetClinic.findUnique({
     where: { id },
-    select: { ...PUBLIC_SELECT, visibility: true, adminNote: true },
+    select: {
+      ...PUBLIC_SELECT,
+      visibility: true,
+      adminNote: true,
+      verifications: {
+        select: { ...PUBLIC_SELECT.verifications.select, verifiedBy: true },
+        orderBy: { verifiedAt: "desc" },
+      },
+    },
   });
   if (!row) return null;
 
