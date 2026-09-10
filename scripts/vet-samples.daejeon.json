@@ -1,0 +1,194 @@
+{
+  "collectedAt": "2026-09-10",
+  "sources": [
+    {
+      "name": "국가동물보호정보시스템 동물병원 정보 — 대전광역시 서구",
+      "url": "https://www.animal.go.kr/front/awtis/shop/hospitalList.do?boardId=shop&menuNo=6000000002&searchUprCd=6300000&searchOrgCd=3660000",
+      "lookedUpAt": "2026-09-10",
+      "totalCount": 36,
+      "sourceStatedUpdatedAt": null,
+      "note": "목록 화면에 기준일·자료갱신일 표기가 없다. 출처가 밝히지 않은 갱신일을 지어내지 않는다."
+    },
+    {
+      "name": "국가동물보호정보시스템 동물병원 정보 — 대전광역시 유성구",
+      "url": "https://www.animal.go.kr/front/awtis/shop/hospitalList.do?boardId=shop&menuNo=6000000002&searchUprCd=6300000&searchOrgCd=3670000",
+      "lookedUpAt": "2026-09-10",
+      "totalCount": 39,
+      "sourceStatedUpdatedAt": null,
+      "note": "위와 같다."
+    }
+  ],
+  "sourceLimits": [
+    "목록 화면은 소재지를 **동 단위까지만** 제공한다. 도로명·건물번호는 이 출처로 확인할 수 없다.",
+    "진료시간·야간 진료·영어 응대 항목이 출처에 아예 없다. 표본의 해당 값은 모두 UNKNOWN이다.",
+    "전화번호 표기가 제각각이다(`042)486-7581`, `0427197566`, 국번만 있는 항목, 빈 항목). 빈 항목은 표본에서 제외했다.",
+    "좌표가 없다. 표본의 `location`은 모두 null이며 목록에서 거리가 계산되지 않는다."
+  ],
+  "samples": [
+    {
+      "input": {
+        "nameKr": "24시도안동물메디컬센터",
+        "nameEn": null,
+        "district": "seo",
+        "address": "대전광역시 서구 도안동",
+        "phone": "042-710-1502",
+        "website": null,
+        "location": null,
+        "hours": null,
+        "hoursNote": null,
+        "englishSupport": { "status": "UNKNOWN", "condition": null },
+        "afterHours": { "status": "UNKNOWN", "condition": null },
+        "visibility": "DRAFT",
+        "adminNote": "공개 전 도로명 상세주소와 진료시간을 별도로 확인할 것.",
+        "collectedAt": "2026-09-10",
+        "verifications": [
+          {
+            "target": "BASIC",
+            "method": "WEBSITE",
+            "verifiedAt": "2026-09-10",
+            "sourceUrl": "https://www.animal.go.kr/front/awtis/shop/hospitalList.do?boardId=shop&menuNo=6000000002&searchUprCd=6300000&searchOrgCd=3660000",
+            "note": "공식 등록 목록에서 병원명·소재지(동)·전화번호를 확인했다. 전화 확인이 아니다."
+          }
+        ]
+      },
+      "needsReview": [
+        "address — 출처가 동 단위까지만 준다. 도로명·건물번호 미확인",
+        "afterHours — 이름에 `24시`가 있으나 출처는 야간 진료를 기재하지 않는다. 이름을 근거로 AVAILABLE로 올리지 않았다",
+        "hours / englishSupport — 출처에 없음",
+        "location — 좌표 미확보"
+      ]
+    },
+    {
+      "input": {
+        "nameKr": "24아프리카동물메디컬센터",
+        "nameEn": null,
+        "district": "seo",
+        "address": "대전광역시 서구 탄방동",
+        "phone": "042-486-7581",
+        "website": null,
+        "location": null,
+        "hours": null,
+        "hoursNote": null,
+        "englishSupport": { "status": "UNKNOWN", "condition": null },
+        "afterHours": { "status": "UNKNOWN", "condition": null },
+        "visibility": "DRAFT",
+        "adminNote": "공개 전 도로명 상세주소와 진료시간을 별도로 확인할 것.",
+        "collectedAt": "2026-09-10",
+        "verifications": [
+          {
+            "target": "BASIC",
+            "method": "WEBSITE",
+            "verifiedAt": "2026-09-10",
+            "sourceUrl": "https://www.animal.go.kr/front/awtis/shop/hospitalList.do?boardId=shop&menuNo=6000000002&searchUprCd=6300000&searchOrgCd=3660000",
+            "note": "공식 등록 목록에서 병원명·소재지(동)·전화번호를 확인했다. 전화 확인이 아니다."
+          }
+        ]
+      },
+      "needsReview": [
+        "address — 출처가 동 단위까지만 준다. 도로명·건물번호 미확인",
+        "phone — 출처 표기가 `042)486-7581`이다. 자릿수는 그대로 두고 구분자만 하이픈으로 맞췄다",
+        "afterHours — 이름에 `24`가 있으나 출처는 야간 진료를 기재하지 않는다",
+        "hours / englishSupport — 출처에 없음",
+        "location — 좌표 미확보"
+      ]
+    },
+    {
+      "input": {
+        "nameKr": "관저종합동물병원",
+        "nameEn": null,
+        "district": "seo",
+        "address": "대전광역시 서구 관저동",
+        "phone": "042-546-7575",
+        "website": null,
+        "location": null,
+        "hours": null,
+        "hoursNote": null,
+        "englishSupport": { "status": "UNKNOWN", "condition": null },
+        "afterHours": { "status": "UNKNOWN", "condition": null },
+        "visibility": "DRAFT",
+        "adminNote": "공개 전 도로명 상세주소와 진료시간을 별도로 확인할 것.",
+        "collectedAt": "2026-09-10",
+        "verifications": [
+          {
+            "target": "BASIC",
+            "method": "WEBSITE",
+            "verifiedAt": "2026-09-10",
+            "sourceUrl": "https://www.animal.go.kr/front/awtis/shop/hospitalList.do?boardId=shop&menuNo=6000000002&searchUprCd=6300000&searchOrgCd=3660000",
+            "note": "공식 등록 목록에서 병원명·소재지(동)·전화번호를 확인했다. 전화 확인이 아니다."
+          }
+        ]
+      },
+      "needsReview": [
+        "address — 출처가 동 단위까지만 준다. 도로명·건물번호 미확인",
+        "hours / englishSupport / afterHours — 출처에 없음",
+        "location — 좌표 미확보"
+      ]
+    },
+    {
+      "input": {
+        "nameKr": "24시 성심동물메디컬센터",
+        "nameEn": null,
+        "district": "yuseong",
+        "address": "대전광역시 유성구 봉명동",
+        "phone": "042-719-7566",
+        "website": null,
+        "location": null,
+        "hours": null,
+        "hoursNote": null,
+        "englishSupport": { "status": "UNKNOWN", "condition": null },
+        "afterHours": { "status": "UNKNOWN", "condition": null },
+        "visibility": "DRAFT",
+        "adminNote": "공개 전 도로명 상세주소·진료시간과 전화번호 끊어읽기를 확인할 것.",
+        "collectedAt": "2026-09-10",
+        "verifications": [
+          {
+            "target": "BASIC",
+            "method": "WEBSITE",
+            "verifiedAt": "2026-09-10",
+            "sourceUrl": "https://www.animal.go.kr/front/awtis/shop/hospitalList.do?boardId=shop&menuNo=6000000002&searchUprCd=6300000&searchOrgCd=3670000",
+            "note": "공식 등록 목록에서 병원명·소재지(동)·전화번호를 확인했다. 전화 확인이 아니다."
+          }
+        ]
+      },
+      "needsReview": [
+        "address — 출처가 동 단위까지만 준다. 도로명·건물번호 미확인",
+        "phone — 출처 표기가 `0427197566`으로 구분자가 없다. 042(대전 지역번호)로 끊었으나 **끊어읽기는 추정**이다",
+        "afterHours — 이름에 `24시`가 있으나 출처는 야간 진료를 기재하지 않는다",
+        "hours / englishSupport — 출처에 없음",
+        "location — 좌표 미확보"
+      ]
+    },
+    {
+      "input": {
+        "nameKr": "계절엔 동물의료센터",
+        "nameEn": null,
+        "district": "yuseong",
+        "address": "대전광역시 유성구 관평동",
+        "phone": "042-368-7575",
+        "website": null,
+        "location": null,
+        "hours": null,
+        "hoursNote": null,
+        "englishSupport": { "status": "UNKNOWN", "condition": null },
+        "afterHours": { "status": "UNKNOWN", "condition": null },
+        "visibility": "DRAFT",
+        "adminNote": "공개 전 도로명 상세주소와 진료시간을 별도로 확인할 것.",
+        "collectedAt": "2026-09-10",
+        "verifications": [
+          {
+            "target": "BASIC",
+            "method": "WEBSITE",
+            "verifiedAt": "2026-09-10",
+            "sourceUrl": "https://www.animal.go.kr/front/awtis/shop/hospitalList.do?boardId=shop&menuNo=6000000002&searchUprCd=6300000&searchOrgCd=3670000",
+            "note": "공식 등록 목록에서 병원명·소재지(동)·전화번호를 확인했다. 전화 확인이 아니다."
+          }
+        ]
+      },
+      "needsReview": [
+        "address — 출처가 동 단위까지만 준다. 도로명·건물번호 미확인",
+        "hours / englishSupport / afterHours — 출처에 없음",
+        "location — 좌표 미확보"
+      ]
+    }
+  ]
+}
