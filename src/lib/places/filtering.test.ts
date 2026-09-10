@@ -424,3 +424,119 @@ describe("getActiveFilterCount", () => {
     ).toBe(4);
   });
 });
+
+/**
+ * D-15 — `실내 가능` 필터에서 **요약과 구역 기록이 어긋나는 장소**를 제외한다.
+ *
+ * 서비스는 이런 장소를 이미 표시·판정에서 `동반 조건 정보 불일치`로 다루는데
+ * 필터만 `확인된 실내 가능`으로 다뤄 앞뒤가 맞지 않았다. 적용 범위는 **실내 필터뿐**이다.
+ */
+describe("filterPlaces — 실내 필터와 정보 불일치 (D-15)", () => {
+  /** 요약 컬럼이 뭐라고 하든 구역 기록은 전체 반려견 실내 불가라고 말한다. */
+  const indoorBlockedForAll = {
+    version: 1,
+    entry: { vaccinationCompletionPolicy: "UNKNOWN" },
+    preparation: [],
+    handling: [],
+    admission: null,
+    hygiene: [],
+    behaviorRestrictions: [],
+    spaceExceptions: [
+      { area: "INDOOR", access: "NOT_ALLOWED", appliesToSize: "ALL", note: null },
+    ],
+    uncertainties: [],
+  } as unknown as PlaceListItem["policyDetails"];
+
+  /** 대형견만 실내 불가 — 장소가 실내 허용이라는 사실을 뒤집지 않는다. */
+  const largeDogsBlockedIndoors = {
+    version: 1,
+    entry: { vaccinationCompletionPolicy: "UNKNOWN" },
+    preparation: [],
+    handling: [],
+    admission: null,
+    hygiene: [],
+    behaviorRestrictions: [],
+    spaceExceptions: [
+      { area: "INDOOR", access: "NOT_ALLOWED", appliesToSize: "LARGE", note: null },
+    ],
+    uncertainties: [],
+  } as unknown as PlaceListItem["policyDetails"];
+
+  const conflicting = place({
+    id: "conflict",
+    indoor: "allowed",
+    policyDetails: indoorBlockedForAll,
+  });
+
+  it("요약이 실내 허용이어도 구역 기록과 어긋나면 실내 필터에서 제외한다", () => {
+    expect(run([conflicting], { indoor: "indoor" })).toEqual([]);
+  });
+
+  it("실내 필터가 없으면 불일치만을 이유로 목록에서 지우지 않는다", () => {
+    expect(run([conflicting])).toEqual(["conflict"]);
+  });
+
+  it("실내 허용이 확인된 장소는 그대로 통과한다", () => {
+    const plain = place({ id: "plain", indoor: "allowed" });
+    const withRecords = place({
+      id: "with-records",
+      indoor: "allowed",
+      policyDetails: largeDogsBlockedIndoors,
+    });
+    expect(run([plain, withRecords], { indoor: "indoor" })).toEqual([
+      "plain",
+      "with-records",
+    ]);
+  });
+
+  it("일부 구역 허용·야외만·동반 불가·미확인의 기존 동작은 그대로다", () => {
+    const places = [
+      place({ id: "partial", indoor: "partial_area" }),
+      place({ id: "outdoor", indoor: "outdoor_only" }),
+      place({ id: "not-allowed", indoor: "not_allowed" }),
+      place({ id: "unknown", indoor: "unknown" }),
+    ];
+    expect(run(places, { indoor: "indoor" })).toEqual([]);
+    expect(run(places, { indoor: "partial-area" })).toEqual(["partial"]);
+    expect(run(places, { indoor: "outdoor" })).toEqual(["outdoor"]);
+    expect(run(places)).toEqual(["partial", "outdoor", "not-allowed", "unknown"]);
+  });
+
+  it("불일치 제외는 실내 필터에서만 작동한다 — 다른 필터에는 번지지 않는다", () => {
+    const conflictNoCarrier = place({
+      id: "conflict",
+      indoor: "allowed",
+      carrierStrollerPolicy: "not_required",
+      maxDogSize: "large",
+      policyDetails: indoorBlockedForAll,
+    });
+
+    // 이동장·크기 필터만 걸면 불일치 장소도 그대로 남는다.
+    expect(run([conflictNoCarrier], { carrier: "not-required" })).toEqual(["conflict"]);
+    expect(run([conflictNoCarrier], { dogSize: "large" })).toEqual(["conflict"]);
+
+    // 실내 필터가 함께 걸리면 그때 제외되고, 다른 필터의 조건도 그대로 적용된다.
+    expect(
+      run([conflictNoCarrier], { indoor: "indoor", carrier: "not-required" }),
+    ).toEqual([]);
+  });
+
+  it("실내 필터와 다른 필터를 함께 걸면 각 조건이 모두 적용된다", () => {
+    const ok = place({
+      id: "ok",
+      indoor: "allowed",
+      carrierStrollerPolicy: "not_required",
+    });
+    const carrierMismatch = place({
+      id: "carrier-required",
+      indoor: "allowed",
+      carrierStrollerPolicy: "required_always",
+    });
+    expect(
+      run([ok, carrierMismatch, conflicting], {
+        indoor: "indoor",
+        carrier: "not-required",
+      }),
+    ).toEqual(["ok"]);
+  });
+});

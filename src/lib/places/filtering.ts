@@ -1,3 +1,4 @@
+import { resolveDogAccess } from "./dog-access";
 import type {
   CategoryFilterValue,
   IndoorFilter,
@@ -58,11 +59,29 @@ export function filterPlaces({
       if (!nameKrMatch && !nameEnMatch && !addressMatch) return false;
     }
 
-    if (
-      filters.indoor !== "all" &&
-      place.indoor !== INDOOR_FILTER_MATCH[filters.indoor]
-    ) {
-      return false;
+    if (filters.indoor !== "all") {
+      /**
+       * **D-15** — `실내 가능`으로 거를 때는 요약 컬럼과 구역 기록이 어긋나는 장소를 뺀다.
+       *
+       * 서비스는 이런 장소를 이미 표시·판정에서 `동반 조건 정보 불일치`로 다루는데
+       * (`condition-rows.ts`·`eligibility.ts`) 필터만 요약 컬럼을 확인된 값으로 읽어
+       * 앞뒤가 맞지 않았다. 어긋난 기록은 D-03이 말하는 "확인된 일치 값"이 아니다.
+       *
+       * 적용 범위는 **`실내 가능` 필터 하나뿐**이다. 다른 필터로 번지지 않고, 저장된
+       * 데이터를 `UNKNOWN`으로 바꾸지도 않는다 — 필터 통과 여부만 정한다. 필터를 걸지
+       * 않으면 불일치 장소도 목록에 남아 기존 불일치 안내와 함께 보인다.
+       *
+       * 충돌 판정은 화면들이 쓰는 `resolveDogAccess`를 그대로 쓴다. 여기서 따로
+       * 해석하면 목록과 카드가 다른 근거로 같은 장소를 말하게 된다.
+       */
+      if (
+        filters.indoor === "indoor" &&
+        resolveDogAccess(place.indoor, place.policyDetails).key === "conflict"
+      ) {
+        return false;
+      }
+
+      if (place.indoor !== INDOOR_FILTER_MATCH[filters.indoor]) return false;
     }
 
     // UNKNOWN and null are excluded from both non-"all" carrier filters.
