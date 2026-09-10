@@ -557,7 +557,6 @@
     "myDog": "My Dogs",
     "favorites": "Favorites",
     "vets": "Vets",
-    "comingSoon": "Soon",
     "login": "Log in",
     "logout": "Log out",
     "account": "Account",
@@ -815,6 +814,123 @@
           "policyDetailsAdmissionInconsistent": "The admission fee entries do not match. Rates are saved only when the fee is set to paid, and each period and size combination can be entered only once."
         }
       }
+    }
+  },
+  "vets": {
+    "title": "Vet clinics",
+    "subtitle": "Daejeon pilot - only clinics we have checked",
+    "searchLabel": "Search clinics",
+    "searchPlaceholder": "Search by clinic name or address",
+    "districtLabel": "District",
+    "districtAll": "All",
+    "district": {
+      "dong": "Dong-gu",
+      "jung": "Jung-gu",
+      "seo": "Seo-gu",
+      "yuseong": "Yuseong-gu",
+      "daedeok": "Daedeok-gu"
+    },
+    "myLocation": "Sort by distance from me",
+    "locating": "Getting location",
+    "locationDenied": "Location is unavailable. You can still use district and search.",
+    "filters": {
+      "englishConfirmed": "English support confirmed",
+      "afterHoursConfirmed": "After-hours care confirmed",
+      "clear": "Clear filters",
+      "note": "Shows only clinics with confirmed information. Unconfirmed clinics and overdue records are excluded."
+    },
+    "sort": {
+      "recent": "Recently checked",
+      "recentBasis": "Based on when the clinic information was last confirmed.",
+      "distance": "Nearest first",
+      "distanceBasis": "Straight-line distance, not travel time.",
+      "noCoordinate": "Clinics without location data appear last."
+    },
+    "results": {
+      "count": "{count} clinics",
+      "emptyFiltered": "No registered clinic matches these conditions.",
+      "emptyFilteredAction": "Clear filters and show all",
+      "emptyNone": "No clinics have been added yet.",
+      "error": "We could not load clinic information.",
+      "retry": "Try again"
+    },
+    "outOfArea": {
+      "title": "The pilot covers Daejeon only",
+      "description": "We have not checked clinics in other areas yet. You can look for nearby vets on an external map.",
+      "searchExternal": "Search on an external map"
+    },
+    "card": {
+      "call": "Call",
+      "directions": "Map",
+      "copyAddress": "Copy address",
+      "addressCopied": "Address copied",
+      "copyFailed": "Could not copy. Please select the address and copy it manually.",
+      "openDetails": "Open details for {name}",
+      "callAria": "Call {name}",
+      "noCoordinate": "No location on file"
+    },
+    "hours": {
+      "title": "Posted hours",
+      "none": "No posted hours",
+      "noneHelp": "This does not mean closed - we have not confirmed the hours yet.",
+      "closed": "Closed",
+      "checkByPhone": "Call before you go to check whether they can see your dog now.",
+      "days": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
+      }
+    },
+    "service": {
+      "englishLabel": "English support",
+      "afterHoursLabel": "After-hours / emergency care",
+      "AVAILABLE": "Available",
+      "CONDITIONAL": "Available with conditions",
+      "UNAVAILABLE": "Not available",
+      "UNKNOWN": "Unconfirmed"
+    },
+    "verification": {
+      "title": "How we checked",
+      "confirmedOn": "Checked {date}",
+      "needsRecheck": "Recheck needed",
+      "none": "No record",
+      "valueChanged": "Changed since the last check",
+      "source": "Source",
+      "collectedAt": "Collected {date}",
+      "updatedAt": "Updated {date}",
+      "method": {
+        "PHONE": "Confirmed by phone",
+        "DM": "Confirmed by DM",
+        "WEBSITE": "Confirmed on website",
+        "ON_SITE": "Confirmed on site",
+        "USER_REPORT": "User report"
+      },
+      "targets": {
+        "BASIC": "Basic information",
+        "HOURS": "Hours",
+        "ENGLISH_SUPPORT": "English support",
+        "AFTER_HOURS": "After-hours care"
+      }
+    },
+    "inquiry": {
+      "title": "Korean phrases to ask the clinic",
+      "description": "Show or read these during the call. The English meaning is under each phrase.",
+      "copyAll": "Copy all",
+      "copied": "Copied",
+      "copyFailed": "Could not copy. Please select the text and copy it manually.",
+      "enlarge": "Show large",
+      "close": "Close",
+      "enlargedTitle": "Show this to the clinic"
+    },
+    "detail": {
+      "back": "Back to clinics",
+      "address": "Address",
+      "website": "Website",
+      "disclaimer": "This is posted information. Whether the clinic can see your dog may differ on the day - please call before visiting."
     }
   }
 }

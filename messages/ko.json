@@ -557,7 +557,6 @@
     "myDog": "내 반려견",
     "favorites": "즐겨찾기",
     "vets": "동물병원",
-    "comingSoon": "준비 중",
     "login": "로그인",
     "logout": "로그아웃",
     "account": "계정",
@@ -815,6 +814,123 @@
           "policyDetailsAdmissionInconsistent": "입장료 정보가 서로 맞지 않습니다. 요금은 \"유료\"일 때만 저장되며, 같은 기간·크기 조합은 한 번만 입력할 수 있습니다."
         }
       }
+    }
+  },
+  "vets": {
+    "title": "동물병원",
+    "subtitle": "대전 시범 운영 · 확인한 병원만 보여드려요",
+    "searchLabel": "병원 검색",
+    "searchPlaceholder": "병원명 또는 주소 검색",
+    "districtLabel": "지역",
+    "districtAll": "전체",
+    "district": {
+      "dong": "동구",
+      "jung": "중구",
+      "seo": "서구",
+      "yuseong": "유성구",
+      "daedeok": "대덕구"
+    },
+    "myLocation": "내 위치로 가까운 순",
+    "locating": "위치 확인 중",
+    "locationDenied": "위치를 사용할 수 없어요. 지역 선택과 검색으로 계속 찾을 수 있어요.",
+    "filters": {
+      "englishConfirmed": "영어 응대 안내 확인",
+      "afterHoursConfirmed": "야간 진료 안내 확인",
+      "clear": "조건 해제",
+      "note": "안내가 확인된 병원만 보여줍니다. 미확인과 재확인 기한이 지난 병원은 빠집니다."
+    },
+    "sort": {
+      "recent": "최근 확인순",
+      "recentBasis": "병원 정보를 마지막으로 확인한 날 기준입니다.",
+      "distance": "가까운 순",
+      "distanceBasis": "직선거리 기준이며 이동 시간이 아닙니다.",
+      "noCoordinate": "위치 정보가 없는 병원은 뒤에 표시됩니다."
+    },
+    "results": {
+      "count": "병원 {count}곳",
+      "emptyFiltered": "이 조건에 맞는 등록 병원이 없어요.",
+      "emptyFilteredAction": "조건을 해제하고 전체 보기",
+      "emptyNone": "아직 등록된 병원이 없어요.",
+      "error": "병원 정보를 불러오지 못했습니다.",
+      "retry": "다시 시도"
+    },
+    "outOfArea": {
+      "title": "지금은 대전에서만 시범 운영 중이에요",
+      "description": "다른 지역은 아직 확인한 병원이 없습니다. 외부 지도에서 근처 동물병원을 찾아볼 수 있어요.",
+      "searchExternal": "외부 지도에서 찾기"
+    },
+    "card": {
+      "call": "전화",
+      "directions": "지도",
+      "copyAddress": "주소 복사",
+      "addressCopied": "주소를 복사했어요",
+      "copyFailed": "복사하지 못했어요. 주소를 직접 선택해 복사해 주세요.",
+      "openDetails": "{name} 상세 보기",
+      "callAria": "{name}에 전화 걸기",
+      "noCoordinate": "위치 미등록"
+    },
+    "hours": {
+      "title": "안내된 진료시간",
+      "none": "안내된 진료시간 없음",
+      "noneHelp": "휴무라는 뜻이 아니라 아직 확인하지 못했다는 뜻이에요.",
+      "closed": "휴무",
+      "checkByPhone": "현재 접수 가능 여부는 방문 전 전화로 확인해 주세요.",
+      "days": {
+        "mon": "월",
+        "tue": "화",
+        "wed": "수",
+        "thu": "목",
+        "fri": "금",
+        "sat": "토",
+        "sun": "일"
+      }
+    },
+    "service": {
+      "englishLabel": "영어 응대",
+      "afterHoursLabel": "야간·응급 진료",
+      "AVAILABLE": "가능",
+      "CONDITIONAL": "조건부 가능",
+      "UNAVAILABLE": "불가",
+      "UNKNOWN": "미확인"
+    },
+    "verification": {
+      "title": "확인 근거",
+      "confirmedOn": "{date} 확인",
+      "needsRecheck": "재확인 필요",
+      "none": "확인 기록 없음",
+      "valueChanged": "정보가 바뀐 뒤 아직 확인하지 않았어요",
+      "source": "출처",
+      "collectedAt": "수집일 {date}",
+      "updatedAt": "정보 수정일 {date}",
+      "method": {
+        "PHONE": "전화 확인",
+        "DM": "SNS 문의",
+        "WEBSITE": "홈페이지 확인",
+        "ON_SITE": "현장 확인",
+        "USER_REPORT": "사용자 제보"
+      },
+      "targets": {
+        "BASIC": "기본 정보",
+        "HOURS": "진료시간",
+        "ENGLISH_SUPPORT": "영어 응대",
+        "AFTER_HOURS": "야간 진료"
+      }
+    },
+    "inquiry": {
+      "title": "병원에 물어볼 한국어 문장",
+      "description": "전화 중에 보여 주거나 읽어 주세요. 각 문장 아래에 영어 뜻이 있습니다.",
+      "copyAll": "전체 복사",
+      "copied": "복사했어요",
+      "copyFailed": "복사하지 못했어요. 문장을 직접 선택해 복사해 주세요.",
+      "enlarge": "크게 보기",
+      "close": "닫기",
+      "enlargedTitle": "병원에 보여 주세요"
+    },
+    "detail": {
+      "back": "병원 목록으로",
+      "address": "주소",
+      "website": "홈페이지",
+      "disclaimer": "안내된 정보이며 실제 진료 가능 여부는 병원 사정에 따라 달라질 수 있어요. 방문 전 전화로 확인해 주세요."
     }
   }
 }

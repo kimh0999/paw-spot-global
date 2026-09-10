@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useSession, signOut } from "next-auth/react";
-import { Heart, MapPin, PawPrint } from "lucide-react";
+import { Heart, MapPin, PawPrint, Stethoscope } from "lucide-react";
 
 import PawSpotMark from "@/components/brand/PawSpotMark";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -11,15 +11,25 @@ import { cn } from "@/lib/utils";
 
 interface NavItem {
   href: string;
-  labelKey: "places" | "myDog" | "favorites";
+  labelKey: "places" | "myDog" | "favorites" | "vets";
   /** 현재 위치 판정에 쓰는 경로 접두사. */
   match: string;
 }
+
+/** 하단 탭 아이콘. 항목이 늘 때 중첩 삼항이 길어지지 않게 표로 둔다. */
+const NAV_ICONS = {
+  places: MapPin,
+  myDog: PawPrint,
+  favorites: Heart,
+  vets: Stethoscope,
+} as const;
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/places", labelKey: "places", match: "/places" },
   { href: "/profile/dogs", labelKey: "myDog", match: "/profile/dogs" },
   { href: "/favorites", labelKey: "favorites", match: "/favorites" },
+  // 동물병원 P0가 열리면서 "준비 중" 비활성 항목을 실제 진입점으로 바꿨다.
+  { href: "/vets", labelKey: "vets", match: "/vets" },
 ];
 
 export default function Header() {
@@ -78,17 +88,6 @@ export default function Header() {
                 </li>
               );
             })}
-            <li>
-              <span
-                className="flex h-11 cursor-not-allowed select-none items-center gap-1.5 px-3 text-sm font-medium text-content-muted"
-                aria-disabled="true"
-              >
-                {t("vets")}
-                <span className="rounded-sm bg-surface-subtle px-1.5 py-0.5 text-xs font-medium text-content-secondary">
-                  {t("comingSoon")}
-                </span>
-              </span>
-            </li>
           </ul>
         </nav>
 
@@ -126,12 +125,7 @@ export default function Header() {
         <ul className="flex items-stretch">
           {NAV_ITEMS.map((item) => {
             const current = isCurrent(item.match);
-            const Icon =
-              item.labelKey === "places"
-                ? MapPin
-                : item.labelKey === "favorites"
-                  ? Heart
-                  : PawPrint;
+            const Icon = NAV_ICONS[item.labelKey];
             return (
               <li key={item.href} className="flex-1">
                 <Link
