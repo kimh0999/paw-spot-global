@@ -58,7 +58,13 @@ export default function VetClinicCard({ clinic }: Props) {
         {!clinic.location && <span className="ml-1"> · {t("card.noCoordinate")}</span>}
       </p>
 
-      {/* 안내된 시간. 없으면 "휴무"가 아니라 "안내된 진료시간 없음"이다. */}
+      {/*
+        안내된 시간. 없으면 "휴무"가 아니라 "안내된 진료시간 없음"이다.
+
+        단, 시간표가 없어도 `hoursNote`에 안내가 있으면 `없음`이라고 말하지 않는다.
+        기록에 시간 안내가 있는데 카드가 없다고 단언하면, 목록을 훑는 사람은 실제로는
+        시간이 안내된 병원을 걸러 버린다.
+      */}
       <div className="mt-3 text-sm">
         <p className="text-content-secondary">{t("hours.title")}</p>
         {hourGroups.length > 0 ? (
@@ -77,8 +83,9 @@ export default function VetClinicCard({ clinic }: Props) {
             ))}
           </ul>
         ) : (
-          <p className="mt-0.5 text-content">{t("hours.none")}</p>
+          !clinic.hoursNote && <p className="mt-0.5 text-content">{t("hours.none")}</p>
         )}
+        {clinic.hoursNote && <p className="mt-0.5 text-content">{clinic.hoursNote}</p>}
       </div>
 
       <div className="mt-3 space-y-1.5">

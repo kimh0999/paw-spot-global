@@ -102,14 +102,18 @@ export default async function VetClinicDetailView({
                 ))}
               </dl>
             ) : (
-              <div className="mt-2">
-                <p className="text-sm text-content">{t("hours.none")}</p>
-                {/* 미등록을 휴무로 바꾸지 않는다 */}
-                <p className="mt-0.5 text-xs text-content-secondary">{t("hours.noneHelp")}</p>
-              </div>
+              // 시간표가 없어도 `hoursNote`에 안내가 있으면 `없음`이라고 말하지 않는다.
+              // 둘을 함께 내보내면 같은 칸에서 "없음"과 안내 문구가 서로를 부정한다.
+              !clinic.hoursNote && (
+                <div className="mt-2">
+                  <p className="text-sm text-content">{t("hours.none")}</p>
+                  {/* 미등록을 휴무로 바꾸지 않는다 */}
+                  <p className="mt-0.5 text-xs text-content-secondary">{t("hours.noneHelp")}</p>
+                </div>
+              )
             )}
             {clinic.hoursNote && (
-              <p className="mt-2 text-xs text-content-secondary">{clinic.hoursNote}</p>
+              <p className="mt-2 text-sm text-content">{clinic.hoursNote}</p>
             )}
             <p className="mt-3 border-t border-border pt-2.5 text-xs text-content-muted">
               {t("hours.checkByPhone")}
