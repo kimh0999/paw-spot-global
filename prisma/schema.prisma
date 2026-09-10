@@ -103,14 +103,14 @@ model User {
 }
 
 model Place {
-  id           String          @id @default(cuid())
-  tourApiId    String?         @unique
-  nameKr       String
-  nameEn       String?
-  category     Category
-  address      String
+  id        String   @id @default(cuid())
+  tourApiId String?  @unique
+  nameKr    String
+  nameEn    String?
+  category  Category
+  address   String
 
-  location     Unsupported("geography(Point, 4326)")
+  location Unsupported("geography(Point, 4326)")
 
   phone        String?
   website      String?
@@ -120,63 +120,63 @@ model Place {
   // 요일별 영업시간 (결정 D-04). 형식은 src/lib/places/operating-hours.ts의
   // operatingHoursSchema가 강제한다. 요일 값이 null이면 그날은 휴무다.
   // 자유 텍스트 단독 저장을 금지한다 — 한국어로 적으면 영어 UI에서 읽히지 않는다.
-  hours        Json?
+  hours     Json?
   // 브레이크타임·정기휴무 같은 짧은 보조 정보 1줄. 운영시간 본체를 대신하지 않는다.
-  hoursNote    String?
+  hoursNote String?
 
-  visibility   PlaceVisibility @default(DRAFT)
+  visibility PlaceVisibility @default(DRAFT)
 
   condition     PlaceCondition?
   verifications Verification[]
   favorites     Favorite[]
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([category])
   @@index([visibility])
 }
 
 model PlaceCondition {
-  id                    String                @id @default(cuid())
-  placeId               String                @unique
-  place                 Place                 @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  placeId String @unique
+  place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
 
-  indoor                IndoorPolicy
-  carrierStrollerPolicy CarrierStrollerPolicy @default(UNKNOWN)
-  maxDogSize            MaxDogSize            @default(UNKNOWN)
-  leash                 LeashPolicy           @default(UNKNOWN)
-  muzzle                        MuzzlePolicy                    @default(UNKNOWN)
-  vaccinationCertificatePolicy  VaccinationCertificatePolicy    @default(UNKNOWN)
-  breedRestrictions             String?
-  requiredItems                 String[]
-  cautions                      String?
+  indoor                       IndoorPolicy
+  carrierStrollerPolicy        CarrierStrollerPolicy        @default(UNKNOWN)
+  maxDogSize                   MaxDogSize                   @default(UNKNOWN)
+  leash                        LeashPolicy                  @default(UNKNOWN)
+  muzzle                       MuzzlePolicy                 @default(UNKNOWN)
+  vaccinationCertificatePolicy VaccinationCertificatePolicy @default(UNKNOWN)
+  breedRestrictions            String?
+  requiredItems                String[]
+  cautions                     String?
 
   // 컬럼으로 표현할 수 없는 복합 이용수칙 — 준비물의 AND/OR, 매장 내 상태,
   // 공간 예외, 행동 제한, 요금, 위생 수칙, 항목별 불확실성.
   // 형식은 src/lib/places/policy-details.ts의 policyDetailsSchema가 강제한다.
-  policyDetails                 Json?
+  policyDetails Json?
 
-  updatedAt             DateTime              @updatedAt
+  updatedAt DateTime @updatedAt
 }
 
 model Verification {
-  id          String             @id @default(cuid())
-  placeId     String
-  place       Place              @relation(fields: [placeId], references: [id], onDelete: Cascade)
-  verifiedBy  String
-  method      VerificationMethod
-  verifiedAt  DateTime
-  note        String?
+  id         String             @id @default(cuid())
+  placeId    String
+  place      Place              @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  verifiedBy String
+  method     VerificationMethod
+  verifiedAt DateTime
+  note       String?
 
   // 확인 당시의 안내문 원문 스냅샷. PlaceCondition에는 현재 공개 중인 구조화 값만 두고,
   // 원문은 여기에 확인 시점 단위로 쌓아 정책이 바뀌어도 과거 근거가 남게 한다.
   // 한·영이 병기된 안내문은 쪼개지 않고 통째로 보존하며 원문의 오타도 고치지 않는다.
   rawPolicyText   String?
-  sourceLanguages String[]           @default([])
+  sourceLanguages String[] @default([])
   sourceUrl       String?
 
-  createdAt   DateTime           @default(now())
+  createdAt DateTime @default(now())
 
   @@index([placeId])
 }
@@ -206,4 +206,97 @@ model Favorite {
 
   @@unique([userId, placeId])
   @@index([userId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// 동물병원 (결정 D-16)
+//
+// Place와 분리된 도메인이다. Category에 VET을 더하지 않는 이유는 세 가지다.
+//   (a) Place.location이 non-null이라 좌표를 확보하지 못한 병원을 담을 수 없다.
+//   (b) Verification.placeId가 필수 FK라 항목별 확인 기록을 붙일 수 없다.
+//   (c) VET이 Category에 들어오면 홈 카테고리 탭·filterPlaces·resolveDogAccess·
+//       반려견 입장 판정에 그대로 흘러든다. 병원은 동반 조건 판정 대상이 아니다.
+// PlaceVisibility·VerificationMethod는 도메인 중립이라 그대로 재사용한다.
+// ─────────────────────────────────────────────────────────────
+
+/// 병원이 제공한다고 확인된 서비스의 상태. UNKNOWN은 "없음"이 아니라 "확인되지 않음"이다.
+enum VetServiceStatus {
+  AVAILABLE
+  CONDITIONAL
+  UNAVAILABLE
+  UNKNOWN
+}
+
+/// 확인 근거가 붙는 항목. 주소를 고쳤다고 영어 응대 확인일이 갱신되지 않게 나눈다(D-17).
+enum VetVerificationTarget {
+  BASIC
+  HOURS
+  ENGLISH_SUPPORT
+  AFTER_HOURS
+}
+
+model VetClinic {
+  id       String  @id @default(cuid())
+  nameKr   String
+  /// 병원이 실제로 쓰는 공식 영문명만 넣는다. 자동 번역하지 않는다.
+  nameEn   String?
+  /// 대전 자치구. 값 목록은 src/lib/vets/constants.ts가 강제한다.
+  district String
+  address  String
+  phone    String
+
+  /// Place와 달리 **nullable**이다. 좌표를 확보하지 못해도 검색·연락은 가능해야 한다.
+  /// 좌표가 없으면 거리를 만들지 않고 거리순에서 뒤로 보낸다.
+  location Unsupported("geography(Point, 4326)")?
+
+  website String?
+
+  /// 안내된 진료시간. Place.hours와 같은 스키마를 쓴다(operating-hours.ts).
+  /// NULL은 "휴무"가 아니라 "아직 입력되지 않음"이다.
+  hours     Json?
+  hoursNote String?
+
+  /// 영어 응대. CONDITIONAL이면 조건 문구가 함께 있어야 한다.
+  englishSupport          VetServiceStatus @default(UNKNOWN)
+  englishSupportCondition String?
+
+  /// 야간·응급 진료 운영. 병원명의 "24시"만으로 AVAILABLE로 두지 않는다.
+  afterHours          VetServiceStatus @default(UNKNOWN)
+  afterHoursCondition String?
+
+  visibility PlaceVisibility @default(DRAFT)
+
+  /// 관리자 내부 메모. 사용자 화면 조회에서 제외한다.
+  adminNote   String?
+  /// 데이터를 수집한 날. 정보 수정일(updatedAt)·실제 확인일(verifiedAt)과 구분한다.
+  collectedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  verifications VetVerification[]
+
+  @@index([visibility])
+  @@index([district])
+}
+
+model VetVerification {
+  id         String                @id @default(cuid())
+  clinicId   String
+  clinic     VetClinic             @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  target     VetVerificationTarget
+  method     VerificationMethod
+  verifiedBy String
+  verifiedAt DateTime
+  sourceUrl  String?
+  note       String?
+
+  /// 이 기록이 확인한 **값의 스냅샷**(D-17).
+  /// 값이 바뀌면 현재 값과 달라지므로 이 기록은 더 이상 그 값을 검증하지 않는다.
+  /// 옛 값의 확인 기록이 새 값을 검증한 것처럼 보이는 것을 막는 장치다.
+  verifiedValue String?
+
+  createdAt DateTime @default(now())
+
+  @@index([clinicId, target])
 }
