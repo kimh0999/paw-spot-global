@@ -10,7 +10,7 @@ import type { AdminPlaceRow } from "@/lib/places/queries";
 import { MapPin } from "lucide-react";
 
 interface Props {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
 const VISIBILITY_BADGE: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -19,7 +19,9 @@ const VISIBILITY_BADGE: Record<string, "default" | "secondary" | "destructive" |
   HIDDEN: "destructive",
 };
 
-export default async function AdminPlacesPage({ params }: Props) {
+export default async function AdminPlacesPage({ params: paramsPromise }: Props) {
+  // Next 15부터 params/searchParams는 Promise다. 기존 참조를 그대로 두기 위해 풀어서 같은 이름에 담는다.
+  const params = await paramsPromise;
   const safeLocale = isSupportedLocale(params.locale) ? params.locale : "en";
   const [t, tCard] = await Promise.all([
     getTranslations({ locale: safeLocale, namespace: "admin.places" }),

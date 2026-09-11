@@ -6,7 +6,7 @@ import { getPlaces } from "@/lib/places/queries";
 import PlacesClient from "./PlacesClient";
 
 interface PlacesPageProps {
-  searchParams: {
+  searchParams: Promise<{
     lat?: string;
     lng?: string;
     sort?: string;
@@ -15,7 +15,7 @@ interface PlacesPageProps {
     dogId?: string;
     dogIds?: string;
     match?: string;
-  };
+  }>;
 }
 
 function parseCoord(
@@ -29,7 +29,9 @@ function parseCoord(
   return n;
 }
 
-export default async function PlacesPage({ searchParams }: PlacesPageProps) {
+export default async function PlacesPage({ searchParams: searchParamsPromise }: PlacesPageProps) {
+  // Next 15부터 params/searchParams는 Promise다. 기존 참조를 그대로 두기 위해 풀어서 같은 이름에 담는다.
+  const searchParams = await searchParamsPromise;
   const lat = parseCoord(searchParams.lat, -90, 90);
   const lng = parseCoord(searchParams.lng, -180, 180);
 

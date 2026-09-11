@@ -12,10 +12,12 @@ import { toDogSizeFilter } from "@/lib/places/eligibility";
 import FavoritesList from "./FavoritesList";
 
 interface FavoritesPageProps {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
-export default async function FavoritesPage({ params }: FavoritesPageProps) {
+export default async function FavoritesPage({ params: paramsPromise }: FavoritesPageProps) {
+  // Next 15부터 params/searchParams는 Promise다. 기존 참조를 그대로 두기 위해 풀어서 같은 이름에 담는다.
+  const params = await paramsPromise;
   const locale = isSupportedLocale(params.locale) ? params.locale : "en";
   const t = await getTranslations({ locale, namespace: "favorites" });
 

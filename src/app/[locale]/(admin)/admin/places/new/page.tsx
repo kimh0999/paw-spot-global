@@ -3,10 +3,12 @@ import { PlaceForm } from "@/components/admin/PlaceForm";
 import { createPlace } from "./actions";
 
 interface NewPlacePageProps {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
-export default function NewPlacePage({ params }: NewPlacePageProps) {
+export default async function NewPlacePage({ params: paramsPromise }: NewPlacePageProps) {
+  // Next 15부터 params/searchParams는 Promise다. 기존 참조를 그대로 두기 위해 풀어서 같은 이름에 담는다.
+  const params = await paramsPromise;
   const boundAction = createPlace.bind(null, params.locale);
 
   return (

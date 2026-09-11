@@ -28,6 +28,7 @@ import { getUserDogsByIds } from "@/lib/dogs/queries";
 import { parseDogSelection } from "@/lib/dogs/selection";
 import { formatDistance, haversineDistance } from "@/lib/geo/distance";
 import { displayPlaceName, isSupportedLocale } from "@/lib/i18n/locale";
+import { safeHttpUrl } from "@/lib/validation/url";
 import { getFavoritePlaceIds } from "@/lib/favorites/queries";
 import {
   buildConditionRows,
@@ -71,18 +72,23 @@ function AsideBlock({
 }
 
 interface Props {
-  params: { locale: string; id: string };
-  searchParams: {
+  params: Promise<{ locale: string; id: string }>;
+  searchParams: Promise<{
     dogId?: string;
     dogIds?: string;
     match?: string;
     /** 목록에서 넘어올 때만 붙는다. 없으면 거리를 표시하지 않는다. */
     lat?: string;
     lng?: string;
-  };
+  }>;
 }
 
-export default async function PlaceDetailPage({ params, searchParams }: Props) {
+export default async function PlaceDetailPage({
+  params: paramsPromise,
+  searchParams: searchParamsPromise,
+}: Props) {
+  // Next 15부터 params/searchParams는 Promise다. 기존 참조를 그대로 두기 위해 풀어서 같은 이름에 담는다.
+  const [params, searchParams] = await Promise.all([paramsPromise, searchParamsPromise]);
   const { locale, id } = params;
   const safeLocale = isSupportedLocale(locale) ? locale : "en";
 
@@ -189,7 +195,10 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
   const canonicalPath = `/${safeLocale}/places/${place.id}`;
   // 사진 자리를 만들지 말지는 카드와 같은 판정을 쓴다 — 예시 주소면 자리 자체를 두지 않는다.
   const hasPhoto = hasUsablePhoto(place.thumbnailUrl);
-  const hasContact = place.phone || place.website || place.instagram;
+  // 저장된 홈페이지 주소가 http/https가 아니면 링크로 만들지 않는다. 스킴 검사를
+  // 넣기 전에 들어간 행이 남아 있을 수 있어서, 화면에서도 한 번 더 본다.
+  const websiteHref = safeHttpUrl(place.website);
+  const hasContact = place.phone || websiteHref || place.instagram;
 
   return (
     <>
@@ -401,7 +410,7 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
                         </a>
                       </li>
                     )}
-                    {place.website && (
+                    {websiteHref && (
                       <li className="flex items-center gap-2">
                         <Globe
                           className="h-4 w-4 shrink-0 text-content-muted"
@@ -409,7 +418,7 @@ export default async function PlaceDetailPage({ params, searchParams }: Props) {
                           aria-hidden="true"
                         />
                         <a
-                          href={place.website}
+                          href={websiteHref}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="truncate rounded text-sm text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"

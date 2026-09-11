@@ -6,10 +6,12 @@ import { getVetClinicForAdmin } from "@/lib/vets/queries";
 import { updateVetClinicAction } from "../../actions";
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export default async function EditVetClinicPage({ params }: Props) {
+export default async function EditVetClinicPage({ params: paramsPromise }: Props) {
+  // Next 15부터 params/searchParams는 Promise다. 기존 참조를 그대로 두기 위해 풀어서 같은 이름에 담는다.
+  const params = await paramsPromise;
   const clinic = await getVetClinicForAdmin(params.id);
   if (!clinic) notFound();
 

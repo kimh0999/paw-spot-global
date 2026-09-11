@@ -41,6 +41,9 @@ export default function GlobalError({
             <div className="mt-6 flex justify-center gap-3">
               <Button onClick={reset}>Retry</Button>
               <Button asChild variant="outline">
+                {/* 이 경계는 루트 레이아웃을 대체해 next/link의 라우터 컨텍스트가 없다.
+                    `/`로 보내면 미들웨어가 locale을 협상한다(위 주석 참고). */}
+                {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
                 <a href="/">Go home</a>
               </Button>
             </div>

@@ -9,10 +9,12 @@ import { getAdminPlaceById } from "@/lib/places/queries";
 import { updatePlace } from "./actions";
 
 interface Props {
-  params: { locale: string; id: string };
+  params: Promise<{ locale: string; id: string }>;
 }
 
-export default async function AdminPlaceEditPage({ params }: Props) {
+export default async function AdminPlaceEditPage({ params: paramsPromise }: Props) {
+  // Next 15부터 params/searchParams는 Promise다. 기존 참조를 그대로 두기 위해 풀어서 같은 이름에 담는다.
+  const params = await paramsPromise;
   const { id } = params;
   const safeLocale = isSupportedLocale(params.locale) ? params.locale : "en";
   const t = await getTranslations({ locale: safeLocale, namespace: "admin.places" });

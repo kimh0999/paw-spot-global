@@ -6,10 +6,12 @@ import { Link } from "@/i18n/navigation";
 import { isSupportedLocale } from "@/lib/i18n/locale";
 
 interface ForbiddenPageProps {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
-export default async function ForbiddenPage({ params }: ForbiddenPageProps) {
+export default async function ForbiddenPage({ params: paramsPromise }: ForbiddenPageProps) {
+  // Next 15부터 params/searchParams는 Promise다. 기존 참조를 그대로 두기 위해 풀어서 같은 이름에 담는다.
+  const params = await paramsPromise;
   const locale = isSupportedLocale(params.locale) ? params.locale : "en";
   const t = await getTranslations({ locale, namespace: "auth.forbidden" });
   const tAuth = await getTranslations({ locale, namespace: "auth" });

@@ -7,10 +7,12 @@ import { getUserDogs } from "@/lib/dogs/queries";
 import { isSupportedLocale } from "@/lib/i18n/locale";
 
 interface ProfileDogsPageProps {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
-export default async function ProfileDogsPage({ params }: ProfileDogsPageProps) {
+export default async function ProfileDogsPage({ params: paramsPromise }: ProfileDogsPageProps) {
+  // Next 15부터 params/searchParams는 Promise다. 기존 참조를 그대로 두기 위해 풀어서 같은 이름에 담는다.
+  const params = await paramsPromise;
   const locale = isSupportedLocale(params.locale) ? params.locale : "en";
   const t = await getTranslations({ locale, namespace: "dogs" });
 

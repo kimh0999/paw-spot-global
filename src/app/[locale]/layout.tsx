@@ -21,11 +21,14 @@ export const dynamicParams = false;
 
 export default async function LocaleLayout({
   children,
-  params: { locale },
+  params: paramsPromise,
 }: {
   children: React.ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
+  // Next 15부터 params/searchParams는 Promise다. 기존 참조를 그대로 두기 위해 풀어서 같은 이름에 담는다.
+  const { locale } = await paramsPromise;
+
   // 지원하지 않는 locale은 여기서 404가 된다. 페이지의 조회까지 막는 것은 페이지 쪽 호출이다.
   assertSupportedLocale(locale);
 

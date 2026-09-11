@@ -7,17 +7,20 @@ import { getSafeCallbackUrl } from "@/lib/auth/safe-callback-url";
 import { isSupportedLocale } from "@/lib/i18n/locale";
 
 interface LoginPageProps {
-  params: { locale: string };
-  searchParams: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{
     callbackUrl?: string | string[];
     error?: string | string[];
-  };
+  }>;
 }
 
 export default async function LoginPage({
-  params,
-  searchParams,
+  params: paramsPromise,
+  searchParams: searchParamsPromise,
 }: LoginPageProps) {
+  // Next 15부터 params/searchParams는 Promise다. 기존 참조를 그대로 두기 위해 풀어서 같은 이름에 담는다.
+  const params = await paramsPromise;
+  const searchParams = await searchParamsPromise;
   const locale = isSupportedLocale(params.locale) ? params.locale : "en";
   const t = await getTranslations({ locale, namespace: "auth.login" });
   const fallback = `/${locale}`;

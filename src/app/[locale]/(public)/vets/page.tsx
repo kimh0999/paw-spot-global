@@ -4,10 +4,10 @@ import { getPublicVetClinics } from "@/lib/vets/queries";
 import type { VetClinicListItem } from "@/lib/vets/types";
 
 interface VetsPageProps {
-  searchParams: {
+  searchParams: Promise<{
     lat?: string;
     lng?: string;
-  };
+  }>;
 }
 
 /**
@@ -18,7 +18,9 @@ interface VetsPageProps {
  *
  * 조회 실패를 결과 0건으로 뭉개지 않는다 — 화면이 다른 안내를 내야 하므로 플래그로 넘긴다.
  */
-export default async function VetsPage({ searchParams }: VetsPageProps) {
+export default async function VetsPage({ searchParams: searchParamsPromise }: VetsPageProps) {
+  // Next 15부터 params/searchParams는 Promise다. 기존 참조를 그대로 두기 위해 풀어서 같은 이름에 담는다.
+  const searchParams = await searchParamsPromise;
   const lat = Number(searchParams.lat);
   const lng = Number(searchParams.lng);
   const userLocation =
