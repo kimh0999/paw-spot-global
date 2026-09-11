@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import type { $ZodIssue } from "zod/v4/core";
 
@@ -174,7 +174,7 @@ export function PlaceForm({
   submitLabel = "장소 등록",
   successContent,
 }: PlaceFormProps) {
-  const [state, formAction] = useFormState(action, {});
+  const [state, formAction] = useActionState(action, {});
   const tMap = useTranslations("admin.places.locationPicker");
   const t = useTranslations("admin.places.form");
   const tV = useTranslations("admin.places.form.validation");

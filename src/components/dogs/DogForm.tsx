@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useEffect, useId, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 
 import BreedCombobox from "@/components/dogs/BreedCombobox";
@@ -60,7 +60,7 @@ function SubmitBar({
 
 export default function DogForm({ mode, dog, onResult, onCancel }: DogFormProps) {
   const t = useTranslations("dogs.form");
-  const [state, formAction] = useFormState(
+  const [state, formAction] = useActionState(
     mode === "create" ? createDog : updateDog,
     initialDogFormState,
   );

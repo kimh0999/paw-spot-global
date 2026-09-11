@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 
 import { DAY_KEYS, type OperatingHours } from "@/lib/places/operating-hours";
@@ -92,8 +92,9 @@ export default function VetClinicForm({
   submitLabel: string;
 }) {
   const router = useRouter();
-  // React 18이라 useActionState(19) 대신 react-dom의 useFormState를 쓴다 — 기존 관리자 폼과 같은 패턴이다.
-  const [state, formAction] = useFormState(action, VET_CLINIC_FORM_INITIAL);
+  // React 19의 useActionState. react-dom의 useFormState는 19에서 이 훅으로 이름이 바뀌었고
+  // 쓰면 렌더마다 deprecation 경고가 뜬다. 기존 관리자 폼과 같은 패턴이다.
+  const [state, formAction] = useActionState(action, VET_CLINIC_FORM_INITIAL);
   const [values, setValues] = useState(initial);
   const [hoursMode, setHoursMode] = useState<HoursMode>("unchanged");
   const [hoursDraft, setHoursDraft] = useState<OperatingHours>(
@@ -325,6 +326,7 @@ export default function VetClinicForm({
 
       <ServiceSection
         title="영어 응대"
+        group="englishSupport"
         status={values.englishSupport}
         condition={values.englishSupportCondition}
         onStatus={(status) => set("englishSupport", status)}
@@ -332,6 +334,7 @@ export default function VetClinicForm({
       />
       <ServiceSection
         title="야간·응급 진료"
+        group="afterHours"
         status={values.afterHours}
         condition={values.afterHoursCondition}
         onStatus={(status) => set("afterHours", status)}
@@ -485,12 +488,20 @@ function SubmitButton({ label }: { label: string }) {
 
 function ServiceSection({
   title,
+  group,
   status,
   condition,
   onStatus,
   onCondition,
 }: {
   title: string;
+  /**
+   * 라디오의 `name`. 없으면 브라우저가 이 버튼들을 **한 묶음으로 보지 않는다** —
+   * 화살표 키 이동이 안 되고, 보조기술은 낱개 버튼으로 읽는다.
+   * 두 묶음(영어 응대·야간 진료)이 같은 라벨 네 개를 쓰므로 묶음 이름도 서로 달라야 한다.
+   * 제출은 `payload` 하나로만 나가므로(actions.ts) 이 이름은 저장에 쓰이지 않는다.
+   */
+  group: string;
   status: VetServiceStatus;
   condition: string;
   onStatus: (status: VetServiceStatus) => void;
@@ -499,11 +510,12 @@ function ServiceSection({
   return (
     <section className="flex flex-col gap-3 rounded border p-4">
       <h2 className="text-sm font-semibold">{title}</h2>
-      <div className="flex flex-wrap gap-3 text-sm">
+      <div className="flex flex-wrap gap-3 text-sm" role="radiogroup" aria-label={title}>
         {VET_SERVICE_STATUSES.map((value) => (
           <label key={value} className="flex items-center gap-1.5">
             <input
               type="radio"
+              name={group}
               checked={status === value}
               onChange={() => onStatus(value)}
             />
