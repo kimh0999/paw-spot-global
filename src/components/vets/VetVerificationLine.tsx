@@ -5,6 +5,7 @@ import { History } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { VetItemState } from "@/lib/vets/verification";
+import { safeHttpUrl } from "@/lib/validation/url";
 
 /**
  * 항목 하나의 확인 근거 한 줄 (D-17·D-18).
@@ -53,6 +54,8 @@ export default function VetVerificationLine({ item, label, className }: Props) {
     day: "2-digit",
   });
   const method = t(`method.${item.evidence.method}`);
+  // 출처 링크도 저장된 값을 그대로 쓴다. http/https가 아니면 링크를 만들지 않는다.
+  const sourceHref = safeHttpUrl(item.evidence.sourceUrl);
 
   return (
     <p
@@ -68,9 +71,9 @@ export default function VetVerificationLine({ item, label, className }: Props) {
         {t("confirmedOn", { date })} · {method}
       </span>
       {item.needsRecheck && <span>· {t("needsRecheck")}</span>}
-      {item.evidence.sourceUrl && (
+      {sourceHref && (
         <a
-          href={item.evidence.sourceUrl}
+          href={sourceHref}
           target="_blank"
           rel="noopener noreferrer"
           className="rounded-sm underline outline-none focus-visible:ring-2 focus-visible:ring-ring"

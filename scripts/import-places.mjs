@@ -45,6 +45,28 @@ export const CATEGORIES = new Set(["RESTAURANT", "CAFE", "TRAVEL", "ETC"]);
 const LAT_MIN = 33, LAT_MAX = 43;
 const LNG_MIN = 124, LNG_MAX = 132;
 
+/**
+ * 이 스크립트는 관리자 폼을 거치지 않고 `Place`에 **직접 쓴다.** 그래서 zod 스키마의
+ * URL 검사가 적용되지 않는다. `website`·`thumbnailUrl`은 사용자 화면에서 `href`와
+ * 이미지 주소로 쓰이므로 여기서도 같은 규칙(http/https + 도메인 호스트)을 건다.
+ *
+ * 이 스크립트는 순수 node로 돌아 TypeScript 모듈을 가져올 수 없다. 그래서 규칙을
+ * 옮겨 적되, `src/lib/places/import-validation.test.ts`가 `lib/validation/url.ts`와
+ * 같은 답을 내는지 확인해 두 곳이 갈라지지 않게 막는다.
+ */
+export function isHttpUrl(value) {
+  let url;
+  try {
+    url = new URL(String(value).trim());
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+  // IP 주소·`localhost`·밑줄이 든 호스트는 공개 홈페이지 주소가 아니다.
+  // zod의 `regexes.domain`(node_modules/zod/v4/core/regexes.js)과 같은 식이다.
+  return /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/.test(url.hostname);
+}
+
 function parseArgs(argv) {
   const args = { file: null, commit: false };
   for (let i = 0; i < argv.length; i += 1) {
@@ -82,6 +104,11 @@ export function validate(item, index) {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return `${where}: 좌표 없음`;
   if (lat < LAT_MIN || lat > LAT_MAX) return `${where}: 위도가 한국 범위 밖 (${lat})`;
   if (lng < LNG_MIN || lng > LNG_MAX) return `${where}: 경도가 한국 범위 밖 (${lng})`;
+  for (const key of ["website", "thumbnailUrl"]) {
+    const value = item[key];
+    if (value == null || value === "") continue;
+    if (!isHttpUrl(value)) return `${where}: ${key}가 http/https 주소가 아닙니다`;
+  }
   return null;
 }
 

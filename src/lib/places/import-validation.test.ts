@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 // 스크립트에서 직접 가져온다. 규칙을 두 곳에 적어 두면 갈라진다.
-import { validate } from "../../../scripts/import-places.mjs";
+import { isHttpUrl, validate } from "../../../scripts/import-places.mjs";
+
+import { httpUrlSchema } from "@/lib/validation/url";
 
 /**
  * Import는 조건을 추측하지 않고, 좌표가 없으면 후보로도 넣지 않는다
@@ -53,5 +55,55 @@ describe("import 후보 검증", () => {
     for (const category of ["RESTAURANT", "CAFE", "TRAVEL", "ETC"]) {
       expect(validate({ ...valid, category }, 0)).toBeNull();
     }
+  });
+
+  /**
+   * Import는 관리자 폼을 거치지 않고 DB에 직접 쓴다. 여기서 막지 않으면
+   * `website`·`thumbnailUrl`이 검사 없이 저장되고, 그대로 사용자 화면의 `href`가 된다.
+   */
+  it("website·thumbnailUrl이 http/https가 아니면 거른다", () => {
+    for (const key of ["website", "thumbnailUrl"]) {
+      expect(validate({ ...valid, [key]: "javascript:alert(1)" }, 0)).toContain(key);
+      expect(validate({ ...valid, [key]: "java	script:alert(1)" }, 0)).toContain(key);
+      expect(validate({ ...valid, [key]: "data:text/html,<script>alert(1)</script>" }, 0)).toContain(key);
+      expect(validate({ ...valid, [key]: "//evil.com" }, 0)).toContain(key);
+    }
+  });
+
+  it("URL이 없거나 정상이면 통과한다 — 선택 항목이다", () => {
+    expect(validate({ ...valid, website: undefined, thumbnailUrl: null }, 0)).toBeNull();
+    expect(validate({ ...valid, website: "", thumbnailUrl: "" }, 0)).toBeNull();
+    expect(
+      validate({ ...valid, website: "https://a.example.com", thumbnailUrl: "http://b.example.com/x.jpg" }, 0),
+    ).toBeNull();
+  });
+});
+
+/**
+ * 스크립트는 순수 node로 돌아 `lib/validation/url.ts`를 가져올 수 없어 규칙을 옮겨 적었다.
+ * 두 곳이 갈라지면 한쪽만 막히므로, 같은 답을 내는지 여기서 고정한다.
+ */
+describe("import 스크립트의 URL 규칙은 공용 스키마와 같은 답을 낸다", () => {
+  const cases = [
+    "https://example.com",
+    "http://example.com/a?b=c",
+    "HTTPS://Example.COM/Path",
+    "https://sub.example.co.kr:8080/x",
+    "  https://example.com  ",
+    "javascript:alert(1)",
+    "java	script:alert(1)",
+    "data:text/html,<script>alert(1)</script>",
+    "vbscript:msgbox(1)",
+    "file:///etc/passwd",
+    "//evil.com",
+    "evil.com",
+    "https://localhost:3000",
+    "https://192.168.0.1/",
+    "https://exa_mple.com/",
+    "",
+  ];
+
+  it.each(cases)("%j", (value) => {
+    expect(isHttpUrl(value)).toBe(httpUrlSchema.safeParse(value).success);
   });
 });

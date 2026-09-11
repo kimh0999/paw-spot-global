@@ -18,6 +18,7 @@ import {
   operatingHoursSchema,
   type OperatingHours,
 } from "@/lib/places/operating-hours";
+import { httpUrlSchema } from "@/lib/validation/url";
 
 // @handle, handle, or instagram.com URL
 const INSTAGRAM_REGEX =
@@ -98,13 +99,13 @@ const placeBaseSchema = z.object({
     .max(30)
     .nullish()
     .refine((val) => !val || PHONE_REGEX.test(val), { message: "invalidPhone" }),
-  website: z.string().url().nullish(),
+  website: httpUrlSchema.nullish(),
   instagram: z
     .string()
     .max(100)
     .nullish()
     .refine((val) => !val || INSTAGRAM_REGEX.test(val), { message: "invalidInstagram" }),
-  thumbnailUrl: z.string().url().nullish(),
+  thumbnailUrl: httpUrlSchema.nullish(),
   tourApiId: z.string().nullish(),
   visibility: z.enum(PLACE_VISIBILITY).default("DRAFT"),
   hours: hoursFormSchema,
@@ -134,7 +135,7 @@ const placeBaseSchema = z.object({
 const policySnapshotShape = {
   rawPolicyText: z.string().max(5000).optional(),
   sourceLanguages: z.array(z.enum(SUPPORTED_LOCALES)).default([]),
-  sourceUrl: z.string().url().nullish(),
+  sourceUrl: httpUrlSchema.nullish(),
 };
 
 const verificationSchema = z.object({

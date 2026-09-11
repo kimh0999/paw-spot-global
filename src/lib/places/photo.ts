@@ -25,6 +25,9 @@ export function hasUsablePhoto(src: string | null | undefined): src is string {
   if (!src) return false;
   try {
     const url = new URL(src, "http://localhost");
+    // http/https로 읽히지 않는 값은 이미지로 쓰지 않는다. 상대 경로는 기준 주소에
+    // 붙어 http로 읽히므로 그대로 통과한다.
+    if (url.protocol !== "http:" && url.protocol !== "https:") return false;
     return !PLACEHOLDER_HOSTS.has(url.hostname);
   } catch {
     return false;

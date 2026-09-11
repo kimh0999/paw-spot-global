@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { operatingHoursSchema } from "@/lib/places/operating-hours";
+import { optionalHttpUrlText } from "@/lib/validation/url";
 import {
   VET_CONDITION_MAX_LENGTH,
   VET_DISTRICTS,
@@ -44,7 +45,7 @@ export const vetVerificationInputSchema = z.object({
   method: z.enum(["PHONE", "DM", "WEBSITE", "ON_SITE", "USER_REPORT"]),
   /** 확인 시각. 미래 날짜는 막는다 — 아직 하지 않은 확인을 기록할 수 없다. */
   verifiedAt: z.coerce.date(),
-  sourceUrl: optionalText,
+  sourceUrl: optionalHttpUrlText,
   note: optionalText,
 });
 export type VetVerificationInput = z.infer<typeof vetVerificationInputSchema>;
@@ -55,7 +56,7 @@ export const vetClinicInputSchema = z.object({
   district: z.enum(VET_DISTRICTS),
   address: z.string().trim().min(1),
   phone: z.string().trim().min(1),
-  website: optionalText,
+  website: optionalHttpUrlText,
 
   /** 좌표는 선택이다. 없으면 거리를 만들지 않을 뿐 검색·연락은 그대로 된다. */
   location: z

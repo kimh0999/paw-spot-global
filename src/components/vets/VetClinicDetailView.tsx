@@ -10,6 +10,7 @@ import type { SupportedLocale } from "@/lib/constants";
 import { groupConsecutiveDays } from "@/lib/places/operating-hours";
 import { VET_VERIFICATION_TARGETS } from "@/lib/vets/constants";
 import type { VetClinicDetail } from "@/lib/vets/types";
+import { safeHttpUrl } from "@/lib/validation/url";
 
 /**
  * 병원 상세 본문.
@@ -30,6 +31,9 @@ export default async function VetClinicDetailView({
   const primaryName = locale === "en" && clinic.nameEn ? clinic.nameEn : clinic.nameKr;
   const secondaryName = locale === "en" && clinic.nameEn ? clinic.nameKr : clinic.nameEn;
   const hourGroups = clinic.hours ? groupConsecutiveDays(clinic.hours) : [];
+  // http/https가 아닌 주소는 링크로 만들지 않는다 — 스킴 검사를 넣기 전에 저장된 값이
+  // 남아 있을 수 있다.
+  const websiteHref = safeHttpUrl(clinic.website);
 
   const itemByTarget = {
     BASIC: clinic.verification.basic,
@@ -133,9 +137,9 @@ export default async function VetClinicDetailView({
               statusLabel={t(`service.${clinic.afterHours}`)}
               condition={clinic.afterHoursCondition}
             />
-            {clinic.website && (
+            {websiteHref && (
               <a
-                href={clinic.website}
+                href={websiteHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 rounded-sm text-sm font-semibold text-primary outline-none hover:text-primary-hover focus-visible:ring-2 focus-visible:ring-ring"

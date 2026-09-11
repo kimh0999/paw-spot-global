@@ -31,11 +31,21 @@ describe("hasUsablePhoto", () => {
   });
 
   /**
-   * 이 판정은 **호스트만** 본다. 형식이 이상한 값은 상대 경로로 읽혀 자리를 얻지만,
+   * 이 판정은 스킴과 호스트만 본다. 형식이 이상한 값은 상대 경로로 읽혀 자리를 얻지만,
    * 불러오기가 실패하면 패턴만 남으므로 빈 띠가 생기지 않는다(§6 Place Thumb).
    * 여기서 더 걸러 내려 하면 실제 상대 경로 사진까지 막힌다.
    */
   it("형식이 이상한 값은 상대 경로로 읽혀 자리를 얻는다 — 실패는 불러오기가 처리한다", () => {
     expect(hasUsablePhoto("not-a-url")).toBe(true);
+  });
+
+  /**
+   * `javascript:`는 `<img src>`에서 실행되지는 않는다. 그래도 이미지로 쓸 값이
+   * 아니므로 자리를 만들지 않는다 — 저장 단계 검사를 넣기 전 행이 남아 있을 수 있다.
+   */
+  it("http·https가 아닌 스킴은 사진으로 치지 않는다", () => {
+    expect(hasUsablePhoto("javascript:alert(1)")).toBe(false);
+    expect(hasUsablePhoto("data:image/svg+xml,<svg onload=alert(1)>")).toBe(false);
+    expect(hasUsablePhoto("file:///C:/secret.png")).toBe(false);
   });
 });
