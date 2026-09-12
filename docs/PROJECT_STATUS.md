@@ -3,7 +3,7 @@
 > **이 문서의 목적**: 기획이 아니라 **실제 개발 진행 상황 추적**이다.
 > 모든 상태는 코드 확인에 근거한다. 확인하지 못한 것은 `확인 필요`로 남기고 추측하지 않는다.
 >
-> **기준일**: 2026-09-11 (**보안 후속 + 재검증 2차** — 의존성 업그레이드 · **React 19 이행** · **vitest 4.1.11** · 외부 URL 스킴 검증 · CSP 보고 전용 · **폼 저장·서버액션 인가·지도 실측**) · 직전 **동물병원 탐색·문의 P0 구현**과 `DESIGN.md` v2.1 2026-09-10 · 직전 사용자 화면 재설계(`DESIGN.md` v2.0) 2026-09-09 · 직전 **P0 20건 전부 완료** 2026-09-08 · 직전 **P0 20건 코드 재대조** 2026-09-06 · **브랜치**: `chore/project-foundation`
+> **기준일**: 2026-09-12 (**Next 16 이행** — 16.3.5 + ESLint 9 · `middleware` → `proxy` · 정적 생성 전제 정정) · 직전 2026-09-11 (**보안 후속 + 재검증 2차** — 의존성 업그레이드 · **React 19 이행** · **vitest 4.1.11** · 외부 URL 스킴 검증 · CSP 보고 전용 · **폼 저장·서버액션 인가·지도 실측**) · 직전 **동물병원 탐색·문의 P0 구현**과 `DESIGN.md` v2.1 2026-09-10 · 직전 사용자 화면 재설계(`DESIGN.md` v2.0) 2026-09-09 · 직전 **P0 20건 전부 완료** 2026-09-08 · 직전 **P0 20건 코드 재대조** 2026-09-06 · **브랜치**: `chore/project-foundation`
 > **기획 기준**: `docs/Paw_Spot_Global_기획서_v3.md` · **구현 기준**: `docs/Paw_Spot_Global_개발명세서_v2.md` · **디자인 기준**: `DESIGN.md`
 
 **상태 값**: `완료` / `부분 완료` / `미구현` / `확인 필요` / `제외`(하지 않기로 결정 — 미구현과 구분한다)
@@ -306,6 +306,20 @@ P0 이후 첫 P1 트랙. §19의 접근성 4행을 처리했다.
 > 커밋 메시지(`2ed7cea`)에도 `D-15`가 들어가 있어 **재부여는 문서 여러 곳을 함께 고쳐야 한다.**
 > 아직 고치지 않았다 — §미확정 항목에 남긴다.
 
+### 2026-09-12 Next 16 이행 (프레임워크 · 린트 · 라우팅 규약)
+
+**기능 변경이 아니다.** 화면·판정 로직·데이터 구조는 그대로다.
+
+| 변경 | 절 |
+|---|---|
+| **Next 15.5.25 → 16.3.5.** 15.x는 Maintenance LTS이고 `nextjs.org/support-policy` 기준 **2026-10-21**에 끝난다. 16.x가 Active LTS이고, 8월 보안 릴리스가 지정한 하한이 16.3.3이라 그 위의 최신 안정 버전을 골랐다 | §20 |
+| **ESLint 8 → 9.39.5 + flat config.** 선택이 아니다 — `eslint-config-next@16`의 peer가 `eslint >= 9`이고, 그 의존인 `typescript-eslint@8`은 ESLint 10을 받지 않는다. `next lint`가 16에서 제거돼 `npm run lint`는 `eslint src`다. 규칙 구성(`core-web-vitals` + `typescript`)과 검사 범위(`src`)는 이전과 같다 | §20 |
+| **lint warning 12건** — `eslint-plugin-react-hooks` 5.2.0 → 7.1.1이 들여온 `react-hooks/refs`·`react-hooks/set-state-in-effect`에 걸린다. **전부 이행 이전부터 있던 코드다.** 끄지 않고 `warn`으로 낮췄다 — 고치려면 지도·폼 컴포넌트를 다시 짜야 하고, 지도는 결제 오류로 실동작 확인이 불가능하다 | §3, §15, §20 |
+| **`src/middleware.ts` → `src/proxy.ts`** — Next 16의 파일 규약. 이름만 바뀌는 것이 아니라 **런타임이 Edge에서 Node.js로 고정**된다(`proxy`는 runtime 설정을 받지 않는다). 이 파일은 next-intl 로케일 협상만 하고 `auth()`를 부르지 않으며, 저장소에 `runtime = "edge"` 선언이 0건이라 Edge를 유지할 근거를 찾지 못했다. matcher와 협상 정책은 그대로고, 로케일 협상·보호 라우트 리다이렉트를 실측해 이행 전과 같은 값을 확인했다 | §12 |
+| **`turbopack.resolveAlias` 2줄** — 16부터 빌드가 Turbopack 기본인데 `tw-animate-css`와 `shadcn/tailwind.css`가 CSS를 `"style"` export 조건으로만 노출해 `Module not found`가 난다(webpack css-loader는 그 조건을 적용했었다) | §17 |
+| **정적 생성 전제 정정** — "빌드가 28페이지를 미리 만든다"는 서술이 틀렸다. 산출물을 직접 세어 보니 `prerender-manifest.json` 2건(`/favicon.ico`·`/_global-error`) · `.html` 1개이고, 루트 레이아웃이 `await getLocale()`로 요청 헤더를 읽어 **모든 경로가 요청 시 렌더**된다. Next 15의 `●(SSG)` 표시가 실제를 가리고 있었다. CSP nonce의 대가로 계산했던 "정적 생성 상실"은 **존재하지 않는다** | §20, `CSP-적용-현황.md` §4-1 |
+| `next-env.d.ts`·`tsconfig.json`·`AGENTS.md`·`CLAUDE.md`는 Next 16 도구가 직접 고쳐 쓴 파일이다. 지우면 다음 `next dev`가 다시 만들기 때문에 함께 커밋했다 | — |
+
 ---
 
 ## 1. 홈
@@ -485,7 +499,7 @@ P0 이후 첫 P1 트랙. §19의 접근성 4행을 처리했다.
 | 사용자 가드 | 완료 | `requireUser`(페이지) / `requireUserAction`(액션) | — | — | `src/lib/auth/current-user.ts` |
 | 관리자 가드 | 완료 | `requireAdminPage` / `requireAdminAction`. **DB의 role을 매 요청 조회**해 JWT만 믿지 않음. 미인증→로그인, 비관리자→`/forbidden` | — | — | `src/lib/auth/require-admin.ts` |
 | Open Redirect 방어 | 완료 | `getSafeCallbackUrl()` | — | — | `src/lib/auth/safe-callback-url.ts` |
-| 로그인 경로 로케일 | 완료 | `pages`를 locale 없는 `/login`으로 두고 next-intl 미들웨어가 기존 정책(NEXT_LOCALE 쿠키 → Accept-Language → `DEFAULT_LOCALE=en`)대로 `/ko/login`·`/en/login`으로 넘긴다. `?error=` 쿼리도 함께 넘어간다. 앱 쪽 진입점(`requireUser`·`requireAdminPage`·`Header`·`FavoriteButton`)은 이미 locale을 유지하고 있었다 | — | — | `src/auth.ts`, `src/middleware.ts` |
+| 로그인 경로 로케일 | 완료 | `pages`를 locale 없는 `/login`으로 두고 next-intl 미들웨어가 기존 정책(NEXT_LOCALE 쿠키 → Accept-Language → `DEFAULT_LOCALE=en`)대로 `/ko/login`·`/en/login`으로 넘긴다. `?error=` 쿼리도 함께 넘어간다. 앱 쪽 진입점(`requireUser`·`requireAdminPage`·`Header`·`FavoriteButton`)은 이미 locale을 유지하고 있었다 | — | — | `src/auth.ts`, `src/proxy.ts` |
 | Rate Limiting | 미구현 | 없음 | 신고 기능 도입 시 필수 | P1 | — |
 
 ---
@@ -537,7 +551,7 @@ P0 이후 첫 P1 트랙. §19의 접근성 4행을 처리했다.
 
 | 영역 | 상태 | 현재 구현 | 남은 작업 | 우선순위 | 근거 파일 |
 |---|---|---|---|---|---|
-| 로케일 라우팅 | 완료 | `next-intl` v4, `["en","ko"]`, default `en`, `localePrefix:"always"` | — | — | `src/i18n/routing.ts`, `src/middleware.ts` |
+| 로케일 라우팅 | 완료 | `next-intl` v4, `["en","ko"]`, default `en`, `localePrefix:"always"` | — | — | `src/i18n/routing.ts`, `src/proxy.ts` |
 | 메시지 키 정합성 | 완료 | **422키, en/ko 완전 일치. 누락 0건** (2026-08-18 재확인) | — | — | `messages/en.json`, `messages/ko.json` |
 | 장소명 표기 | 완료 | en: `nameEn ?? nameKr` primary / ko: `nameKr` primary | — | — | `src/lib/i18n/locale.ts:7-21` |
 | 카테고리 라벨 | 완료 | en 3개 키 모두 `Attractions` — `home.categories.tabs.travel`·`places.filters.category.travel`·`places.card.category.travel`. enum `TRAVEL`·내부값 `travel`·관리자 폼 라벨은 명세서 v2 §7-1 지시대로 유지. ko `여행지`는 변경 대상 아님 | — | — | `messages/en.json` |
@@ -602,9 +616,9 @@ P0 이후 첫 P1 트랙. §19의 접근성 4행을 처리했다.
 |---|---|---|---|---|---|
 | 테스트 | 완료 | **vitest 4.1.11**. `npm test` = **636 통과 / 18 skip**(그 18건이 `npm run test:db`에서 **18 통과**). 09-10 동물병원 40건, 09-11 URL 검증 36건 + 병원 스키마 배선 5건 | 컴포넌트 렌더 테스트는 없음(jsdom·RTL 미도입) — P2. 브라우저 E2E는 스크립트로만 돌렸고 저장소에 테스트로 편입하지 않았다 | P1 | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/test-db.mjs` |
 | 오류 추적 | 미구현 | Sentry 미설치 | 도입. CSP 위반 보고 수집처가 없는 것도 같은 원인이다(`NEXT_PUBLIC_SENTRY_DSN` 비어 있음) | P1 | `package.json` |
-| 보안 헤더 · CSP | 부분 완료 | **2026-09-11 도입.** `Content-Security-Policy-Report-Only`(차단 없음) + `X-Frame-Options: DENY` + `X-Content-Type-Options: nosniff` + `Referrer-Policy`. 그전에는 헤더 설정이 저장소에 **하나도 없었다** | **강제 전환 미완.** 프레임워크가 만드는 nonce 없는 인라인 스크립트가 페이지당 14~20개라 `script-src 'self'`로 바꾸면 하이드레이션이 깨진다. nonce를 쓰면 정적 생성 28페이지를 잃는다 — 이 교환이 미결정 | P1 | `next.config.mjs`, `docs/02-design/CSP-적용-현황.md` |
-| 의존성 보안 | 부분 완료 | **2026-09-11 업그레이드.** Next 15.5.25 · **React/react-dom 19.2.8 + 타입 19.2.x** · next-auth beta.32 · postcss 8.5.28 · **vitest 4.1.11**(5.0.0 불필요 — 공지 수정 버전은 4.1.11). `npm audit` 전체 **critical 0**, Next.js·Auth.js·React·vitest 계열 공지 0건. 검증 도구로 `playwright-core` 추가 | **Next 15.x는 Maintenance LTS이고 2026-10-21경 종료**(2024-10-21 릴리스 + 정책상 2년) — 16.x 이행을 일정에 잡아야 한다. `prisma`가 `dependencies`에 있어 CLI 개발 서버 체인(hono·mysql2 등)이 프로덕션 트리로 계산된다(런타임 경로 아님) | **P0(10월)** | `package.json`, `nextjs.org/support-policy` |
-| 빌드·타입체크 검증 | 완료 | **2026-09-11 실행(Next 15.5.25 + React 19.2.8): `tsc --noEmit` 0오류 · `vitest run` 636 통과/18 skip · `test:db` 18/18 · `next build` 통과(정적 28/28) · `next lint` 0건.** 빌드는 **격리 DB를 명시해** 돌렸다 — 운영 DB를 보면 `VetClinic`이 없어 `prisma:error`가 찍힌다 | `next lint`는 Next 16에서 제거된다(빌드가 deprecation 경고를 낸다). 16 이행 시 ESLint CLI로 교체 필요 | P1 | — |
+| 보안 헤더 · CSP | 부분 완료 | **2026-09-11 도입.** `Content-Security-Policy-Report-Only`(차단 없음) + `X-Frame-Options: DENY` + `X-Content-Type-Options: nosniff` + `Referrer-Policy`. 그전에는 헤더 설정이 저장소에 **하나도 없었다** | **강제 전환 미완.** 프레임워크가 만드는 nonce 없는 인라인 스크립트가 페이지당 14~20개라 `script-src 'self'`로 바꾸면 하이드레이션이 깨진다. nonce 도입의 대가로 계산했던 **정적 생성 상실은 2026-09-12에 사실이 아님이 확인됐다** — 미리 만들어지는 페이지가 처음부터 없었다(`prerender-manifest.json` 2건 · `.html` 1개). 남은 검토는 nonce의 스트리밍·`next/script` 전파와 위반 수집처다 | P1 | `next.config.mjs`, `docs/02-design/CSP-적용-현황.md` |
+| 의존성 보안 | 부분 완료 | **2026-09-12 Next 16 이행.** Next 16.3.5(Active LTS) · **ESLint 8 → 9.39.5 + flat config**(`eslint-config-next@16`의 peer가 `eslint >= 9`). `npm audit` 20건 → 17건 · critical 0 — 번들 postcss 경유 4건과 ESLint 8이 끌던 js-yaml 4건이 닫혔고, 남은 17건은 `prisma` CLI 체인이다. 직전 2026-09-11: Next 15.5.25 · **React/react-dom 19.2.8 + 타입 19.2.x** · next-auth beta.32 · postcss 8.5.28 · **vitest 4.1.11**(5.0.0 불필요 — 공지 수정 버전은 4.1.11). `npm audit` 전체 **critical 0**, Next.js·Auth.js·React·vitest 계열 공지 0건. 검증 도구로 `playwright-core` 추가 | **Next 15 EOL(2026-10-21) 대응은 끝났다.** `prisma`가 `dependencies`에 있어 CLI 개발 서버 체인(hono·mysql2 등)이 프로덕션 트리로 계산된다(런타임 경로 아님) — 이것만 남았다 | P1 | `package.json`, `nextjs.org/support-policy` |
+| 빌드·타입체크 검증 | 완료 | **2026-09-12 실행(Next 16.3.5 + React 19.2.8): `tsc --noEmit` 0오류 · `eslint src` 0 error / 12 warning · `vitest run` 636 통과/18 skip · `test:db` 18/18 · production 빌드 통과.** 빌드는 Turbopack 기본이고 **격리 DB를 명시해** 돌렸다 — 운영 DB를 보면 `VetClinic`이 없어 `prisma:error`가 찍힌다. 미리 만들어지는 페이지는 `/favicon.ico`·`/_global-error` 2건뿐이다(이전 판의 `정적 28/28`은 진행 카운터였고 산출물이 아니었다) | **warning 12건**은 `eslint-config-next@16`이 들여온 `react-hooks/refs`·`set-state-in-effect`이고 전부 이행 이전 코드다. `off` 대신 `warn`이라 매 실행마다 출력된다 | P1 | `eslint.config.mjs` |
 | 미사용 코드 | 부분 완료 | `mock-places.ts`, `haversineDistance`, `formatWalkingTime`, `lib/result.ts` 참조 0건 | 정리 | P1 | grep 결과 |
 | 문서 버전 관리 | 완료 | `docs/*.md`를 git 추적으로 전환하고 원본 PDF 2건 제거 (커밋 `df2ffb3`) | — | — | `git log` |
 | 서비스 지역 제한 (대전 단독) | 완료 | 코드에 지역 개념 없음. 공개는 "검증 이력 + `visibility=VISIBLE`"로만 통제됨 | **D-08 확정**: 코드 변경 없이 **운영 규칙으로 강제**한다 — 운영자가 대전 장소만 검증·공개. 지역 필드는 2단계 확장 시 도입 | — | `prisma/schema.prisma`(지역 필드 없음), 기획서 v3 §9-5 |
@@ -720,7 +734,7 @@ P0 이후 첫 P1 트랙. §19의 접근성 4행을 처리했다.
 |---|---|---|---|
 | 검증 이력 없는 공개 장소 수 | DB 읽기 전용 조회 | P0 #1 (D-07) | ✅ **2026-08-13 확인 — 0건.** 조회 조건 추가만으로 완결 |
 | PostGIS extension 활성화 여부 | 배포 DB 조회 | 전체 | ✅ 사실상 확인 — 좌표·거리 쿼리 정상 반환 |
-| `next build` / `tsc --noEmit` 통과 여부 | 로컬 실행 | 전체 | ✅ **2026-09-11 Next 15.5.25에서 전부 통과** (lint·test 포함, 정적 28/28) |
+| `next build` / `tsc --noEmit` 통과 여부 | 로컬 실행 | 전체 | ✅ **2026-09-12 Next 16.3.5에서 전부 통과** (typecheck 0 · `eslint src` 0 error/12 warning · test 636 통과/18 skip · production 빌드). 미리 만들어지는 페이지는 2건뿐이다 — 이전 판의 `정적 28/28`은 산출물이 아니었다 |
 | Google Maps API 키 도메인 제한 설정 | Google Cloud Console | 보안 | 미확인 |
 | 지도 `Google 지도를 제대로 로드할 수 없습니다` 오버레이 | Google Cloud Console (결제·API 사용 설정·키 제한) | 지도 | ❌ **2026-09-11 실패 확정 — 지도가 동작하지 않는다.** production 빌드에서 공개(`/ko/places`)·관리자(`/ko/admin/places/new`) 모두 오버레이가 뜬다. Google 네트워크 응답은 **전부 200**(31·27건)이라 **스크립트 다운로드 성공은 지도 동작의 증거가 아니다.** 콘솔 오류는 `Google Maps JavaScript API error: BillingNotEnabledMapError` 하나. **관리자 지도를 클릭해도 위도·경도 칸이 채워지지 않는다.** 코드 결함이 아니라 외부 결제/API 설정 문제다 — 확인 순서와 해결 후 재검증 목록은 `docs/02-design/CSP-적용-현황.md` §3-5 |
 | `데오` 장소 좌표 | DB 읽기 + 지오코딩 대조 | 데이터 | ❌ **2026-09-07 확정 — 좌표가 틀렸다.** `lat=35, lng=124`로 정확히 정수이며 스키마 유효범위(위도 33~43·경도 124~132)의 하한값이다. 실제 지점은 서해 바다, 대전시청에서 341km. 다만 주소 `대전서구도안북로93번길`에 **건물번호가 없어** 검증된 좌표를 만들 수 없다. **수정 보류 — 완전한 주소 필요** |
@@ -786,7 +800,7 @@ P0을 차단하는 항목은 없다. 아래 둘은 해당 기능 착수 시점�
 | D-14 | 2단계 확장 시 지역 필드 설계 | 서울 확장 착수 시 |
 | — | **`D-15` 중복 ID 정리** — 두 결정 중 어느 쪽을 재부여할지. 커밋 메시지·설계 문서·분석 문서가 함께 걸려 있다 | 문서 정리 시 |
 | — | **동물병원(§21)을 기획서 v3에 편입할지** 별도 트랙으로 둘지 | 동물병원 운영 반영 전 |
-| — | **CSP 강제 전환** — nonce(요청마다 생성) ↔ 정적 생성 28페이지의 교환 | CSP 위반 실측 후 |
-| — | **Next 16.x 이행** — 15.x Maintenance LTS가 2026-10-21경 종료된다. `next lint` 제거 대응 포함 | **2026-10 안** |
+| — | **CSP 강제 전환** — nonce(요청마다 생성)를 쓸지. **정적 생성과의 교환은 없었다**(2026-09-12 정정) | CSP 위반 실측 후 |
+| — | ~~**Next 16.x 이행**~~ — **2026-09-12 완료.** 16.3.5 + ESLint 9 flat config · `middleware` → `proxy` | 해소 |
 
 구현 중 정할 소소한 값 (별도 결정 항목 아님): 서비스 범위 밖 판정 임계 거리(기본 50 km 권장), 대전 기본 중심 좌표와 초기 zoom — 모두 P0 #20에서 처리.

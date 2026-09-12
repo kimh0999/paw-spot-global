@@ -94,7 +94,7 @@ src/app/
 | `loading.tsx` / `error.tsx` / `not-found.tsx` | **프로젝트 전체에 0개** | ❌ 미구현 → **P0** |
 | `robots.ts` / `sitemap.ts` / `manifest.ts` | 없음 | ❌ 미구현 → P1 |
 
-**미들웨어** — `src/middleware.ts`는 `next-intl` 로케일 처리만 수행한다. 인증 가드는 미들웨어가 아니라 페이지·액션 단위다. ✅ 확정 (v1의 "middleware로 protected route 가드"는 폐기)
+**프록시** — `src/proxy.ts`(Next 16 규약. 16 이전 이름은 `src/middleware.ts`)는 `next-intl` 로케일 처리만 수행한다. 인증 가드는 프록시가 아니라 페이지·액션 단위다. ✅ 확정 (v1의 "middleware로 protected route 가드"는 폐기)
 
 ---
 
