@@ -39,6 +39,12 @@ const cspReportOnly = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  turbopack: {
+    resolveAlias: {
+      "tw-animate-css": "./node_modules/tw-animate-css/dist/tw-animate.css",
+      "shadcn/tailwind.css": "./node_modules/shadcn/dist/tailwind.css",
+    },
+  },
   async headers() {
     return [
       {
