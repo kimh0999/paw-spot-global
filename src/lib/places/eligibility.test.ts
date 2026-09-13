@@ -119,8 +119,14 @@ describe("getVisitEligibility", () => {
 });
 
 describe("getPlaceConditionBreakdown", () => {
+  // `carrierMeans`는 이동장 문구가 쓸 수단이다. 의무가 없거나 근거가 없으면
+  // `unspecified`이고, 그때 문구는 무엇이 되는지 추정하지 않는다(D-21).
   it("미확인과 null은 어느 목록에도 넣지 않는다", () => {
-    expect(getPlaceConditionBreakdown(place())).toEqual({ allowances: [], conditions: [] });
+    expect(getPlaceConditionBreakdown(place())).toEqual({
+      allowances: [],
+      conditions: [],
+      carrierMeans: "unspecified",
+    });
     expect(
       getPlaceConditionBreakdown(
         place({
@@ -131,13 +137,14 @@ describe("getPlaceConditionBreakdown", () => {
           muzzle: null,
         }),
       ),
-    ).toEqual({ allowances: [], conditions: [] });
+    ).toEqual({ allowances: [], conditions: [], carrierMeans: "unspecified" });
   });
 
   it("확실히 허용된 조건만 allowances에 담는다", () => {
     expect(getPlaceConditionBreakdown(fullyAllowedPlace())).toEqual({
       allowances: ["indoorAllowed", "noCarrier", "largeDogs", "noLeash", "noMuzzle"],
       conditions: [],
+      carrierMeans: "unspecified",
     });
   });
 
@@ -161,6 +168,8 @@ describe("getPlaceConditionBreakdown", () => {
         "leashRequired",
         "muzzleRequired",
       ],
+      // 요약 컬럼은 이동장·케이지·유모차를 한 값에 뭉쳐 담으므로 셋을 구분할 수 없다.
+      carrierMeans: "unspecified",
     });
   });
 

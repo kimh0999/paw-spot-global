@@ -1,3 +1,7 @@
+import {
+  resolveCarrierRequirement,
+  type CarrierRequirementKey,
+} from "./carrier-requirement";
 import { resolveDogAccess, type DogAccessKey } from "./dog-access";
 import { showsVaccinationRow } from "./display";
 import type { ConditionStatus, PlaceDetail } from "@/types/place";
@@ -15,8 +19,11 @@ export interface ConditionRow {
   status: ConditionStatus;
 }
 
-/** `places.detail.beforeYouGo` 네임스페이스의 메시지 조회 함수. */
-type Translate = (key: string) => string;
+/**
+ * `places.detail.beforeYouGo` 네임스페이스의 메시지 조회 함수.
+ * 이동장 문구가 수단(`means`)에 따라 갈리므로 값을 함께 받는다.
+ */
+type Translate = (key: string, values?: Record<string, string>) => string;
 
 /**
  * 조건 행을 표시 순서대로 만든다.
@@ -50,17 +57,28 @@ export function buildConditionRows(
   };
   rows.push({ key: "indoor", label: t("indoor.label"), ...accessMap[access.key] });
 
-  const carrierMap: Record<string, { value: string; status: ConditionStatus }> = {
-    not_required: { value: t("carrier.not_required"), status: "good" },
-    required_indoor: { value: t("carrier.required_indoor"), status: "warning" },
-    required_always: { value: t("carrier.required_always"), status: "bad" },
+  // 이동장 행도 요약 컬럼만으로 판단하지 않는다. `handling`의 `IN_CARRIER` 의무까지
+  // 함께 읽어야 목록 필터와 이 행이 같은 말을 한다(D-21).
+  const carrier = resolveCarrierRequirement(
+    condition.carrierStrollerPolicy,
+    condition.policyDetails,
+  );
+  const carrierMap: Record<
+    CarrierRequirementKey,
+    { value: string; status: ConditionStatus }
+  > = {
+    notRequired: { value: t("carrier.not_required"), status: "good" },
+    requiredIndoor: {
+      value: t("carrier.required_indoor", { means: carrier.means }),
+      status: "warning",
+    },
+    requiredAlways: {
+      value: t("carrier.required_always", { means: carrier.means }),
+      status: "bad",
+    },
     unknown: { value: t("carrier.unknown"), status: "neutral" },
   };
-  rows.push({
-    key: "carrier",
-    label: t("carrier.label"),
-    ...(carrierMap[condition.carrierStrollerPolicy ?? ""] ?? unknownRow),
-  });
+  rows.push({ key: "carrier", label: t("carrier.label"), ...carrierMap[carrier.key] });
 
   /**
    * 최대 허용 크기는 **상한을 알려주는 사실**이지 그 자체로 좋고 나쁜 조건이 아니다.

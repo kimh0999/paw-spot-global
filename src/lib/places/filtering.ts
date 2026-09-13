@@ -1,3 +1,4 @@
+import { resolveCarrierRequirement } from "./carrier-requirement";
 import { resolveDogAccess } from "./dog-access";
 import type {
   CategoryFilterValue,
@@ -84,10 +85,25 @@ export function filterPlaces({
       if (place.indoor !== INDOOR_FILTER_MATCH[filters.indoor]) return false;
     }
 
-    // UNKNOWN and null are excluded from both non-"all" carrier filters.
-    if (filters.carrier === "not-required") {
-      if (place.carrierStrollerPolicy !== "not_required") return false;
+    /**
+     * `필수 아님`은 **이동장·유모차의 사용 의무만** 부정한다. 반입이 허용된다거나
+     * 안기·목줄 같은 다른 조건이 없다는 뜻이 아니다 — 그 사실은 요약 컬럼이 담지 않는다.
+     *
+     * 판정은 `resolveCarrierRequirement`에 맡긴다. 요약 컬럼만 보면 `handling`이 말하는
+     * 이동장 의무를 놓쳐, 같은 장소를 두고 상세는 `실내에서 이동장 필요`라고 하는데
+     * 목록만 `필수 아님`으로 통과시킨다(결정 D-21). 필터에 따로 예외를 두지 않고
+     * 화면들이 쓰는 해석을 그대로 쓴다 — 실내 필터가 `resolveDogAccess`를 쓰는 것과 같다.
+     *
+     * `UNKNOWN`과 값 없음은 제외한다(D-03). 확인되지 않은 조건을 충족한 것처럼 보이게 하지 않는다.
+     */
+    if (
+      filters.carrier === "not-required" &&
+      resolveCarrierRequirement(place.carrierStrollerPolicy, place.policyDetails).key !==
+        "notRequired"
+    ) {
+      return false;
     }
+    // `지참 가능`은 확정값 3개를 모두 통과시킨다 — 사실상 미확인만 제외한다.
     if (filters.carrier === "can-bring") {
       if (
         place.carrierStrollerPolicy !== "not_required" &&
@@ -145,9 +161,14 @@ export function sortPlaces(
         return aScore - bScore;
       }
       case "no-carrier-first": {
-        const aScore = a.carrierStrollerPolicy === "not_required" ? 0 : 1;
-        const bScore = b.carrierStrollerPolicy === "not_required" ? 0 : 1;
-        return aScore - bScore;
+        // 순서도 필터와 같은 해석을 쓴다. 요약 컬럼만 보면 `이동장 불필요 우선`이
+        // 세부 정책상 이동장이 필요한 장소를 앞에 세운다(D-21).
+        const score = (place: PlaceListItem) =>
+          resolveCarrierRequirement(place.carrierStrollerPolicy, place.policyDetails).key ===
+          "notRequired"
+            ? 0
+            : 1;
+        return score(a) - score(b);
       }
       default:
         return 0;

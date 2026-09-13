@@ -5,6 +5,10 @@ import { History } from "lucide-react";
 
 import ConditionStatusIcon from "@/components/places/ConditionStatusIcon";
 import {
+  resolveCarrierRequirement,
+  type CarrierRequirementKey,
+} from "@/lib/places/carrier-requirement";
+import {
   displayableAreaRecords,
   resolveDogAccess,
   type DogAccessKey,
@@ -95,19 +99,22 @@ export default function PlaceConditionSummary({
   groups.push(accessGroup);
 
   // --- 이동장·유모차 ---
-  switch (place.carrierStrollerPolicy) {
-    case "not_required":
-      groups.push([{ label: t("carrierStroller.notRequired"), status: "good" }]);
-      break;
-    case "required_indoor":
-      groups.push([{ label: t("carrierStroller.requiredIndoor"), status: "warning" }]);
-      break;
-    case "required_always":
-      groups.push([{ label: t("carrierStroller.requiredAlways"), status: "bad" }]);
-      break;
-    default:
-      groups.push([{ label: t("carrierStroller.unknown"), status: "neutral" }]);
-  }
+  // 요약 컬럼만 보면 `handling`이 말하는 이동장 의무를 놓친다. 상세·목록과 같은
+  // 해석을 써서 한 장소가 화면마다 다르게 읽히지 않게 한다(D-21).
+  const carrier = resolveCarrierRequirement(place.carrierStrollerPolicy, place.policyDetails);
+  const carrierLine: Record<CarrierRequirementKey, CoreCondition> = {
+    notRequired: { label: t("carrierStroller.notRequired"), status: "good" },
+    requiredIndoor: {
+      label: t("carrierStroller.requiredIndoor", { means: carrier.means }),
+      status: "warning",
+    },
+    requiredAlways: {
+      label: t("carrierStroller.requiredAlways", { means: carrier.means }),
+      status: "bad",
+    },
+    unknown: { label: t("carrierStroller.unknown"), status: "neutral" },
+  };
+  groups.push([carrierLine[carrier.key]]);
 
   // --- 허용 크기 ---
   // 미확인일 때도 항목을 비우지 않는다. 비우면 목줄이 세 번째 자리로 올라와 표시 순서가 흔들린다.

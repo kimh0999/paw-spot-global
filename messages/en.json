@@ -168,8 +168,8 @@
       },
       "carrierStroller": {
         "notRequired": "Carrier or stroller not required",
-        "requiredIndoor": "Carrier, stroller, or holding required indoors",
-        "requiredAlways": "Carrier or stroller required",
+        "requiredIndoor": "{means, select, carrier {A carrier is required indoors} crate {A crate is required indoors} stroller {A stroller is required indoors} other {Carrier/stroller required indoors — check which is accepted}}",
+        "requiredAlways": "{means, select, carrier {A carrier is always required} crate {A crate is always required} stroller {A stroller is always required} other {Carrier/stroller required — check which is accepted}}",
         "unknown": "Carrier or stroller requirement unconfirmed"
       },
       "maxDogSize": {
@@ -246,8 +246,8 @@
         "indoorPartialArea": "Partial indoor area",
         "indoorBlockedOutdoorUnconfirmed": "No indoor access · Outdoor access unconfirmed",
         "dogAccessConflict": "Conflicting dog access information",
-        "carrierIndoor": "Carrier, stroller, or holding required indoors",
-        "carrierAlways": "Carrier or stroller required",
+        "carrierIndoor": "{means, select, carrier {A carrier is required indoors} crate {A crate is required indoors} stroller {A stroller is required indoors} other {Carrier/stroller required indoors — check which is accepted}}",
+        "carrierAlways": "{means, select, carrier {A carrier is always required} crate {A crate is always required} stroller {A stroller is always required} other {Carrier/stroller required — check which is accepted}}",
         "sizeSmallOnly": "Maximum dog size: Small",
         "sizeMediumOnly": "Maximum dog size: Medium",
         "leashRequired": "Leash required",
@@ -359,8 +359,8 @@
         "carrier": {
           "label": "Carrier / Stroller",
           "not_required": "Carrier or stroller not required",
-          "required_indoor": "Carrier, stroller, or holding required indoors",
-          "required_always": "Carrier or stroller required",
+          "required_indoor": "{means, select, carrier {A carrier is required indoors} crate {A crate is required indoors} stroller {A stroller is required indoors} other {Carrier/stroller required indoors — check which is accepted}}",
+          "required_always": "{means, select, carrier {A carrier is always required} crate {A crate is always required} stroller {A stroller is always required} other {Carrier/stroller required — check which is accepted}}",
           "unknown": "Carrier or stroller requirement unconfirmed"
         },
         "dogSize": {
@@ -712,7 +712,7 @@
       "carrier": {
         "label": "Carrier / Stroller",
         "NOT_REQUIRED": "Not required",
-        "REQUIRED_INDOOR": "Hold/stroller indoors",
+        "REQUIRED_INDOOR": "Required indoors",
         "REQUIRED_ALWAYS": "Required",
         "UNKNOWN": "Check required"
       },

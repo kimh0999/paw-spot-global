@@ -154,7 +154,7 @@ export default function PlacePreviewCard({
     place.distanceMeters != null ? formatDistance(place.distanceMeters, locale) : null;
 
   const status = getVisitStatus(place, dogSize);
-  const { allowances, conditions } = getPlaceConditionBreakdown(place);
+  const { allowances, conditions, carrierMeans } = getPlaceConditionBreakdown(place);
 
   // 구역 단위로 확인된 출입 기록. 구역과 적용 대상을 그대로 보여준다 —
   // 테라스를 전체 야외로, 특정 크기를 전체 반려견으로 넓히지 않는다.
@@ -283,7 +283,7 @@ export default function PlacePreviewCard({
                 <ul className="mt-2 space-y-1.5">
                   {conditions.map((key) => (
                     <ConditionLine key={key} icon={CircleAlert} tone="warning">
-                      {t(`preview.conditions.${key}`)}
+                      {t(`preview.conditions.${key}`, { means: carrierMeans })}
                     </ConditionLine>
                   ))}
                   {areaLines.map((line) => (

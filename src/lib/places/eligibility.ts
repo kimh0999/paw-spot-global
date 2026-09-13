@@ -1,4 +1,8 @@
 import type { DogSizeFilter, PlaceListItem } from "@/types/place";
+import {
+  resolveCarrierRequirement,
+  type CarrierMeansKey,
+} from "./carrier-requirement";
 import { resolveDogAccess } from "./dog-access";
 
 export type VisitEligibilityStatus = "allowed" | "blocked" | "unknown";
@@ -22,8 +26,13 @@ const SIZE_RANK: Record<"small" | "medium" | "large", number> = {
 };
 
 // 실내 동반·이동장·허용 크기는 방문 가능 여부를 가르는 핵심 조건이다 (DESIGN.md §1).
+// 이동장은 요약 컬럼이 아니라 세부 정책까지 읽은 해석으로 본다 — 컬럼만 보면 `handling`이
+// 말하는 의무를 놓쳐 미확인을 확인된 것처럼 다루게 된다(D-21).
 function hasUnconfirmedCoreCondition(place: PlaceListItem): boolean {
-  const core = [place.indoor, place.carrierStrollerPolicy, place.maxDogSize];
+  const carrier = resolveCarrierRequirement(place.carrierStrollerPolicy, place.policyDetails);
+  if (carrier.key === "unknown") return true;
+
+  const core = [place.indoor, place.maxDogSize];
   return core.some((value) => value == null || value === "unknown");
 }
 
@@ -113,6 +122,11 @@ export interface PlaceConditionBreakdown {
   allowances: AllowanceKey[];
   /** 지켜야 하거나 주의해야 하는 조건만 담는다. */
   conditions: VisitConditionKey[];
+  /**
+   * 이동장 문구가 쓸 수단. 확인된 근거가 없으면 `unspecified`이고, 그때 문구는
+   * 어떤 수단이 되는지 추정하지 않는다(D-21).
+   */
+  carrierMeans: CarrierMeansKey;
 }
 
 /**
@@ -134,9 +148,10 @@ export function getPlaceConditionBreakdown(place: PlaceListItem): PlaceCondition
     conditions.push("indoorBlockedOutdoorUnconfirmed");
   } else if (access.key === "conflict") conditions.push("dogAccessConflict");
 
-  if (place.carrierStrollerPolicy === "not_required") allowances.push("noCarrier");
-  else if (place.carrierStrollerPolicy === "required_indoor") conditions.push("carrierIndoor");
-  else if (place.carrierStrollerPolicy === "required_always") conditions.push("carrierAlways");
+  const carrier = resolveCarrierRequirement(place.carrierStrollerPolicy, place.policyDetails);
+  if (carrier.key === "notRequired") allowances.push("noCarrier");
+  else if (carrier.key === "requiredIndoor") conditions.push("carrierIndoor");
+  else if (carrier.key === "requiredAlways") conditions.push("carrierAlways");
 
   if (place.maxDogSize === "large") allowances.push("largeDogs");
   else if (place.maxDogSize === "medium") conditions.push("sizeMediumOnly");
@@ -150,7 +165,7 @@ export function getPlaceConditionBreakdown(place: PlaceListItem): PlaceCondition
   else if (place.muzzle === "required") conditions.push("muzzleRequired");
   else if (place.muzzle === "conditional") conditions.push("muzzleConditional");
 
-  return { allowances, conditions };
+  return { allowances, conditions, carrierMeans: carrier.means };
 }
 
 

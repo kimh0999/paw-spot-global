@@ -7,6 +7,7 @@ import {
   parseVerifiedAt,
   sortPlaces,
 } from "@/lib/places/filtering";
+import { EMPTY_POLICY_DETAILS, type PolicyDetails } from "@/lib/places/policy-details";
 import type { PlaceFilters, PlaceListItem } from "@/types/place";
 
 /**
@@ -176,6 +177,106 @@ describe("filterPlaces — 이동장 필터", () => {
       "notRequired",
       "indoorOnly",
       "always",
+    ]);
+  });
+});
+
+/**
+ * 세부 정책(`policyDetails.handling`)이 말하는 이동장 의무까지 읽는다 (결정 **D-21**).
+ *
+ * 요약 컬럼만 보면 "실내에서는 이동장에 넣어 주세요"라고 적힌 장소가 `필수 아님`으로
+ * 통과했다. 판정은 화면들이 쓰는 `resolveCarrierRequirement`에 맡기므로 필터에 별도
+ * 예외가 없고, 카드·상세와 결과가 갈리지 않는다. 경계 규칙 전체는
+ * `carrier-requirement.test.ts`가 고정하고, 여기서는 **필터에 실제로 닿는지**만 본다.
+ */
+describe("filterPlaces — 이동장 필터와 세부 정책 (D-21)", () => {
+  function handling(
+    mode: PolicyDetails["handling"][number]["mode"],
+    scope: PolicyDetails["handling"][number]["scope"],
+    rules: PolicyDetails["handling"][number]["rules"],
+  ): PolicyDetails {
+    return { ...EMPTY_POLICY_DETAILS, handling: [{ mode, scope, rules }] };
+  }
+
+  const carrierIndoor = handling("UNKNOWN", "INDOOR", [
+    { rule: "IN_CARRIER", status: "REQUIRED" },
+  ]);
+  const heldOnly = handling("UNKNOWN", "INDOOR", [
+    { rule: "HELD_BY_OWNER", status: "REQUIRED" },
+  ]);
+  const eitherHeldOrCarrier = handling("ANY_OF", "INDOOR", [
+    { rule: "IN_CARRIER", status: "REQUIRED" },
+    { rule: "HELD_BY_OWNER", status: "REQUIRED" },
+  ]);
+
+  it("실내 이동장 필수는 요약이 필수 아님이어도 제외한다", () => {
+    const places = [
+      place({ id: "plain", carrierStrollerPolicy: "not_required" }),
+      place({
+        id: "carrierIndoor",
+        carrierStrollerPolicy: "not_required",
+        policyDetails: carrierIndoor,
+      }),
+    ];
+    expect(run(places, { carrier: "not-required" })).toEqual(["plain"]);
+  });
+
+  // 사용자 확정: 안기 의무는 이동장 사용 의무가 아니다.
+  it("안기만 필수인 곳은 남긴다", () => {
+    const places = [
+      place({ id: "held", carrierStrollerPolicy: "not_required", policyDetails: heldOnly }),
+    ];
+    expect(run(places, { carrier: "not-required" })).toEqual(["held"]);
+  });
+
+  it("이동장을 대신할 수단이 확인된 택일은 남긴다", () => {
+    const places = [
+      place({
+        id: "either",
+        carrierStrollerPolicy: "not_required",
+        policyDetails: eitherHeldOrCarrier,
+      }),
+    ];
+    expect(run(places, { carrier: "not-required" })).toEqual(["either"]);
+  });
+
+  it("세부 정책이 없는 기존 데이터는 규칙이 그대로다", () => {
+    const places = [
+      place({ id: "notRequired", carrierStrollerPolicy: "not_required", policyDetails: null }),
+      place({ id: "unknown", carrierStrollerPolicy: "unknown", policyDetails: null }),
+      place({ id: "indoorOnly", carrierStrollerPolicy: "required_indoor", policyDetails: null }),
+    ];
+    expect(run(places, { carrier: "not-required" })).toEqual(["notRequired"]);
+  });
+
+  it("다른 필터로 번지지 않는다", () => {
+    const places = [
+      place({
+        id: "carrierIndoor",
+        indoor: "allowed",
+        maxDogSize: "large",
+        carrierStrollerPolicy: "not_required",
+        policyDetails: carrierIndoor,
+      }),
+    ];
+    // 실내·크기 필터는 이동장 의무와 무관하므로 이 장소를 그대로 통과시킨다.
+    expect(run(places, { indoor: "indoor" })).toEqual(["carrierIndoor"]);
+    expect(run(places, { dogSize: "large" })).toEqual(["carrierIndoor"]);
+    expect(run(places)).toEqual(["carrierIndoor"]);
+  });
+
+  it("이동장 불필요 우선 정렬도 같은 해석을 쓴다", () => {
+    const places = [
+      place({
+        id: "carrierIndoor",
+        carrierStrollerPolicy: "not_required",
+        policyDetails: carrierIndoor,
+      }),
+      place({ id: "plain", carrierStrollerPolicy: "not_required" }),
+    ];
+    expect(sortPlaces(places, "no-carrier-first").map((p) => p.id)).toEqual([
+      "plain",
+      "carrierIndoor",
     ]);
   });
 });
