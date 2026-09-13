@@ -24,6 +24,7 @@ import SortDropdown from "@/components/places/SortDropdown";
 import { usePlaceListState } from "@/components/places/hooks/usePlaceListState";
 import { useUserLocationQuery } from "@/components/places/hooks/useUserLocationQuery";
 import { DOG_MATCH_FILTER_ENABLED } from "@/lib/dogs/constants";
+import { filterPlaces } from "@/lib/places/filtering";
 import {
   matchDogsToPlace,
   type DogMatchResult,
@@ -36,7 +37,7 @@ import {
   resolveListEmptyReason,
 } from "@/lib/places/service-area";
 import { cn } from "@/lib/utils";
-import type { CategoryFilterValue, PlaceListItem } from "@/types/place";
+import type { CategoryFilterValue, PlaceFilters, PlaceListItem } from "@/types/place";
 
 interface PlacesClientProps {
   initialPlaces: PlaceListItem[];
@@ -101,12 +102,20 @@ export default function PlacesClient({
     filteredAndSorted,
     selectedPlace,
     activeFilterCount,
-    resetFilters,
     resetConditions,
     handlePlaceSelect,
     clearSelectedPlace,
   } = usePlaceListState({ initialPlaces, referenceDate });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  /**
+   * 드로어를 열 때마다 바뀌는 값. `FilterModal`의 `key`로 써서 다시 마운트시키면
+   * 임시 선택이 현재 적용값에서 새로 시작한다 (`useEffect`로 prop을 복사하지 않는다).
+   */
+  const [filterSession, setFilterSession] = useState(0);
+  const openFilters = useCallback(() => {
+    setFilterSession((session) => session + 1);
+    setIsFilterOpen(true);
+  }, []);
   const [isSheetListOpen, setIsSheetListOpen] = useState(false);
   const {
     isLocating,
@@ -226,6 +235,54 @@ export default function PlacesClient({
           (place) => dogMatchByPlaceId.get(place.id)?.status !== "MISMATCH",
         )
       : filteredAndSorted;
+
+  /**
+   * 임시 선택으로 셌을 때 남는 장소 수.
+   *
+   * 목록이 쓰는 것과 **같은 `filterPlaces`**를 같은 입력으로 부른다. 드로어 버튼의 숫자와
+   * 적용 후 결과 개수가 어긋나지 않게 하려는 것이다. 반려견 매칭 층도 `visiblePlaces`와
+   * 같은 조건으로 얹는다.
+   */
+  const countFor = useCallback(
+    (next: PlaceFilters) => {
+      const filtered = filterPlaces({
+        places: initialPlaces,
+        selectedCategory,
+        searchQuery,
+        filters: next,
+        referenceDate,
+      });
+      if (!DOG_MATCH_FILTER_ENABLED || selectedDogs.length === 0) return filtered.length;
+      return filtered.filter(
+        (place) => dogMatchByPlaceId.get(place.id)?.status !== "MISMATCH",
+      ).length;
+    },
+    [
+      initialPlaces,
+      selectedCategory,
+      searchQuery,
+      referenceDate,
+      selectedDogs.length,
+      dogMatchByPlaceId,
+    ],
+  );
+
+  /**
+   * 드로어의 선택을 한 번에 적용하고 닫는다.
+   *
+   * **바뀐 것이 없으면 주소를 건드리지 않는다.** 그래야 히스토리에 빈 항목이 쌓이지 않고,
+   * 적용 뒤 뒤로가기 한 번이 곧바로 변경 전 필터로 돌아간다.
+   */
+  const applyFilters = useCallback(
+    (next: PlaceFilters) => {
+      const changed = (Object.keys(next) as (keyof PlaceFilters)[]).some(
+        (key) => next[key] !== filters[key],
+      );
+      if (changed) setFilters(next);
+      setIsFilterOpen(false);
+    },
+    [filters, setFilters],
+  );
 
   const favoriteIdSet = useMemo(
     () => new Set(favoritePlaceIds ?? []),
@@ -470,7 +527,7 @@ export default function PlacesClient({
 
               <button
                 type="button"
-                onClick={() => setIsFilterOpen(true)}
+                onClick={openFilters}
                 className={cn(
                   controlChipClass,
                   activeFilterCount > 0
@@ -667,12 +724,12 @@ export default function PlacesClient({
       </main>
 
       <FilterModal
+        key={filterSession}
         isOpen={isFilterOpen}
         filters={filters}
         onClose={() => setIsFilterOpen(false)}
-        onChange={setFilters}
-        onReset={resetFilters}
-        onApply={() => setIsFilterOpen(false)}
+        onApply={applyFilters}
+        countFor={countFor}
       />
     </div>
   );

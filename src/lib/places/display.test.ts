@@ -4,6 +4,7 @@ import {
   RECHECK_AFTER_DAYS,
   daysSinceVerified,
   needsRecheck,
+  parseVerifiedAt,
   showsVaccinationRow,
 } from "@/lib/places/display";
 
@@ -41,6 +42,23 @@ function verifiedDaysAgo(days: number): string {
   const day = String(d.getDate()).padStart(2, "0");
   return `${d.getFullYear()}.${m}.${day}`;
 }
+
+/**
+ * `latestVerifiedAt`은 타임스탬프가 아니라 날짜 전용 값(`YYYY.MM.DD`)이다. 여기서 같은
+ * 로컬 타임존의 자정으로 되돌리므로, 경과일은 `확인한 날의 자정`부터 센다.
+ *
+ * 재확인 배지와 `최근 확인된 정보` 필터가 이 함수 하나를 공유한다(D-02·D-21).
+ */
+describe("parseVerifiedAt", () => {
+  it("YYYY.MM.DD를 로컬 날짜의 자정으로 옮긴다", () => {
+    const parsed = parseVerifiedAt("2026.08.13");
+    expect(parsed.getFullYear()).toBe(2026);
+    expect(parsed.getMonth()).toBe(7);
+    expect(parsed.getDate()).toBe(13);
+    expect(parsed.getHours()).toBe(0);
+    expect(parsed.getMinutes()).toBe(0);
+  });
+});
 
 describe("재확인 필요 판정 (90일)", () => {
   it("임계는 90일 하나뿐이다", () => {

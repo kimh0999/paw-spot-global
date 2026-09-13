@@ -1,4 +1,20 @@
-import { parseVerifiedAt } from "./filtering";
+/**
+ * 확인일 문자열을 로컬 날짜로 옮긴다.
+ *
+ * **`latestVerifiedAt`은 타임스탬프가 아니라 날짜 전용 값이다.** 원본
+ * `Verification.verifiedAt`(timestamptz)을 `queries.ts`의 `formatVerifiedAt`이 서버
+ * 로컬 타임존 기준으로 `YYYY.MM.DD` 문자열로 굳혀 내려보낸다. 여기서는 그 문자열을
+ * 같은 로컬 타임존의 **자정(00:00)** 으로 되돌린다.
+ *
+ * 그래서 경과일 계산은 `확인한 날의 자정`과 `지금 이 순간`의 차이이며, 재확인 배지와
+ * `최근 확인된 정보` 필터가 **이 함수 하나를 공유**한다(D-21·D-02).
+ * 여기 있는 이유는 `filtering.ts`가 `needsRecheck`를 부르기 때문이다 — 반대 방향으로
+ * 두면 두 모듈이 서로를 import한다.
+ */
+export function parseVerifiedAt(verifiedAt: string): Date {
+  const [year, month, day] = verifiedAt.split(".").map(Number);
+  return new Date(year, month - 1, day);
+}
 
 /**
  * 재확인이 필요해지는 경계 (결정 D-02).

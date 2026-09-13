@@ -87,7 +87,7 @@
     "filters": {
       "title": "플레이스 필터",
       "reset": "초기화",
-      "apply": "결과 보기",
+      "applyCount": "장소 {count}곳 보기",
       "category": {
         "all": "전체",
         "cafe": "카페",
@@ -95,29 +95,28 @@
         "travel": "여행지"
       },
       "indoor": {
-        "title": "실내 동반 여부",
+        "title": "이용 가능 구역",
         "all": "전체",
         "indoorAllowed": "실내 가능",
         "outdoorOnly": "실외/테라스만 가능",
         "partialArea": "일부 구역만 가능"
       },
       "carrier": {
-        "title": "이동장/유모차",
+        "title": "이동장·유모차",
         "all": "전체",
-        "notRequired": "이동장 불필요",
-        "canBring": "이동장/유모차 준비 가능"
+        "notRequired": "필수 아님"
       },
       "dogSize": {
-        "title": "반려견 크기",
+        "title": "내 반려견 크기",
+        "hint": "크기 제한이 미확인인 장소도 포함됩니다",
         "all": "전체",
         "small": "소형견",
         "medium": "중형견",
         "large": "대형견"
       },
       "reliability": {
-        "title": "정보 신뢰도",
-        "30days": "최근 30일 확인",
-        "90days": "최근 90일 확인"
+        "title": "최근 확인된 정보",
+        "recent90": "최근 90일 안에 확인된 곳"
       }
     },
     "sort": {

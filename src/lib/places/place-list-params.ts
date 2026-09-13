@@ -37,9 +37,9 @@ const PARAM = {
 
 const CATEGORY_VALUES = ["all", "cafe", "restaurant", "travel"] as const;
 const INDOOR_VALUES = ["all", "indoor", "outdoor", "partial-area"] as const;
-const CARRIER_VALUES = ["all", "not-required", "can-bring"] as const;
+const CARRIER_VALUES = ["all", "not-required"] as const;
 const DOG_SIZE_VALUES = ["all", "small", "medium", "large"] as const;
-const RECENT_VALUES = ["all", "30days", "90days"] as const;
+const RECENT_VALUES = ["all", "90days"] as const;
 const SORT_VALUES = [
   "distance",
   "recent",

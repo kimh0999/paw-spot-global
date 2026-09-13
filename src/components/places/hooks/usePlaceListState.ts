@@ -104,18 +104,10 @@ export function usePlaceListState({
     writePlaceListParams({ sortOption: next }, "push");
   }, []);
 
-  const resetFilters = useCallback(() => {
-    // 필터 네 개만 주소에서 걷어낸다. 카테고리·검색어·정렬·위치는 그대로 둔다.
-    writePlaceListParams(
-      { filters: DEFAULT_PLACE_LIST_PARAMS.filters },
-      "push",
-    );
-  }, []);
-
   /**
    * 빈 화면에서 결과를 되살리는 버튼용 (D-11).
    *
-   * `resetFilters`와 달리 카테고리·검색어까지 되돌린다. 검색어를 남긴 채 필터만 풀면
+   * 필터만 푸는 것과 달리 카테고리·검색어까지 되돌린다. 검색어를 남긴 채 필터만 풀면
    * 버튼을 눌러도 여전히 0건이라 사용자를 헛돌게 한다. 정렬과 위치는 결과 수를 바꾸지
    * 않으므로 건드리지 않는다. 주소는 한 번만 쓴다.
    */
@@ -192,7 +184,6 @@ export function usePlaceListState({
     filteredAndSorted,
     selectedPlace,
     activeFilterCount,
-    resetFilters,
     resetConditions,
     handlePlaceSelect,
     clearSelectedPlace,

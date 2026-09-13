@@ -1,4 +1,5 @@
 import { resolveCarrierRequirement } from "./carrier-requirement";
+import { needsRecheck } from "./display";
 import { resolveDogAccess } from "./dog-access";
 import type {
   CategoryFilterValue,
@@ -34,11 +35,6 @@ type FilterPlacesOptions = {
 type GetFilteredAndSortedPlacesOptions = FilterPlacesOptions & {
   sortOption: SortOption;
 };
-
-export function parseVerifiedAt(verifiedAt: string): Date {
-  const [year, month, day] = verifiedAt.split(".").map(Number);
-  return new Date(year, month - 1, day);
-}
 
 export function filterPlaces({
   places,
@@ -103,16 +99,6 @@ export function filterPlaces({
     ) {
       return false;
     }
-    // `지참 가능`은 확정값 3개를 모두 통과시킨다 — 사실상 미확인만 제외한다.
-    if (filters.carrier === "can-bring") {
-      if (
-        place.carrierStrollerPolicy !== "not_required" &&
-        place.carrierStrollerPolicy !== "required_indoor" &&
-        place.carrierStrollerPolicy !== "required_always"
-      ) {
-        return false;
-      }
-    }
 
     // 크기 필터만 예외로 미확인을 남긴다. 크기 미확인은 `EligibilityBanner`가
     // `Size limit unconfirmed`로 따로 단언하므로, 목록에서 지우면 정보를 감추는 셈이 된다(D-03).
@@ -126,13 +112,16 @@ export function filterPlaces({
       return false;
     }
 
-    if (filters.recent !== "all") {
-      const days = filters.recent === "30days" ? 30 : 90;
-      const cutoff = new Date(referenceDate);
-      cutoff.setDate(cutoff.getDate() - days);
-      if (!place.latestVerifiedAt || parseVerifiedAt(place.latestVerifiedAt) < cutoff) {
-        return false;
-      }
+    /**
+     * `최근 90일 안에 확인된 곳만` — 판정을 재확인 배지와 **같은 함수**에 맡긴다.
+     *
+     * 직접 경계를 계산하면 `referenceDate`의 시각 성분 때문에 배지와 어긋났다.
+     * `needsRecheck`는 `확인한 날의 자정`부터 지난 일수를 내림해 `>= 90`이면 참이므로
+     * **89일 포함 · 정확히 90일 제외 · 91일 제외**이고, 확인 이력이 없으면(`null`)
+     * 참이라 함께 제외된다. 즉 `재확인 필요` 배지가 붙은 장소는 언제나 빠진다(D-02).
+     */
+    if (filters.recent === "90days" && needsRecheck(place.latestVerifiedAt, referenceDate)) {
+      return false;
     }
 
     return true;

@@ -7,9 +7,9 @@ export type PlaceCategory = "cafe" | "restaurant" | "travel";
 export type CategoryFilterValue = "all" | PlaceCategory;
 
 export type IndoorFilter = "all" | "indoor" | "outdoor" | "partial-area";
-export type CarrierFilter = "all" | "not-required" | "can-bring";
+export type CarrierFilter = "all" | "not-required";
 export type DogSizeFilter = "all" | "small" | "medium" | "large";
-export type RecentFilter = "all" | "30days" | "90days";
+export type RecentFilter = "all" | "90days";
 export type SortOption = "distance" | "recent" | "indoor-first" | "no-carrier-first";
 
 export interface PlaceFilters {

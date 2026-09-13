@@ -22,7 +22,7 @@ describe("parsePlaceListParams", () => {
 
   it("정상 값을 그대로 읽는다", () => {
     expect(
-      parse("category=cafe&q=둔산&indoor=indoor&carrier=not-required&size=large&recent=30days&sort=distance"),
+      parse("category=cafe&q=둔산&indoor=indoor&carrier=not-required&size=large&recent=90days&sort=distance"),
     ).toEqual({
       category: "cafe",
       searchQuery: "둔산",
@@ -30,7 +30,7 @@ describe("parsePlaceListParams", () => {
         indoor: "indoor",
         carrier: "not-required",
         dogSize: "large",
-        recent: "30days",
+        recent: "90days",
       },
       sortOption: "distance",
     });
@@ -45,6 +45,16 @@ describe("parsePlaceListParams", () => {
   // D-12로 삭제된 옵션. 옛 링크를 열어도 화면이 깨지지 않고 필터만 풀린다.
   it("삭제된 exclude-unknown 링크는 실내 필터 없음으로 읽는다", () => {
     expect(parse("indoor=exclude-unknown").filters.indoor).toBe("all");
+  });
+
+  // 삭제된 `이동장·유모차 준비 가능`. 같은 규칙으로 필터만 풀린다.
+  it("삭제된 can-bring 링크는 이동장 필터 없음으로 읽는다", () => {
+    expect(parse("carrier=can-bring").filters.carrier).toBe("all");
+  });
+
+  // 삭제된 `최근 30일 확인`. 재확인 임계 90일 하나만 남겼다(D-02).
+  it("삭제된 30days 링크는 신선도 필터 없음으로 읽는다", () => {
+    expect(parse("recent=30days").filters.recent).toBe("all");
   });
 
   it("같은 파라미터가 여러 번이면 첫 값만 쓴다", () => {
@@ -92,7 +102,7 @@ describe("serializePlaceListParams", () => {
 
   it("필터 초기화는 네 개 필터만 지우고 나머지는 남긴다", () => {
     const result = serialize(
-      "category=cafe&q=둔산&sort=distance&indoor=indoor&carrier=can-bring&size=large&recent=30days&lat=36.3",
+      "category=cafe&q=둔산&sort=distance&indoor=indoor&carrier=not-required&size=large&recent=90days&lat=36.3",
       { filters: DEFAULT_PLACE_LIST_PARAMS.filters },
     );
     const params = new URLSearchParams(result);
@@ -104,6 +114,18 @@ describe("serializePlaceListParams", () => {
     expect(params.get("q")).toBe("둔산");
     expect(params.get("sort")).toBe("distance");
     expect(params.get("lat")).toBe("36.3");
+  });
+
+  it("삭제된 can-bring 링크는 다시 쓸 때 주소에서 사라지고 나머지는 남는다", () => {
+    const source = "carrier=can-bring&indoor=indoor&sort=distance&lat=36.3&lng=127.4&dogId=abc";
+    const result = serialize(source, { filters: parse(source).filters });
+    const params = new URLSearchParams(result);
+    expect(params.get("carrier")).toBeNull();
+    expect(params.get("indoor")).toBe("indoor");
+    expect(params.get("sort")).toBe("distance");
+    expect(params.get("lat")).toBe("36.3");
+    expect(params.get("lng")).toBe("127.4");
+    expect(params.get("dogId")).toBe("abc");
   });
 
   it("검색어는 앞뒤 공백을 떼고, 공백뿐이면 지운다", () => {
@@ -123,7 +145,7 @@ describe("serializePlaceListParams", () => {
       searchQuery: "카페",
       filters: {
         indoor: "partial-area",
-        carrier: "can-bring",
+        carrier: "not-required",
         dogSize: "medium",
         recent: "90days",
       },

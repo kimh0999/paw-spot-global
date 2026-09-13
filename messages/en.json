@@ -87,7 +87,7 @@
     "filters": {
       "title": "Filters",
       "reset": "Reset",
-      "apply": "Show results",
+      "applyCount": "{count, plural, one {Show # place} other {Show # places}}",
       "category": {
         "all": "All",
         "cafe": "Cafe",
@@ -95,29 +95,28 @@
         "travel": "Attractions"
       },
       "indoor": {
-        "title": "Dog access",
+        "title": "Where dogs can go",
         "all": "All",
         "indoorAllowed": "Indoor allowed",
         "outdoorOnly": "Outdoor / terrace only",
         "partialArea": "Partial area only"
       },
       "carrier": {
-        "title": "Carrier / stroller",
+        "title": "Carrier or stroller",
         "all": "All",
-        "notRequired": "No carrier needed",
-        "canBring": "I can bring a carrier/stroller"
+        "notRequired": "Not required"
       },
       "dogSize": {
         "title": "My dog's size",
+        "hint": "Places with an unconfirmed size limit are included",
         "all": "All sizes",
         "small": "Small",
         "medium": "Medium",
         "large": "Large"
       },
       "reliability": {
-        "title": "Info reliability",
-        "30days": "Verified in last 30 days",
-        "90days": "Verified in last 90 days"
+        "title": "Recently verified",
+        "recent90": "Verified in the last 90 days"
       }
     },
     "sort": {

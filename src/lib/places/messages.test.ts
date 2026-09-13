@@ -9,8 +9,8 @@ import ko from "../../../messages/ko.json";
  * 장소 화면 메시지 중 **분기를 가진 것**만 여기서 렌더해 고정한다.
  *
  * 키가 있는지만 보는 것으로는 부족한 자리들이다 — ICU `select`의 분기 이름이 코드의
- * 값(`CarrierMeansKey`)과 어긋나거나 `other`가 빠지면 **화면에서만 드러난다.** 세 표면
- * (카드 · 미리보기 · 상세)이 같은 문장을 각자의 키로 담고 있어 한 곳만 틀리기도 쉽다.
+ * 값과 어긋나거나 `other`가 빠지거나 복수형이 틀리면 **화면에서만 드러난다.** 실제로
+ * 적용 버튼은 영어에서 `Show 1 places`로 나가고 있었다.
  *
  * `createTranslator`는 화면이 쓰는 것과 **같은 next-intl 포맷터**라 여기서 통과하면
  * 런타임에서도 같은 결과가 나온다.
@@ -94,3 +94,20 @@ describe("이동장 조건 문구 — means 분기", () => {
   );
 });
 
+/**
+ * 필터 드로어의 적용 버튼은 결과 수를 문구에 담는다(`DESIGN.md` §6 `Filter Drawer`).
+ * 영어는 1곳일 때 단수여야 한다 — `Show 1 places`로 나가던 것을 ICU plural로 고쳤다.
+ */
+describe("필터 적용 버튼 문구 — 결과 수", () => {
+  it.each([0, 1, 2, 6])("ko · %i곳", (count) => {
+    const t = createTranslator({ locale: "ko", messages: ko, namespace: "places.filters" });
+    expect(t("applyCount", { count })).toBe(`장소 ${count}곳 보기`);
+  });
+
+  it("en · 1곳은 단수, 나머지는 복수", () => {
+    const t = createTranslator({ locale: "en", messages: en, namespace: "places.filters" });
+    expect(t("applyCount", { count: 1 })).toBe("Show 1 place");
+    expect(t("applyCount", { count: 0 })).toBe("Show 0 places");
+    expect(t("applyCount", { count: 6 })).toBe("Show 6 places");
+  });
+});

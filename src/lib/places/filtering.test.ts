@@ -4,7 +4,6 @@ import {
   filterPlaces,
   getActiveFilterCount,
   getFilteredAndSortedPlaces,
-  parseVerifiedAt,
   sortPlaces,
 } from "@/lib/places/filtering";
 import { EMPTY_POLICY_DETAILS, type PolicyDetails } from "@/lib/places/policy-details";
@@ -62,15 +61,6 @@ function run(places: PlaceListItem[], overrides: Partial<PlaceFilters> = {}, que
     referenceDate: REFERENCE_DATE,
   }).map((p) => p.id);
 }
-
-describe("parseVerifiedAt", () => {
-  it("YYYY.MM.DD를 로컬 날짜로 옮긴다", () => {
-    const parsed = parseVerifiedAt("2026.08.13");
-    expect(parsed.getFullYear()).toBe(2026);
-    expect(parsed.getMonth()).toBe(7);
-    expect(parsed.getDate()).toBe(13);
-  });
-});
 
 describe("filterPlaces — 카테고리와 검색", () => {
   const places = [
@@ -159,7 +149,14 @@ describe("filterPlaces — 실내 필터", () => {
   });
 });
 
-describe("filterPlaces — 이동장 필터", () => {
+/**
+ * 선택지는 `전체` / `필수 아님` 둘뿐이다. `지참 가능`(`can-bring`)은 확정값 3개를 모두
+ * 통과시켜 사실상 `미확인이 아닌 곳`을 뜻했으므로 없앴다.
+ *
+ * `필수 아님`은 **사용 의무가 없다**는 뜻이지 반입 허용이나 모든 구역 자유 이용이 아니다.
+ * 그래서 실내 한정 요구(`required_indoor`)도 통과시키지 않는다.
+ */
+describe("filterPlaces — 이동장·유모차 필터", () => {
   const places = [
     place({ id: "notRequired", carrierStrollerPolicy: "not_required" }),
     place({ id: "indoorOnly", carrierStrollerPolicy: "required_indoor" }),
@@ -168,16 +165,28 @@ describe("filterPlaces — 이동장 필터", () => {
     place({ id: "null", carrierStrollerPolicy: null }),
   ];
 
-  it("불필요 필터는 미확인과 null을 제외한다", () => {
-    expect(run(places, { carrier: "not-required" })).toEqual(["notRequired"]);
-  });
-
-  it("지참 가능 필터는 확인된 3개 값만 통과시킨다", () => {
-    expect(run(places, { carrier: "can-bring" })).toEqual([
+  it("전체는 미확인과 null도 남긴다", () => {
+    expect(run(places)).toEqual([
       "notRequired",
       "indoorOnly",
       "always",
+      "unknown",
+      "null",
     ]);
+  });
+
+  it("필수 아님 필터는 not_required만 통과시킨다", () => {
+    expect(run(places, { carrier: "not-required" })).toEqual(["notRequired"]);
+  });
+
+  it("실내 한정 요구는 필수 아님이 아니다", () => {
+    expect(run(places, { carrier: "not-required" })).not.toContain("indoorOnly");
+  });
+
+  it("미확인을 필수 아님으로 처리하지 않는다", () => {
+    const kept = run(places, { carrier: "not-required" });
+    expect(kept).not.toContain("unknown");
+    expect(kept).not.toContain("null");
   });
 });
 
@@ -315,29 +324,47 @@ describe("filterPlaces — 크기 필터", () => {
   });
 });
 
+/**
+ * **선택지는 `전체` / `최근 90일 안에 확인된 곳` 둘뿐이다.** 30일 선택지는 없앴다 —
+ * 재확인 임계가 90일 하나(D-02)인데 30일 선택지는 그 경계와 무관한 숫자를 하나 더
+ * 보여 줘, `재확인 필요` 배지가 없는 장소도 걸러 냈다.
+ *
+ * 판정은 배지와 **같은 `needsRecheck`**가 한다. 그래서 `재확인 필요` 배지가 붙은
+ * 장소는 언제나 빠지고, 확인 이력이 없는 장소(`null`)도 함께 빠진다.
+ */
 describe("filterPlaces — 신선도 필터", () => {
   const places = [
     place({ id: "fresh", latestVerifiedAt: "2026.08.20" }),
-    place({ id: "cutoff30", latestVerifiedAt: "2026.08.02" }),
+    place({ id: "day30", latestVerifiedAt: "2026.08.02" }),
     place({ id: "old", latestVerifiedAt: "2026.08.01" }),
     place({ id: "veryOld", latestVerifiedAt: "2026.01.01" }),
     place({ id: "never", latestVerifiedAt: null }),
   ];
 
   it("전체는 확인 이력이 없는 장소도 남긴다", () => {
-    expect(run(places)).toEqual(["fresh", "cutoff30", "old", "veryOld", "never"]);
+    expect(run(places)).toEqual(["fresh", "day30", "old", "veryOld", "never"]);
   });
 
-  it("30일 필터는 기준일 30일 전까지 포함한다", () => {
-    expect(run(places, { recent: "30days" })).toEqual(["fresh", "cutoff30"]);
-  });
-
-  it("90일 필터는 더 넓게 포함한다", () => {
-    expect(run(places, { recent: "90days" })).toEqual(["fresh", "cutoff30", "old"]);
+  it("90일 필터는 90일이 지난 장소만 걸러 낸다", () => {
+    expect(run(places, { recent: "90days" })).toEqual(["fresh", "day30", "old"]);
   });
 
   it("확인 이력이 없으면 신선도 필터에서 제외된다", () => {
     expect(run(places, { recent: "90days" })).not.toContain("never");
+  });
+
+  /**
+   * 경계는 재확인 배지와 **같은 함수**가 정하므로 같은 자리에 선다 —
+   * 89일 포함 · 정확히 90일 제외 · 91일 제외 (`display.test.ts`의 D-02 경계와 같다).
+   * 기준일은 `REFERENCE_DATE`(2026.09.01)다.
+   */
+  it("90일 경계는 재확인 배지와 같은 자리에 선다", () => {
+    const boundary = [
+      place({ id: "day89", latestVerifiedAt: "2026.06.04" }),
+      place({ id: "day90", latestVerifiedAt: "2026.06.03" }),
+      place({ id: "day91", latestVerifiedAt: "2026.06.02" }),
+    ];
+    expect(run(boundary, { recent: "90days" })).toEqual(["day89"]);
   });
 });
 
@@ -372,7 +399,7 @@ describe("filterPlaces — 필터 조합", () => {
         indoor: "indoor",
         carrier: "not-required",
         dogSize: "large",
-        recent: "30days",
+        recent: "90days",
       }),
     ).toEqual(["match"]);
   });
@@ -520,7 +547,7 @@ describe("getActiveFilterCount", () => {
         indoor: "indoor",
         carrier: "not-required",
         dogSize: "large",
-        recent: "30days",
+        recent: "90days",
       }),
     ).toBe(4);
   });
