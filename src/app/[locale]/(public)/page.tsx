@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
 import Header from "@/components/Header";
@@ -7,6 +8,31 @@ import InfoSection from "@/components/home/InfoSection";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { getFavoritePlaceIds } from "@/lib/favorites/queries";
 import { getCategoryPlaces } from "@/lib/places/queries";
+import { isSupportedLocale } from "@/lib/i18n/locale";
+import { publicPageMetadata } from "@/lib/seo/page-metadata";
+
+/**
+ * 이 페이지의 title·description·canonical·hreflang.
+ *
+ * locale마다 다시 만든다 — 한국어 문구가 영어 페이지로 넘어가지 않게 한다.
+ */
+export async function generateMetadata({
+  params: paramsPromise,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await paramsPromise;
+  if (!isSupportedLocale(locale)) return {};
+  const t = await getTranslations({ locale, namespace: "seo" });
+
+  return publicPageMetadata({
+    locale,
+    path: "/",
+    title: t("home.title"),
+    description: t("home.description"),
+    siteName: t("siteName"),
+  });
+}
 
 export default async function Home() {
   const t = await getTranslations("home");

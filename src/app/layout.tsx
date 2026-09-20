@@ -3,6 +3,7 @@ import { Inter, Noto_Sans_KR } from "next/font/google";
 import { getLocale } from "next-intl/server";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { siteOrigin } from "@/lib/seo/site";
 import { Toaster } from "@/components/ui/sonner";
 
 // 라틴은 Inter, 한글은 Noto Sans KR이 맡는다. 한 벌만 쓰면 한쪽 언어가 시스템 기본
@@ -20,10 +21,15 @@ const notoSansKr = Noto_Sans_KR({
   display: "swap",
 });
 
+/**
+ * 루트는 **locale 중립인 것만** 둔다.
+ *
+ * 이전에는 여기에 한국어 제목·설명이 박혀 있어 `/en` 페이지까지 그대로 물려받았다.
+ * locale별 문구는 `[locale]/layout.tsx`가 `generateMetadata`로 만든다.
+ */
 export const metadata: Metadata = {
-  title: "Paw Spot Global — 반려견 동반 장소 안내",
-  description:
-    "반려견과 갈 수 있는 장소를 지도에서 쉽게 확인하세요. 카페, 음식점, 여행지 정보를 방문 전에 확인합니다.",
+  metadataBase: new URL(siteOrigin()),
+  title: "Paw Spot Global",
 };
 
 export default async function RootLayout({

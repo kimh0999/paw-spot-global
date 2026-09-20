@@ -1,9 +1,37 @@
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { getUserDogsByIds } from "@/lib/dogs/queries";
 import { parseDogSelection } from "@/lib/dogs/selection";
 import { getFavoritePlaceIds } from "@/lib/favorites/queries";
 import { getPlaces } from "@/lib/places/queries";
+import { isSupportedLocale } from "@/lib/i18n/locale";
+import { publicPageMetadata } from "@/lib/seo/page-metadata";
 import PlacesClient from "./PlacesClient";
+
+/**
+ * 이 페이지의 title·description·canonical·hreflang.
+ *
+ * locale마다 다시 만든다 — 한국어 문구가 영어 페이지로 넘어가지 않게 한다.
+ */
+export async function generateMetadata({
+  params: paramsPromise,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await paramsPromise;
+  if (!isSupportedLocale(locale)) return {};
+  const t = await getTranslations({ locale, namespace: "seo" });
+
+  return publicPageMetadata({
+    locale,
+    path: "/places",
+    title: t("places.title"),
+    description: t("places.description"),
+    siteName: t("siteName"),
+  });
+}
 
 interface PlacesPageProps {
   searchParams: Promise<{

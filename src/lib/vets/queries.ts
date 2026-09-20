@@ -197,6 +197,20 @@ export async function getPublicVetClinicById(
   };
 }
 
+/**
+ * sitemap에 실을 병원.
+ *
+ * 공개 조회와 **같은 `visibility: "VISIBLE"`** 조건이다. `DRAFT`·`HIDDEN`은 상세 URL이
+ * 열리지 않으므로 sitemap에도 넣지 않는다.
+ */
+export async function getSitemapVetClinics(): Promise<{ id: string; updatedAt: Date }[]> {
+  return prisma.vetClinic.findMany({
+    where: { visibility: "VISIBLE" },
+    select: { id: true, updatedAt: true },
+    orderBy: { updatedAt: "desc" },
+  });
+}
+
 export interface AdminVetClinicRow {
   id: string;
   nameKr: string;

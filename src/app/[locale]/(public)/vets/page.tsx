@@ -1,7 +1,35 @@
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+
 import Header from "@/components/Header";
 import VetsClient from "@/components/vets/VetsClient";
 import { getPublicVetClinics } from "@/lib/vets/queries";
 import type { VetClinicListItem } from "@/lib/vets/types";
+import { isSupportedLocale } from "@/lib/i18n/locale";
+import { publicPageMetadata } from "@/lib/seo/page-metadata";
+
+/**
+ * 이 페이지의 title·description·canonical·hreflang.
+ *
+ * locale마다 다시 만든다 — 한국어 문구가 영어 페이지로 넘어가지 않게 한다.
+ */
+export async function generateMetadata({
+  params: paramsPromise,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await paramsPromise;
+  if (!isSupportedLocale(locale)) return {};
+  const t = await getTranslations({ locale, namespace: "seo" });
+
+  return publicPageMetadata({
+    locale,
+    path: "/vets",
+    title: t("vets.title"),
+    description: t("vets.description"),
+    siteName: t("siteName"),
+  });
+}
 
 interface VetsPageProps {
   searchParams: Promise<{
