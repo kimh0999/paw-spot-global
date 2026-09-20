@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest";
  * 화면 테스트 환경(jsdom·RTL)이 없어 렌더 경로를 소스 수준에서 고정한다.
  */
 const detailPage = readFileSync(
-  path.join(process.cwd(), "src/app/[locale]/(public)/places/[id]/page.tsx"),
+  path.join(process.cwd(), "src/app/[locale]/(detail)/places/[id]/page.tsx"),
   "utf8",
 );
 
