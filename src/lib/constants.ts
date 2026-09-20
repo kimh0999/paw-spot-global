@@ -5,10 +5,15 @@ export const DEFAULT_LOCALE: SupportedLocale = "en";
 
 export {
   CARRIER_STROLLER_POLICIES,
+  IMAGE_LICENSE_TYPES,
   INDOOR_POLICIES,
   LEASH_POLICIES,
   MAX_DOG_SIZES,
   MUZZLE_POLICIES,
+  DESCRIPTION_MAX_LENGTH,
+  PARKING_AVAILABILITY,
+  PARKING_NOTE_MAX_LENGTH,
+  USAGE_GUIDE_MAX_LENGTH,
   PLACE_CATEGORIES,
   PLACE_VISIBILITY,
   REQUIRED_ITEMS,
@@ -16,10 +21,12 @@ export {
 } from "@/lib/places/constants";
 export type {
   CarrierStrollerPolicy,
+  ImageLicenseTypeValue,
   IndoorPolicy,
   LeashPolicy,
   MaxDogSize,
   MuzzlePolicy,
+  ParkingAvailabilityValue,
   PlaceCategory,
   PlaceVisibilityType,
   RequiredItem,

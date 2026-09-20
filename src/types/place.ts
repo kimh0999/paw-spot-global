@@ -1,3 +1,4 @@
+import type { ImageAttributionDisplay } from "@/lib/places/image-attribution";
 import type { OperatingHours } from "@/lib/places/operating-hours";
 import type { PolicyDetails } from "@/lib/places/policy-details";
 
@@ -28,7 +29,13 @@ export interface PlaceListItem {
   phone: string | null;
   location: { lat: number; lng: number } | null;
   distanceMeters: number | null;
+  /**
+   * 공개해도 되는 대표 이미지. 출처 표시가 필요한데 근거가 없으면 조회에서 이미 null이다
+   * (`publicImageFields`). 화면은 이 값만 보고 사진 자리를 만든다.
+   */
   thumbnailUrl: string | null;
+  /** 이미지에 붙는 출처. 출처 조건이 없는 이미지는 null이다. */
+  imageAttribution: ImageAttributionDisplay | null;
   indoor: "allowed" | "outdoor_only" | "partial_area" | "not_allowed" | "unknown" | null;
   carrierStrollerPolicy: "not_required" | "required_indoor" | "required_always" | "unknown" | null;
   maxDogSize: "small" | "medium" | "large" | "unknown" | null;
@@ -61,11 +68,25 @@ export interface PlaceDetail {
   phone: string | null;
   website: string | null;
   instagram: string | null;
+  /** 목록과 같은 판정을 거친 값이다. 출처 근거가 없는 이미지는 여기서도 null이다. */
   thumbnailUrl: string | null;
+  imageAttribution: ImageAttributionDisplay | null;
   location: { lat: number; lng: number } | null;
   /** 형식이 깨졌거나 아직 입력되지 않은 장소는 null이다(결정 D-04). */
   hours: OperatingHours | null;
   hoursNote: string | null;
+  /**
+   * 장소 소개. **언어별로 나눠 둔다.** 한국어 원문을 영어 UI에 그대로 내보내면
+   * 영문 설명이 있는 것처럼 보인다. 화면은 없는 쪽을 만들어 내지 않는다.
+   */
+  descriptionKr: string | null;
+  descriptionEn: string | null;
+  /** `unknown`은 "주차 불가"가 아니라 "확인되지 않음"이다. */
+  parking: "AVAILABLE" | "UNAVAILABLE" | "UNKNOWN";
+  parkingNote: string | null;
+  /** `hours`로 옮길 수 없는 운영·이용 안내. 범위(계절·시설)를 지우지 않고 그대로 둔다. */
+  usageGuideKr: string | null;
+  usageGuideEn: string | null;
   condition: {
     indoor: PlaceListItem["indoor"];
     carrierStrollerPolicy: PlaceListItem["carrierStrollerPolicy"];

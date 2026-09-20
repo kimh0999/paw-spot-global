@@ -50,6 +50,7 @@ function input(condition: Partial<PlaceInput["condition"]> = {}): PlaceInput {
     location: { lat: 37.5, lng: 127.0 },
     hours: null,
     hoursNote: null,
+    parking: "UNKNOWN",
     phone: null,
     website: null,
     instagram: null,

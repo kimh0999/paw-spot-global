@@ -20,6 +20,12 @@ export type ParsedPlaceFormData = {
   visibility: string;
   hours: HoursFormInput;
   hoursNote: string | null;
+  descriptionKr: string | null;
+  descriptionEn: string | null;
+  parking: string;
+  parkingNote: string | null;
+  usageGuideKr: string | null;
+  usageGuideEn: string | null;
   condition: {
     indoor: string;
     carrierStrollerPolicy: string;
@@ -84,6 +90,12 @@ export function parsePlaceFormData(formData: FormData): ParsedPlaceFormData {
       ]),
     ),
     hoursNote: nullIfEmpty(formData.get("hoursNote")),
+    descriptionKr: nullIfEmpty(formData.get("descriptionKr")),
+    descriptionEn: nullIfEmpty(formData.get("descriptionEn")),
+    parking: String(formData.get("parking") ?? "UNKNOWN"),
+    parkingNote: nullIfEmpty(formData.get("parkingNote")),
+    usageGuideKr: nullIfEmpty(formData.get("usageGuideKr")),
+    usageGuideEn: nullIfEmpty(formData.get("usageGuideEn")),
     condition: {
       indoor: String(formData.get("condition.indoor") ?? ""),
       carrierStrollerPolicy: String(

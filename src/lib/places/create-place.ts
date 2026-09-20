@@ -8,6 +8,10 @@ import {
 import { prisma } from "@/lib/db/prisma";
 import { pointFromLngLat } from "@/lib/geo/postgis";
 import {
+  resolveReviewFields,
+  type ImageAttributionWrite,
+} from "@/lib/places/image-attribution-form";
+import {
   resolvePolicyDetails,
   type PolicyDetailsFormInput,
 } from "@/lib/places/policy-details-form";
@@ -17,6 +21,7 @@ export async function createPlaceRecord(
   input: PlaceInput,
   admin: VerifiedAdmin,
   policyDetailsForm?: PolicyDetailsFormInput,
+  attribution?: ImageAttributionWrite,
 ): Promise<{ placeId: string }> {
   const { location, condition, verification, ...placeData } = input;
   const id = randomUUID();
@@ -29,7 +34,9 @@ export async function createPlaceRecord(
       INSERT INTO "Place"
         (id, "tourApiId", "nameKr", "nameEn", category,
          address, location, phone, website, instagram,
-         "thumbnailUrl", hours, "hoursNote", visibility,
+         "thumbnailUrl", hours, "hoursNote",
+         "descriptionKr", "descriptionEn", parking, "parkingNote",
+         "usageGuideKr", "usageGuideEn", visibility,
          "createdAt", "updatedAt")
       VALUES
         (${id},
@@ -45,6 +52,12 @@ export async function createPlaceRecord(
          ${placeData.thumbnailUrl ?? null},
          ${placeData.hours ? JSON.stringify(placeData.hours) : null}::jsonb,
          ${placeData.hoursNote ?? null},
+         ${placeData.descriptionKr ?? null},
+         ${placeData.descriptionEn ?? null},
+         ${placeData.parking}::"ParkingAvailability",
+         ${placeData.parkingNote ?? null},
+         ${placeData.usageGuideKr ?? null},
+         ${placeData.usageGuideEn ?? null},
          ${placeData.visibility}::"PlaceVisibility",
          now(),
          now())
@@ -62,6 +75,14 @@ export async function createPlaceRecord(
         ...policy.write,
       },
     });
+
+    // 새 장소라 이어받을 검토 기록이 없다. 확인 표시가 있으면 지금이 검토 시각이다(D-22).
+    if (attribution?.action === "upsert") {
+      const review = resolveReviewFields(attribution, null, admin.email, new Date());
+      await tx.placeImageAttribution.create({
+        data: { placeId: id, ...attribution.data, ...review },
+      });
+    }
 
     await tx.verification.create({
       data: {

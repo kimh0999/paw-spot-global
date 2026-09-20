@@ -39,6 +39,10 @@ const cspReportOnly = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // 격리 실행용. 두 번째 dev 서버를 띄울 때 **빌드 산출물까지 나눈다** —
+  // `.next`를 공유하면 이미 떠 있는 서버의 캐시를 서로 덮어쓴다.
+  //   NEXT_DIST_DIR=.next-test DATABASE_URL=<격리 DB> npx next dev -p 3100
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   turbopack: {
     resolveAlias: {
       "tw-animate-css": "./node_modules/tw-animate-css/dist/tw-animate.css",

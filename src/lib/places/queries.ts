@@ -2,6 +2,14 @@ import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
 import { HOME_CATEGORY_PLACE_LIMIT, MVP_PLACE_CATEGORIES } from "@/lib/places/constants";
+import {
+  imageAttributionStatus,
+  missingAttributionFields,
+  publicImageFields,
+  type ImageAttributionField,
+  type ImageAttributionStatus,
+} from "@/lib/places/image-attribution";
+import { readDescriptionParking } from "@/lib/places/schema-compat";
 import { readOperatingHours, type OperatingHours } from "@/lib/places/operating-hours";
 import { readPolicyDetails, type PolicyDetailsRead } from "@/lib/places/policy-details";
 import type {
@@ -114,6 +122,19 @@ function toNumberOrNull(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** 출처 판정에 필요한 최소 컬럼. 목록·상세·관리자가 같은 묶음을 읽는다(D-22). */
+const imageAttributionSelect = {
+  imageUrl: true,
+  provider: true,
+  copyrightHolder: true,
+  workTitle: true,
+  createdYear: true,
+  sourceUrl: true,
+  licenseType: true,
+  licenseUrl: true,
+  reviewedAt: true,
+} satisfies Prisma.PlaceImageAttributionSelect;
+
 // Shared so favorites (and other list views) map places identically via toPlaceListItem.
 export const placeListSelect = {
   id: true,
@@ -123,6 +144,8 @@ export const placeListSelect = {
   address: true,
   phone: true,
   thumbnailUrl: true,
+  // 출처 표시가 필요한 이미지를 근거 없이 내보내지 않기 위해 목록에서도 함께 읽는다(D-22).
+  imageAttribution: { select: imageAttributionSelect },
   condition: {
     select: {
       indoor: true,
@@ -157,6 +180,23 @@ const PUBLIC_PLACE_WHERE = {
   visibility: "VISIBLE",
   verifications: { some: {} },
 } as const satisfies Prisma.PlaceWhereInput;
+
+/**
+ * sitemap에 실을 장소.
+ *
+ * **`PUBLIC_PLACE_WHERE`를 그대로 쓴다** — 목록·상세와 같은 공개 조건이다. 조건을 따로
+ * 적으면 한쪽만 바뀌었을 때 비공개 장소가 sitemap에 남는다.
+ *
+ * 목록이 `MVP_PLACE_CATEGORIES`로 좁히는 것과 달리 카테고리를 좁히지 않는다 — 상세 URL은
+ * 카테고리와 무관하게 열리므로 열리는 URL을 모두 싣는다.
+ */
+export async function getSitemapPlaces(): Promise<{ id: string; updatedAt: Date }[]> {
+  return prisma.place.findMany({
+    where: PUBLIC_PLACE_WHERE,
+    select: { id: true, updatedAt: true },
+    orderBy: { updatedAt: "desc" },
+  });
+}
 
 async function findPlaces() {
   return prisma.place.findMany({
@@ -211,6 +251,8 @@ export function toPlaceListItem(row: RawPlace, coord?: CoordQueryRow): PlaceList
   const lat = toNumberOrNull(coord?.lat);
   const lng = toNumberOrNull(coord?.lng);
   const distanceMeters = toNumberOrNull(coord?.distanceMeters);
+  // 출처 근거가 없는 이미지는 여기서 주소째 떨어진다 — 화면이 사진 자리를 만들지 않는다.
+  const image = publicImageFields(row.thumbnailUrl, row.imageAttribution);
 
   return {
     id: row.id,
@@ -221,7 +263,8 @@ export function toPlaceListItem(row: RawPlace, coord?: CoordQueryRow): PlaceList
     phone: row.phone ?? null,
     location: lat != null && lng != null ? { lat, lng } : null,
     distanceMeters,
-    thumbnailUrl: row.thumbnailUrl,
+    thumbnailUrl: image.thumbnailUrl,
+    imageAttribution: image.imageAttribution,
     indoor: row.condition
       ? mapIndoorPolicy(String(row.condition.indoor))
       : null,
@@ -307,6 +350,7 @@ export async function getPlaceById(id: string): Promise<PlaceDetail | null> {
       website: true,
       instagram: true,
       thumbnailUrl: true,
+      imageAttribution: { select: imageAttributionSelect },
       hours: true,
       hoursNote: true,
       visibility: true,
@@ -347,6 +391,8 @@ export async function getPlaceById(id: string): Promise<PlaceDetail | null> {
 
   if (!isPublic) return null;
 
+  const descriptionParking = await readDescriptionParking(place.id);
+
   const coords = await prisma.$queryRaw<
     Array<{ id: string; lat: unknown; lng: unknown }>
   >`
@@ -372,12 +418,16 @@ export async function getPlaceById(id: string): Promise<PlaceDetail | null> {
     phone: place.phone ?? null,
     website: place.website ?? null,
     instagram: place.instagram ?? null,
-    thumbnailUrl: place.thumbnailUrl ?? null,
+    // 목록과 같은 판정을 쓴다. 상세만 이미지를 내보내는 일이 없게 한다.
+    ...publicImageFields(place.thumbnailUrl, place.imageAttribution),
     location: lat != null && lng != null ? { lat, lng } : null,
     // 형식이 깨진 값은 null로 내린다. 화면에서 "입력 없음"과 같이 보이지만, 깨진 값을
     // 억지로 렌더해 잘못된 영업시간을 보여주는 것보다 낫다.
     hours: readOperatingHours(place.hours).value,
     hoursNote: place.hoursNote ?? null,
+    // 언어별로 나눠 내려보낸다. 화면이 "영문 설명이 있다"고 오해하지 않게 한다.
+    // 마이그레이션 전 DB에서도 화면이 뜨도록 따로 읽는다(schema-compat.ts). 적용 뒤 정리한다.
+    ...descriptionParking,
     condition: place.condition
       ? {
           indoor: mapIndoorPolicy(String(place.condition.indoor)),
@@ -437,6 +487,8 @@ export interface AdminPlaceRow {
   address: string;
   visibility: string;
   thumbnailUrl: string | null;
+  /** 현재 이미지 기준 출처 판정(D-22). 목록에서 보완 대상을 알아보게 한다. */
+  imageAttributionStatus: ImageAttributionStatus;
   createdAt: Date;
   updatedAt: Date;
   condition: {
@@ -458,6 +510,25 @@ function formatDateForInput(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+/** 관리자 화면이 읽는 출처 기록. 날짜는 폼이 그대로 쓰도록 문자열로 내린다. */
+export interface AdminImageAttribution {
+  imageUrl: string;
+  provider: string;
+  copyrightHolder: string | null;
+  workTitle: string | null;
+  createdYear: number | null;
+  sourceUrl: string;
+  licenseType: string;
+  licenseUrl: string | null;
+  reviewedBy: string | null;
+  /** YYYY-MM-DD. 사람이 검토한 날이며 수집일이 아니다. */
+  reviewedAt: string | null;
+  preparationId: string | null;
+  sourceSnapshotSha256: string | null;
+  /** API 수집 시각. 정책을 확인한 날과 구분한다. */
+  sourceFetchedAt: string | null;
+}
+
 export interface AdminPlaceDetail {
   id: string;
   nameKr: string;
@@ -470,9 +541,23 @@ export interface AdminPlaceDetail {
   website: string | null;
   instagram: string | null;
   thumbnailUrl: string | null;
+  /**
+   * 저장된 출처 기록 그대로. 공개 화면과 달리 **감추지 않는다** — 관리자는 어긋난 기록을
+   * 보고 고쳐야 한다. 현재 이미지에 유효한지는 `imageAttributionStatus`가 말한다.
+   */
+  imageAttribution: AdminImageAttribution | null;
+  imageAttributionStatus: ImageAttributionStatus;
+  /** 이용 조건이 요구하는데 아직 비어 있는 항목. 기록이 없으면 빈 배열이다. */
+  imageAttributionMissing: ImageAttributionField[];
   /** 형식이 깨졌으면 null. 편집기가 깨진 값을 조용히 덮어쓰지 않도록 읽기에서 걸러 낸다. */
   hours: OperatingHours | null;
   hoursNote: string | null;
+  descriptionKr: string | null;
+  descriptionEn: string | null;
+  parking: string;
+  parkingNote: string | null;
+  usageGuideKr: string | null;
+  usageGuideEn: string | null;
   tourApiId: string | null;
   visibility: string;
   createdAt: Date;
@@ -518,6 +603,7 @@ export async function getAdminPlaceById(id: string): Promise<AdminPlaceDetail | 
       website: true,
       instagram: true,
       thumbnailUrl: true,
+      imageAttribution: true,
       hours: true,
       hoursNote: true,
       tourApiId: true,
@@ -556,6 +642,8 @@ export async function getAdminPlaceById(id: string): Promise<AdminPlaceDetail | 
 
   if (!place) return null;
 
+  const descriptionParking = await readDescriptionParking(place.id);
+
   const coords = await prisma.$queryRaw<Array<{ id: string; lat: unknown; lng: unknown }>>`
     SELECT
       id,
@@ -582,8 +670,37 @@ export async function getAdminPlaceById(id: string): Promise<AdminPlaceDetail | 
     website: place.website ?? null,
     instagram: place.instagram ?? null,
     thumbnailUrl: place.thumbnailUrl ?? null,
+    imageAttribution: place.imageAttribution
+      ? {
+          imageUrl: place.imageAttribution.imageUrl,
+          provider: place.imageAttribution.provider,
+          copyrightHolder: place.imageAttribution.copyrightHolder ?? null,
+          workTitle: place.imageAttribution.workTitle ?? null,
+          createdYear: place.imageAttribution.createdYear ?? null,
+          sourceUrl: place.imageAttribution.sourceUrl,
+          licenseType: String(place.imageAttribution.licenseType),
+          licenseUrl: place.imageAttribution.licenseUrl ?? null,
+          reviewedBy: place.imageAttribution.reviewedBy ?? null,
+          reviewedAt: place.imageAttribution.reviewedAt
+            ? formatDateForInput(place.imageAttribution.reviewedAt)
+            : null,
+          preparationId: place.imageAttribution.preparationId ?? null,
+          sourceSnapshotSha256: place.imageAttribution.sourceSnapshotSha256 ?? null,
+          sourceFetchedAt: place.imageAttribution.sourceFetchedAt
+            ? place.imageAttribution.sourceFetchedAt.toISOString()
+            : null,
+        }
+      : null,
+    imageAttributionStatus: imageAttributionStatus(
+      place.thumbnailUrl,
+      place.imageAttribution,
+    ),
+    imageAttributionMissing: place.imageAttribution
+      ? missingAttributionFields(place.thumbnailUrl, place.imageAttribution)
+      : [],
     hours: readOperatingHours(place.hours).value,
     hoursNote: place.hoursNote ?? null,
+    ...descriptionParking,
     tourApiId: place.tourApiId ?? null,
     visibility: String(place.visibility),
     createdAt: place.createdAt,
@@ -626,6 +743,7 @@ export async function getAdminPlaces(): Promise<AdminPlaceRow[]> {
       address: true,
       visibility: true,
       thumbnailUrl: true,
+      imageAttribution: { select: imageAttributionSelect },
       createdAt: true,
       updatedAt: true,
       condition: {
@@ -655,7 +773,9 @@ export async function getAdminPlaces(): Promise<AdminPlaceRow[]> {
     category: String(row.category),
     address: row.address,
     visibility: String(row.visibility),
+    // 관리자 목록은 주소를 그대로 보여준다. 공개 화면과 달리 감추면 고칠 수가 없다.
     thumbnailUrl: row.thumbnailUrl ?? null,
+    imageAttributionStatus: imageAttributionStatus(row.thumbnailUrl, row.imageAttribution),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     condition: row.condition

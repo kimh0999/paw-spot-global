@@ -8,6 +8,11 @@ import {
 import { prisma } from "@/lib/db/prisma";
 import { pointFromLngLat } from "@/lib/geo/postgis";
 import {
+  attributionReviewTarget,
+  resolveReviewFields,
+  type ImageAttributionWrite,
+} from "@/lib/places/image-attribution-form";
+import {
   resolvePolicyDetails,
   type PolicyDetailsFormInput,
 } from "@/lib/places/policy-details-form";
@@ -31,6 +36,7 @@ export async function updatePlaceRecord(
   input: PlaceUpdate,
   admin: VerifiedAdmin,
   policyDetailsForm?: PolicyDetailsFormInput,
+  attribution?: ImageAttributionWrite,
 ): Promise<void> {
   const { location, condition, verification, ...placeData } = input;
 
@@ -91,6 +97,12 @@ export async function updatePlaceRecord(
         "thumbnailUrl" = ${placeData.thumbnailUrl ?? null},
         hours          = ${placeData.hours ? JSON.stringify(placeData.hours) : null}::jsonb,
         "hoursNote"    = ${placeData.hoursNote ?? null},
+        "descriptionKr" = ${placeData.descriptionKr ?? null},
+        "descriptionEn" = ${placeData.descriptionEn ?? null},
+        parking        = ${placeData.parking}::"ParkingAvailability",
+        "parkingNote"  = ${placeData.parkingNote ?? null},
+        "usageGuideKr" = ${placeData.usageGuideKr ?? null},
+        "usageGuideEn" = ${placeData.usageGuideEn ?? null},
         visibility     = ${placeData.visibility}::"PlaceVisibility",
         "updatedAt"    = now()
       WHERE id = ${id}
@@ -124,6 +136,56 @@ export async function updatePlaceRecord(
       create: { placeId: id, ...conditionData },
       update: conditionData,
     });
+
+    // 이미지 출처 (D-22). 읽기·병합·쓰기가 같은 트랜잭션 안에 있어야 검토 기록을
+    // 이어받을지 버릴지가 저장 시점의 값으로 정해진다.
+    if (attribution?.action === "delete") {
+      await tx.placeImageAttribution.deleteMany({ where: { placeId: id } });
+    } else if (attribution?.action === "upsert") {
+      const current = await tx.placeImageAttribution.findUnique({
+        where: { placeId: id },
+        select: {
+          imageUrl: true,
+          provider: true,
+          copyrightHolder: true,
+          workTitle: true,
+          createdYear: true,
+          sourceUrl: true,
+          licenseType: true,
+          licenseUrl: true,
+          reviewedBy: true,
+          reviewedAt: true,
+        },
+      });
+      const review = resolveReviewFields(
+        attribution,
+        current
+          ? {
+              reviewedBy: current.reviewedBy,
+              reviewedAt: current.reviewedAt,
+              // 이전 기록이 무엇을 확인한 것이었는지를 같은 방식으로 만든다.
+              target: attributionReviewTarget({
+                imageUrl: current.imageUrl,
+                provider: current.provider,
+                copyrightHolder: current.copyrightHolder,
+                workTitle: current.workTitle,
+                createdYear: current.createdYear,
+                sourceUrl: current.sourceUrl,
+                licenseType: current.licenseType,
+                licenseUrl: current.licenseUrl,
+              }),
+            }
+          : null,
+        admin.email,
+        new Date(),
+      );
+      const data = { ...attribution.data, ...review };
+      await tx.placeImageAttribution.upsert({
+        where: { placeId: id },
+        create: { placeId: id, ...data },
+        update: data,
+      });
+    }
 
     if (shouldCreateVerification && verification) {
       await tx.verification.create({

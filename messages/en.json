@@ -207,6 +207,20 @@
       "select": "Select {name}",
       "openDetails": "Open details for {name}"
     },
+    "imageCredit": {
+      "label": "Image source",
+      "work": "“{title}”",
+      "year": "created {year}",
+      "author": "by {name}",
+      "sourceLink": "View source",
+      "license": {
+        "KOGL_TYPE1": "KOGL Type 1",
+        "KOGL_TYPE2": "KOGL Type 2",
+        "KOGL_TYPE3": "KOGL Type 3",
+        "KOGL_TYPE4": "KOGL Type 4",
+        "UNKNOWN": "License unconfirmed"
+      }
+    },
     "preview": {
       "title": "Selected place",
       "close": "Close summary",
@@ -547,7 +561,19 @@
         "copied": "Copied!"
       },
       "disclaimer": "Store policies may change. Please confirm with the store before your visit.",
-      "seeAllConditions": "See all conditions"
+      "seeAllConditions": "See all conditions",
+      "about": {
+        "title": "About this place",
+        "koreanSource": "Shown in Korean — no English description has been confirmed."
+      },
+      "parking": {
+        "available": "Parking available",
+        "unavailable": "No parking",
+        "unknown": "Parking not confirmed"
+      },
+      "usageGuide": {
+        "title": "Hours & access notes"
+      }
     }
   },
   "header": {
@@ -763,6 +789,32 @@
           "title": "External Data",
           "description": "Optional fields for tracking places imported from external APIs."
         },
+        "imageAttribution": {
+          "legend": "Image source (for licensed images such as KOGL)",
+          "help": "A licensed image is shown publicly only after its source is recorded and reviewed. Leave unconfirmed fields empty.",
+          "provider": "Institution",
+          "copyrightHolder": "Copyright holder (author)",
+          "workTitle": "Work title",
+          "createdYear": "Year created",
+          "sourceUrl": "Source link",
+          "sourceUrlHelp": "A public source website URL. Do not paste an API request URL containing a serviceKey.",
+          "licenseType": "License",
+          "licenseUrl": "License terms link",
+          "reviewed": "I have checked the image and its attribution",
+          "reviewedHelp": "Records the reviewer and time, and lets the image appear publicly. Adding the text alone does not establish compliance.",
+          "reviewedAt": "Review record",
+          "clear": "Delete this source record",
+          "status": {
+            "not_required": "This image carries no source requirement.",
+            "ready": "Reviewed. Shown publicly with its attribution.",
+            "missingRecord": "Korea Tourism Organization image without a source record. It stays hidden publicly until the record is filled in.",
+            "imageChanged": "The image URL changed, so the previous source record no longer describes it. Check again.",
+            "unreviewed": "The source record has not been reviewed yet.",
+            "invalidSourceUrl": "The source link is not an http/https URL.",
+            "incompleteAttribution": "The license still requires attribution fields that are empty. The image stays hidden publicly until they are filled in."
+          },
+          "missingFields": "Still required: {fields}"
+        },
         "phoneHelp": "This is the public business phone number that may be shown to users. Do not enter a private manager contact number.",
         "tourApiIdHelp": "Enter this only for places imported from TourAPI. Leave it blank for manually added places.",
         "requiredItemsHelp": "Check all items visitors must bring. For other requirements (e.g. muzzle, belly band), add details in Cautions.",
@@ -810,7 +862,15 @@
           "policyDetailsHandlingMultiNotRequired": "A condition with two or more behaviors can only be saved when every behavior is required. Add prohibited, allowed, or conditional behaviors as separate conditions, one at a time.",
           "policyDetailsSpaceDuplicate": "The same area and size combination was entered twice. Saving was stopped because there is no way to tell which one is correct. Merge the area exceptions into one.",
           "policyDetailsBehaviorDuplicate": "The same situation was entered twice. Each situation can have only one outcome.",
-          "policyDetailsAdmissionInconsistent": "The admission fee entries do not match. Rates are saved only when the fee is set to paid, and each period and size combination can be entered only once."
+          "policyDetailsAdmissionInconsistent": "The admission fee entries do not match. Rates are saved only when the fee is set to paid, and each period and size combination can be entered only once.",
+          "imageAttributionRequired": "Publishing requires a complete image source. Check the image source section.",
+          "imageAttributionProviderRequired": "An institution name is required to save the source.",
+          "imageAttributionSourceUrlRequired": "A source link is required to save the source.",
+          "imageAttributionInvalidSourceUrl": "The source link is not an http/https URL.",
+          "imageAttributionInvalidLicenseUrl": "The license terms link is not an http/https URL.",
+          "imageAttributionInvalidLicenseType": "The license value is not valid.",
+          "imageAttributionInvalidCreatedYear": "Year created must be between 1800 and 2200.",
+          "imageAttributionIncomplete": "Publishing requires these attribution fields: {fields}"
         }
       }
     }
@@ -930,6 +990,27 @@
       "address": "Address",
       "website": "Website",
       "disclaimer": "This is posted information. Whether the clinic can see your dog may differ on the day - please call before visiting."
+    }
+  },
+  "seo": {
+    "siteName": "Paw Spot Global",
+    "home": {
+      "title": "Dog-friendly places, checked",
+      "description": "Indoor access, carrier and stroller rules, and size limits — confirmed before you visit. Only places we have checked."
+    },
+    "places": {
+      "title": "Places",
+      "description": "Find dog-friendly cafes, restaurants and destinations by condition. We only show conditions we have confirmed."
+    },
+    "vets": {
+      "title": "Vet clinics",
+      "description": "Daejeon pilot. Only clinics whose hours, English support and after-hours care we have checked."
+    },
+    "placeDetail": {
+      "description": "{name} — check the dog-friendly conditions before you go."
+    },
+    "vetDetail": {
+      "description": "{name} ({district}) — check opening hours and contact details."
     }
   }
 }

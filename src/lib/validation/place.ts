@@ -2,10 +2,14 @@ import { z } from "zod";
 
 import {
   CARRIER_STROLLER_POLICIES,
+  DESCRIPTION_MAX_LENGTH,
   INDOOR_POLICIES,
   LEASH_POLICIES,
   MAX_DOG_SIZES,
   MUZZLE_POLICIES,
+  PARKING_AVAILABILITY,
+  PARKING_NOTE_MAX_LENGTH,
+  USAGE_GUIDE_MAX_LENGTH,
   PLACE_CATEGORIES,
   PLACE_VISIBILITY,
   REQUIRED_ITEMS,
@@ -110,6 +114,15 @@ const placeBaseSchema = z.object({
   visibility: z.enum(PLACE_VISIBILITY).default("DRAFT"),
   hours: hoursFormSchema,
   hoursNote: z.string().max(HOURS_NOTE_MAX_LENGTH).nullish(),
+
+  // 언어별로 나눈 소개. 한국어 원문을 영어 칸에 넣으면 영문 설명이 있는 것처럼 보인다.
+  descriptionKr: z.string().max(DESCRIPTION_MAX_LENGTH).nullish(),
+  descriptionEn: z.string().max(DESCRIPTION_MAX_LENGTH).nullish(),
+  parking: z.enum(PARKING_AVAILABILITY).default("UNKNOWN"),
+  parkingNote: z.string().max(PARKING_NOTE_MAX_LENGTH).nullish(),
+  // `hours`로 옮길 수 없는 안내(계절별·시설별 시간, 상시 개방, 주차 상세)를 범위째 담는다.
+  usageGuideKr: z.string().max(USAGE_GUIDE_MAX_LENGTH).nullish(),
+  usageGuideEn: z.string().max(USAGE_GUIDE_MAX_LENGTH).nullish(),
 
   condition: z.object({
     indoor: z.enum(INDOOR_POLICIES),

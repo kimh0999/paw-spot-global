@@ -454,10 +454,11 @@ P0 이후 첫 P1 트랙. §19의 접근성 4행을 처리했다.
 | 핵심 모델 | 완료 | `User` / `Place` / `PlaceCondition` / `Verification` / `Dog` / `Favorite` | — | — | `prisma/schema.prisma` |
 | 조건 필드 | 완료 | `indoor`(5) · `carrierStrollerPolicy`(4) · `maxDogSize`(4) · `leash`(4) · `muzzle`(4) · `vaccinationCertificatePolicy`(3) · `breedRestrictions` · `requiredItems` · `cautions` | — | — | `prisma/schema.prisma:133-149` |
 | PostGIS 좌표 | 완료 | `Unsupported("geography(Point, 4326)")` + raw SQL 처리 | — | — | `prisma/schema.prisma:113`, `lib/places/create-place.ts` |
-| 마이그레이션 | 완료 | init / condition_v2 / vaccination / carrier_stroller_3state / favorite / dog_breed_code (6건) | — | — | `prisma/migrations/` |
+| 마이그레이션 | 완료 (2026-09-18) | 10건 전부 운영 적용 완료. 마지막은 `20260918000000_place_image_attribution` — `migrate status`가 `Database schema is up to date!`, `migrate diff`가 빈 마이그레이션(drift 0)을 낸다 | — | — | `prisma/migrations/` |
 | `Dog` 견종 코드화 | 부분 완료 | `breedCode` · `breedCustom` · `updatedAt` 추가 + 기존 값 백필. 매핑 실패분은 `other` + 원문 보존 | 읽기·쓰기 전환 확인 후 별도 마이그레이션으로 `breed` 컬럼 제거 | P1 | `prisma/schema.prisma:170-176`, `prisma/migrations/20260816000000_dog_breed_code/` |
 | PostGIS extension 활성화 | 확인 필요 | 코드는 extension 존재를 전제. 실제 DB에서만 확인 가능 | 배포 환경 확인 | P0 | — |
 | `Place.hours` / `hoursNote` | 완료 (2026-09-08) | D-04 구조로 추가. `hours` JSONB(요일 7키, 값이 null이면 휴무) + `hoursNote` TEXT. 마이그레이션 `20260908000000_operating_hours` 적용 완료 — 컬럼 추가만 하는 비파괴 변경이고 기존 4행은 둘 다 NULL로 남았다(backfill 없음) | — | — | `prisma/schema.prisma`, `prisma/migrations/20260908000000_operating_hours` |
+| `PlaceImageAttribution` | 완료 (2026-09-18) | D-22. 이미지 1장의 출처(기관·저작권자·저작물명·작성연도·출처 링크·이용 조건)와 **사람 검토 기록**. `imageUrl`이 현재 `Place.thumbnailUrl`과 다르면 승계하지 않는다. `reviewedAt`이 NULL이거나 **공공누리 표시 항목이 비어 있으면** 공개 화면에 이미지가 나가지 않는다 — 검토 체크만으로 통과하지 않는다. 확인되지 않은 항목은 NULL로 둔다 | **운영 적용 완료 (2026-09-18)** — enum 5값·테이블 17컬럼·PK·unique index·FK(ON DELETE CASCADE) 확인, 행 0건. 기존 테이블 행 수 무변경(Place 6 / PlaceCondition 4 / Verification 4 / User 2 / Favorite 2). 관광공사 호스트 이미지 0건이라 **기존 화면 영향 없음**. 애플리케이션 배포가 남았다 | P0 | `prisma/schema.prisma`, `prisma/migrations/20260918000000_place_image_attribution/`, 문서 §12 |
 | `Report` 모델 | 미구현 | 없음 | 추가 | P1 | — |
 | `Review` 모델 | 미구현 | 없음 | 기획서 v3에서 P2로 이동 | P2 | — |
 | `Account`/`Session` | 미구현 | 없음 (JWT 전략이라 불필요) | provider 추가 시 재검토 | P2 | `src/auth.ts:13-15` |
@@ -469,13 +470,30 @@ P0 이후 첫 P1 트랙. §19의 접근성 4행을 처리했다.
 
 | 영역 | 상태 | 현재 구현 | 남은 작업 | 우선순위 | 근거 파일 |
 |---|---|---|---|---|---|
-| API 클라이언트 | 미구현 | 없음 | TourAPI HTTP 호출은 만들지 않았다. 파이프라인은 **정규화된 JSON 파일**을 받는다(기획서 v3 §8-1 — `TourAPI 또는 원본 데이터`). 원본 API 계약이 정해지면 이 형식으로 뽑아 주는 어댑터만 붙이면 된다 | P1 | `scripts/import-places.mjs` 헤더의 입력 형식 |
-| 매퍼 | 미구현 | 없음 | 위와 같은 이유. 스크립트가 요구하는 형식이 사실상 목표 스키마다 | P1 | 같은 파일 |
+| API 클라이언트 | 완료 (2026-09-18) | `check-tour-api.cjs`(연결 확인) · `export-tour-sample.cjs`(단건) · `collect-tour-area.cjs`(지역 목록 → 끝 페이지까지 + 상세 3종). 동시성 1~4 제한, 15초 타임아웃, 유한 재시도(최대 3, 재시도 불가 오류는 즉시 포기), 실패 내역 분리. **정상 응답(resultCode 0000)이 아닌 데이터는 수집으로 세지 않는다.** 이미 스냅샷이 있는 콘텐츠는 건너뛴다 | 지역·타입 확대는 §7-1·§7-2 결정 후 | P1 | `scripts/collect-tour-area.cjs` |
+| 매퍼 | 완료 (2026-09-18) | `prepare-tour-import.cjs` — 스냅샷 → 등록용 배열. `mapy→lat`/`mapx→lng`, 복수 URL 홈페이지 제외, 대표 이미지는 `firstimage` 우선 + `firstimage2` 폴백이며 `cpyrhtDivCd=Type1`만 자동 선택. 분류는 `contentTypeId`+`lclsSystm2`로 정한다 — 12→`TRAVEL`, 39+`FD05`→`CAFE`, 39+`FD01`·`FD02`→`RESTAURANT`(2026-09-20, D-24). 그 밖은 "분류 검토 대상"으로 보고한다. 운영 정보·동반 조건은 **저장하지 않고 제안까지만** 한다 | 38·28·32 매핑(§7-2) | P1 | `scripts/prepare-tour-import.cjs` |
+| 다건 변환 | 완료 (2026-09-18) | `--dir`로 여러 스냅샷을 **등록용 배열 1개 + 메타 1개**로 묶는다. 항목마다 원본 파일·해시·수집 시각·이미지 선택이 연결된다. 같은 콘텐츠 ID의 스냅샷이 겹치면 조용히 고르지 않고 멈춘다(`--latest`로 명시 선택). 변환/제외/실패 건수를 나눠 보고 | — | — | `scripts/prepare-tour-import.cjs` |
+| 등록 전 사람 검토 | 완료 (2026-09-18) | D-23. 등록용 배열은 같은 이름의 `.meta.json`과 짝으로만 존재하고, `review-tour-import.cjs --reviewer --confirm`으로만 검토자·시각·**검토 대상 해시**가 기록된다. 등록기는 DB에 붙기 전에 메타 존재·해시·경로·건수·ID 대응·검토 상태를 모두 본다. 메타를 빼서 우회할 수 없고 수기 배열도 `--manual`로 같은 계약을 따른다 | — | — | `scripts/tour-import-meta.mjs`, `scripts/review-tour-import.cjs` |
+| 오프라인 검증 | 완료 (2026-09-18) | `--validate-only`는 **DB·API에 접속하지 않고** 형식 검증과 사람 검토 대기를 나눠 보여준다. 기존 dry-run은 실제 DB에 접속해 INSERT 후 ROLLBACK하므로 **다른 명령이다** | — | — | `scripts/import-places.mjs` |
+| 이미지 출처 연결 | 완료 (2026-09-18) | D-22. 등록 시 `PlaceImageAttribution`을 **검토 전 상태로** 만든다(새로 만든 장소에만). 공개 조회가 근거 없는 이미지를 주소째 내리고, 목록 카드·상세가 같은 `PlaceThumb`으로 ko/en 출처와 원본 링크를 낸다. 출처 링크에 serviceKey가 든 API 주소를 쓰지 않는다 | 운영 DB 마이그레이션 적용 후 실제 데이터로 확인 | P0 | `src/lib/places/image-attribution.ts`, `src/components/places/PlaceThumb.tsx` |
 | 중복 방지 Import | 완료 (2026-09-08) | `tourApiId` unique + `ON CONFLICT DO NOTHING`. 관리자가 조건을 채우고 공개로 바꿔 둔 장소를 재실행이 되돌리지 않도록 **UPDATE 하지 않는다**. 같은 원본 3건을 넣어 신규 1 · 건너뜀 2로 실측 | — | — | `scripts/import-places.mjs` |
 | 후보 데이터 격리 | 완료 (2026-09-08) | D-05대로 `Place` + `visibility=DRAFT`. `PlaceCondition`·`Verification`을 만들지 않는다 — Import는 조건을 추측하지 않는다. 사용자 조회가 `VISIBLE` **그리고** 검증 이력을 모두 요구하므로(`PUBLIC_PLACE_WHERE`) 후보는 두 조건 모두에서 걸러진다 | — | — | `scripts/import-places.mjs` |
 | 실행 형태 | 완료 (2026-09-08) | D-06대로 `npm run import:places -- --file <경로>`. **기본이 dry-run**이고 `--commit`을 붙여야 쓴다(운영 Supabase가 하나뿐이라). 전체를 한 트랜잭션에 두고 항목마다 SAVEPOINT를 둬 부분 실패를 허용한다. 처리/신규/건너뜀/실패를 사유와 함께 출력 | — | — | `package.json`, `scripts/import-places.mjs` |
 | 관리자 후보 대시보드 | 미구현 | 없음 | 목록·필터·자동 채움 | P1 | — |
-| 잔존물 | 부분 완료 | 관리자 폼의 `tourApiId` 수동 입력 필드, 미사용 `TOUR_API_ERROR` 코드, `.env.example`의 키 자리 | — | — | `components/admin/PlaceForm.tsx:939-948`, `src/lib/errors.ts:7`, `.env.example:33` |
+| 생성물 관리 | 완료 (2026-09-18) | `/data/tour-api/`를 `.gitignore`에 넣었다(`data/` 전체는 막지 않는다). 파일을 지워도 출처가 남도록 원본 파일명·스냅샷 해시·수집 시각·변환 ID를 DB(`PlaceImageAttribution`)에 함께 저장한다 | — | — | `.gitignore`, `scripts/import-places.mjs` |
+| 분류·조건 매핑 | 완료 (2026-09-20) | D-24. `tour-classification.mjs`(분류코드 → Category, 관광타입별 `detailIntro2` 필드명)와 `tour-pet-policy.mjs`(반려견 원문 → 제안 값·근거·미확인). **상호로 분류하지 않고, "전 견종"·"자유이용"·"야외 좌석"을 넓혀 읽지 않는다.** 단위 테스트 35건이 금지 해석을 고정한다 | `acmpyTypeCd` 동반 불가 값을 실데이터로 보지 못함 | — | `scripts/tour-classification.mjs`, `scripts/tour-pet-policy.mjs`, `src/lib/places/tour-classification.test.ts` |
+| 검토 시트 | 완료 (2026-09-20) | 변환이 `import-<...>.review.md`를 함께 만든다. **원문 → 제안 값 → 근거 → 미확인** 대조표이고 관리자 화면 옆에 놓고 쓴다. 등록기는 읽지 않는다 | — | — | `scripts/prepare-tour-import.cjs` |
+| 코드표 캐시 | 완료 (2026-09-20) | `--refresh-codes`가 `lclsSystmCode2`·`ldongCode2`를 `data/tour-api/codes.json`에 담는다. **이 명령은 장소를 수집하지 않는다** — 처음엔 지역 수집까지 이어져 상세 543회를 부른 버그가 있었고 고쳤다 | — | — | `scripts/collect-tour-area.cjs` |
+| 수동 등록과의 중복 | 완료 (2026-09-20) | 등록기가 `tourApiId` 없는 기존 장소와 이름(공백·대소문자 무시)·100m 근접을 대조해 **보고만** 한다. 격리 DB에서 이름 일치·33m 근접 두 경우 모두 검출 확인. 자동 병합·삭제 없음 | — | — | `scripts/import-places.mjs` |
+| 실제 호출 예산 | 완료 (2026-09-20) | D-25. `tour-api-budget.mjs`가 `fetch` 직전에 차감하고 `data/tour-api/call-budget.json`에 보존한다. 명령·재실행·병렬 레인을 가로질러 공유되고, 상한에 닿으면 그 다음 요청을 **보내지 않는다**. 호출하는 스크립트 3개 모두 같은 게이트를 쓴다. 가짜 HTTP 서버로 검증(공공 API 미사용) | — | — | `scripts/tour-api-budget.mjs`, `src/lib/places/tour-api-budget.test.ts` |
+| 소개·주차 연결 | 완료 (2026-09-20) | `Place.descriptionKr`/`descriptionEn`/`parking`/`parkingNote` 추가(마이그레이션 `20260920000000_place_description_parking`). 관리자 폼 → 저장 → 공개 상세까지 격리 DB로 왕복 확인. **가져오기는 이 값을 채우지 않는다** — 검토 시트의 원문을 보고 사람이 넣는다 | 운영 DB 마이그레이션 미적용 | P0 | `prisma/schema.prisma`, `src/lib/places/place-fields.db.test.ts` |
+| 응답 원문의 HTML | 완료 (2026-09-20) | `parking`·`usetime`에 `<br>`이 섞여 온다(대전 14곳 중 4곳). `decodeApiText`가 태그를 지우고 줄바꿈으로 바꾼다. 그대로 두면 화면에 태그가 글자로 나오고 운영시간 파서가 구간을 잘못 읽는다 | — | — | `scripts/tour-pet-policy.mjs` |
+| 동반 범위 ≠ 실내 | 완료 (2026-09-20) | D-26. `acmpyTypeCd`로 `indoor`를 제안하지 않는다 — 공원의 `"전구역 동반가능"`은 실내 입장 확인이 아니다. 범위는 `accompanyScope`로 보존하고 `indoor`는 미확인으로 남는다 | — | — | `scripts/tour-pet-policy.mjs` |
+| 원본 정보 적재 | 완료 (2026-09-20) | D-27. 등록기가 `descriptionKr`·`usageGuideKr`·`parking`·`hours`를 함께 넣는다. 계절·시설별 시간은 `hours`가 아니라 `usageGuideKr`로 간다. 격리 DB에서 importer→DB→조회→브라우저 렌더까지 확인 | 운영 DB 마이그레이션 미적용 | P0 | `scripts/import-places.mjs` |
+| 마이그레이션 전 호환 | 완료 (2026-09-20) | 새 컬럼을 읽어 장소 상세가 500이던 것을 `schema-compat.ts`로 복구(운영 DB 무변경). 마이그레이션 적용 후 삭제할 임시 장치 | 적용 후 제거 필요 | P1 | `src/lib/places/schema-compat.ts` |
+| 관광타입별 소개 필드 | 완료 (2026-09-20) | 12·39에 더해 **28(레포츠)·32(숙박)·38(쇼핑)** 필드명을 실제 응답에서 확인해 넣었다. 관광지 필드로 읽으면 전부 빈 값이라 "정보 없음"으로 잘못 적힌다. 숙박은 운영시간 필드가 없어 `hours: null`로 두고 입실·퇴실은 안내로만 남긴다 | — | — | `scripts/tour-classification.mjs` |
+| 분류 검토 후보 11건 | 정리 완료 (2026-09-20) | 레포츠 5 · 숙박 4 · 쇼핑 1 · 문화시설 1. 결정 문서로 근거·선택지 정리. **결정 대기** | 상세 미수집 7건(21회 필요) | P1 | `docs/03-analysis/분류-검토-후보-11건.decision.md` |
+| 잔존물 | 부분 완료 | 관리자 폼의 `tourApiId` 수동 입력 필드, 미사용 `TOUR_API_ERROR` 코드 | — | — | `components/admin/PlaceForm.tsx`, `src/lib/errors.ts:7` |
 
 ---
 

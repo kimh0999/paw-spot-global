@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { getTranslations } from "next-intl/server";
@@ -5,6 +6,7 @@ import {
   ArrowLeft,
   BadgeCheck,
   Camera,
+  Car,
   Clock,
   Globe,
   History,
@@ -18,6 +20,7 @@ import ConditionStatusIcon from "@/components/places/ConditionStatusIcon";
 import DogMatchBadge from "@/components/places/DogMatchBadge";
 import FavoriteButton from "@/components/places/FavoriteButton";
 import Header from "@/components/Header";
+import JsonLd from "@/components/seo/JsonLd";
 import PlaceThumb from "@/components/places/PlaceThumb";
 import ShareButton from "@/components/places/ShareButton";
 import VisitVerdict from "@/components/places/VisitVerdict";
@@ -39,6 +42,9 @@ import { getVisitStatus } from "@/lib/places/eligibility";
 import { groupConsecutiveDays } from "@/lib/places/operating-hours";
 import { hasUsablePhoto } from "@/lib/places/photo";
 import { getPlaceById } from "@/lib/places/queries";
+import { noIndexMetadata } from "@/lib/seo/page-metadata";
+import { absoluteUrl, alternatesFor } from "@/lib/seo/site";
+import { placeJsonLd } from "@/lib/seo/structured-data";
 import type { PlaceListItem } from "@/types/place";
 
 /** 범위를 벗어난 값·형식이 틀린 값은 없는 것으로 본다. `places/page.tsx`와 같은 규칙이다. */
@@ -81,6 +87,45 @@ interface Props {
     lat?: string;
     lng?: string;
   }>;
+}
+
+/**
+ * 상세 metadata.
+ *
+ * 조회는 화면과 **같은 `getPlaceById`**를 쓴다 — 공개 조건(`VISIBLE` + 검증 이력 1건 이상)을
+ * 통과하지 못한 장소는 여기서도 null이라 비공개 장소의 이름이 metadata로 새어 나가지 않는다.
+ *
+ * 이름은 `displayPlaceName`이 locale에 맞게 고른다. 영문명이 없으면 한국어명을 그대로 쓰고
+ * **번역하지 않는다.**
+ */
+export async function generateMetadata({
+  params: paramsPromise,
+}: Props): Promise<Metadata> {
+  const { locale, id } = await paramsPromise;
+  if (!isSupportedLocale(locale)) return noIndexMetadata;
+
+  const place = await getPlaceById(id);
+  if (!place) return noIndexMetadata;
+
+  const t = await getTranslations({ locale, namespace: "seo" });
+  const name = displayPlaceName(place, locale).primary;
+  const path = `/places/${place.id}`;
+  const description = t("placeDetail.description", { name });
+
+  return {
+    title: name,
+    description,
+    alternates: alternatesFor(locale, path),
+    openGraph: {
+      type: "website",
+      siteName: t("siteName"),
+      locale,
+      url: absoluteUrl(locale, path),
+      title: `${name} · ${t("siteName")}`,
+      description,
+    },
+    twitter: { card: "summary", title: `${name} · ${t("siteName")}`, description },
+  };
 }
 
 export default async function PlaceDetailPage({
@@ -165,6 +210,8 @@ export default async function PlaceDetailPage({
     location: place.location,
     distanceMeters: null,
     thumbnailUrl: place.thumbnailUrl,
+    // 판정은 사진을 보지 않는다. 모양을 맞추기 위한 값이다.
+    imageAttribution: place.imageAttribution,
     indoor: place.condition?.indoor ?? null,
     carrierStrollerPolicy: place.condition?.carrierStrollerPolicy ?? null,
     maxDogSize: place.condition?.maxDogSize ?? null,
@@ -199,9 +246,48 @@ export default async function PlaceDetailPage({
   // 넣기 전에 들어간 행이 남아 있을 수 있어서, 화면에서도 한 번 더 본다.
   const websiteHref = safeHttpUrl(place.website);
   const hasContact = place.phone || websiteHref || place.instagram;
+  const hasParking = place.parking !== "UNKNOWN" || Boolean(place.parkingNote);
+
+  /**
+   * 장소 소개를 어느 언어로 보여줄까.
+   *
+   * 영어 화면에서 영문 소개가 없으면 **한국어 원문임을 밝히고** 보여준다.
+   * 한국어 글을 아무 표시 없이 내보내면 영문 설명이 있는 것처럼 읽힌다.
+   */
+  /** 소개·이용 안내를 어느 언어로 보여줄지 같은 규칙으로 고른다. */
+  const pickText = (kr: string | null, en: string | null) =>
+    safeLocale === "en"
+      ? en
+        ? { text: en, isKoreanSource: false }
+        : kr
+          ? { text: kr, isKoreanSource: true }
+          : null
+      : kr
+        ? { text: kr, isKoreanSource: false }
+        : null;
+
+  const usageGuide = pickText(place.usageGuideKr, place.usageGuideEn);
+
+  const description =
+    safeLocale === "en"
+      ? place.descriptionEn
+        ? { text: place.descriptionEn, isKoreanSource: false }
+        : place.descriptionKr
+          ? { text: place.descriptionKr, isKoreanSource: true }
+          : null
+      : place.descriptionKr
+        ? { text: place.descriptionKr, isKoreanSource: false }
+        : null;
 
   return (
     <>
+      <JsonLd
+        data={placeJsonLd({
+          place,
+          name: displayPlaceName(place, safeLocale).primary,
+          url: absoluteUrl(safeLocale, `/places/${place.id}`),
+        })}
+      />
       {/* 상세도 공통 헤더를 갖는다. 없으면 사용자는 뒤로 가기 말고 이동할 길을 잃는다
           (DESIGN.md §5 Header와 main의 소유 위치). */}
       <Header />
@@ -227,6 +313,8 @@ export default async function PlaceDetailPage({
                 category={place.category}
                 src={place.thumbnailUrl}
                 alt={placeName}
+                attribution={place.imageAttribution}
+                creditVariant="block"
                 className="aspect-[21/6] w-full"
               />
             )}
@@ -357,6 +445,28 @@ export default async function PlaceDetailPage({
           */}
           <div className="mt-8 gap-10 lg:flex lg:items-start">
             <div className="min-w-0 flex-1">
+              {description && (
+                <section className="mb-8">
+                  <h2 className="text-base font-semibold text-content">
+                    {t("about.title")}
+                  </h2>
+                  {/*
+                    영문 소개가 없어 한국어 원문을 보여줄 때는 그렇다고 적는다.
+                    표시하지 않으면 영문 설명이 있는 것처럼 읽힌다.
+                  */}
+                  {description.isKoreanSource && (
+                    <p className="mt-1 text-xs text-content-muted">
+                      {t("about.koreanSource")}
+                    </p>
+                  )}
+                  <p
+                    className="mt-2 whitespace-pre-line text-sm leading-relaxed text-content-secondary"
+                    lang={description.isKoreanSource ? "ko" : undefined}
+                  >
+                    {description.text}
+                  </p>
+                </section>
+              )}
               <BeforeYouGoCard condition={place.condition} locale={safeLocale} />
               <p className="mt-5 text-xs text-content-muted">{t("disclaimer")}</p>
             </div>
@@ -390,11 +500,46 @@ export default async function PlaceDetailPage({
                 {place.hoursNote && (
                   <p className="mt-1.5 text-sm text-content-secondary">{place.hoursNote}</p>
                 )}
+                {/*
+                  요일별 시간으로 옮길 수 없는 안내 — 계절별·시설별 시간, `상시 개방`,
+                  복잡한 휴무 규칙. **범위를 지우지 않고** 원문 그대로 보여 준다.
+                */}
+                {usageGuide && (
+                  <div className="mt-3 border-t border-border pt-3">
+                    <p className="text-xs font-medium text-content-secondary">
+                      {t("usageGuide.title")}
+                    </p>
+                    {usageGuide.isKoreanSource && (
+                      <p className="mt-1 text-xs text-content-muted">{t("about.koreanSource")}</p>
+                    )}
+                    <p
+                      className="mt-1 whitespace-pre-line text-sm text-content-secondary"
+                      lang={usageGuide.isKoreanSource ? "ko" : undefined}
+                    >
+                      {usageGuide.text}
+                    </p>
+                  </div>
+                )}
               </AsideBlock>
 
-              {hasContact && (
+              {(hasContact || hasParking) && (
                 <AsideBlock title={t("info.title")}>
                   <ul className="space-y-2">
+                    {hasParking && (
+                      <li className="flex items-center gap-2">
+                        <Car
+                          className="h-4 w-4 shrink-0 text-content-muted"
+                          strokeWidth={2}
+                          aria-hidden="true"
+                        />
+                        <span className="text-sm text-content">
+                          {place.parking === "UNKNOWN"
+                            ? t("parking.unknown")
+                            : t(`parking.${place.parking === "AVAILABLE" ? "available" : "unavailable"}`)}
+                          {place.parkingNote ? ` · ${place.parkingNote}` : ""}
+                        </span>
+                      </li>
+                    )}
                     {place.phone && (
                       <li className="flex items-center gap-2">
                         <Phone

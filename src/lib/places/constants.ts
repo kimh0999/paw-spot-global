@@ -38,5 +38,35 @@ export type VaccinationCertificatePolicy = (typeof VACCINATION_CERTIFICATE_POLIC
 export const REQUIRED_ITEMS = ["POOP_BAG"] as const;
 export type RequiredItem = (typeof REQUIRED_ITEMS)[number];
 
+/**
+ * 이미지 이용 조건 (결정 D-22).
+ * 공공누리 네 유형은 **모두 출처 표시를 요구한다**. UNKNOWN은 "제한 없음"이 아니라
+ * "확인되지 않음"이며, 확인되지 않은 이미지는 공개 화면에 나가지 않는다.
+ */
+export const IMAGE_LICENSE_TYPES = [
+  "KOGL_TYPE1",
+  "KOGL_TYPE2",
+  "KOGL_TYPE3",
+  "KOGL_TYPE4",
+  "UNKNOWN",
+] as const;
+export type ImageLicenseTypeValue = (typeof IMAGE_LICENSE_TYPES)[number];
+
+/**
+ * 주차 가능 여부. `UNKNOWN`은 "주차 불가"가 아니라 **"확인되지 않음"**이다.
+ * 요금·대수 같은 세부는 코드로 닫을 수 없어 `parkingNote` 한 줄이 받는다.
+ */
+export const PARKING_AVAILABILITY = ["AVAILABLE", "UNAVAILABLE", "UNKNOWN"] as const;
+export type ParkingAvailabilityValue = (typeof PARKING_AVAILABILITY)[number];
+
+/** `Place.parkingNote` 최대 길이. 주차 가능 여부 본체를 대신하는 용도가 아니다. */
+export const PARKING_NOTE_MAX_LENGTH = 100;
+
+/** `Place.descriptionKr` / `descriptionEn` 최대 길이. */
+export const DESCRIPTION_MAX_LENGTH = 2000;
+
+/** `Place.usageGuideKr` / `usageGuideEn` 최대 길이. 운영·이용 안내 원문을 담는다. */
+export const USAGE_GUIDE_MAX_LENGTH = 2000;
+
 export const PLACE_VISIBILITY = ["VISIBLE", "HIDDEN", "DRAFT"] as const;
 export type PlaceVisibilityType = (typeof PLACE_VISIBILITY)[number];

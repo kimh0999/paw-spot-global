@@ -7,6 +7,7 @@ import type { $ZodIssue } from "zod/v4/core";
 
 import {
   CARRIER_STROLLER_POLICIES,
+  IMAGE_LICENSE_TYPES,
   INDOOR_POLICIES,
   LEASH_POLICIES,
   MAX_DOG_SIZES,
@@ -23,6 +24,10 @@ import {
   derivedColumns,
   derivedPoopBagRequired,
 } from "@/lib/places/condition-consistency";
+import type {
+  ImageAttributionField,
+  ImageAttributionStatus,
+} from "@/lib/places/image-attribution";
 import type { PolicyDetails, PolicyDetailsRead } from "@/lib/places/policy-details";
 import { ConditionPolicySelect } from "./policy-details/ConditionPolicySelect";
 import { PolicyDetailsSection } from "./policy-details/PolicyDetailsSection";
@@ -49,9 +54,31 @@ export type PlaceFormInitialValues = {
   website?: string | null;
   instagram?: string | null;
   thumbnailUrl?: string | null;
+  /** 저장된 이미지 출처 기록. 행이 없으면 null이다 — 빈 기록을 만들지 않는다. */
+  imageAttribution?: {
+    provider?: string;
+    copyrightHolder?: string | null;
+    workTitle?: string | null;
+    createdYear?: number | null;
+    sourceUrl?: string;
+    licenseType?: string;
+    licenseUrl?: string | null;
+    reviewedBy?: string | null;
+    reviewedAt?: string | null;
+  } | null;
+  /** 현재 이미지 기준 판정(D-22). 무엇을 보완해야 하는지 이 값으로 안내한다. */
+  imageAttributionStatus?: ImageAttributionStatus;
+  /** 이용 조건이 요구하는데 아직 비어 있는 항목. 관리자가 무엇을 확인해야 하는지 말한다. */
+  imageAttributionMissing?: readonly ImageAttributionField[];
   /** 저장된 요일별 운영시간. 형식이 깨졌으면 null로 받아 빈 칸으로 시작한다. */
   hours?: OperatingHours | null;
   hoursNote?: string | null;
+  descriptionKr?: string | null;
+  descriptionEn?: string | null;
+  parking?: string;
+  parkingNote?: string | null;
+  usageGuideKr?: string | null;
+  usageGuideEn?: string | null;
   tourApiId?: string | null;
   visibility?: string;
   condition?: {
@@ -85,6 +112,30 @@ type PlaceFormProps = {
   submitLabel?: string;
   successContent?: React.ReactNode;
 };
+
+/**
+ * 출처 판정값 → 안내 문구 키 (결정 D-22).
+ * 문자열을 조립해 넘기지 않는다 — 판정값이 늘면 컴파일에서 걸려야 한다.
+ */
+const ATTRIBUTION_STATUS_KEY = {
+  not_required: "imageAttribution.status.not_required",
+  ready: "imageAttribution.status.ready",
+  missingRecord: "imageAttribution.status.missingRecord",
+  imageChanged: "imageAttribution.status.imageChanged",
+  unreviewed: "imageAttribution.status.unreviewed",
+  invalidSourceUrl: "imageAttribution.status.invalidSourceUrl",
+  incompleteAttribution: "imageAttribution.status.incompleteAttribution",
+} as const satisfies Record<ImageAttributionStatus, string>;
+
+/** 비어 있는 출처 항목 → 입력 칸 이름. 입력 칸과 같은 문구를 써야 어디를 채울지 안다. */
+const ATTRIBUTION_FIELD_KEY = {
+  provider: "imageAttribution.provider",
+  sourceUrl: "imageAttribution.sourceUrl",
+  licenseType: "imageAttribution.licenseType",
+  copyrightHolder: "imageAttribution.copyrightHolder",
+  workTitle: "imageAttribution.workTitle",
+  createdYear: "imageAttribution.createdYear",
+} as const satisfies Record<ImageAttributionField, string>;
 
 const SOURCE_LANGUAGE_LABELS: Record<string, string> = {
   ko: "한국어",
@@ -178,6 +229,15 @@ export function PlaceForm({
   const tMap = useTranslations("admin.places.locationPicker");
   const t = useTranslations("admin.places.form");
   const tV = useTranslations("admin.places.form.validation");
+  // 이용 조건 이름은 공개 화면과 같은 문구를 쓴다. 두 곳이 다른 이름을 쓰면 안 된다.
+  const tCredit = useTranslations("places.imageCredit");
+  const LICENSE_LABELS: Record<string, string> = {
+    KOGL_TYPE1: tCredit("license.KOGL_TYPE1"),
+    KOGL_TYPE2: tCredit("license.KOGL_TYPE2"),
+    KOGL_TYPE3: tCredit("license.KOGL_TYPE3"),
+    KOGL_TYPE4: tCredit("license.KOGL_TYPE4"),
+    UNKNOWN: tCredit("license.UNKNOWN"),
+  };
 
   const [lat, setLat] = useState<string>(String(initialValues?.lat ?? ""));
   const [lng, setLng] = useState<string>(String(initialValues?.lng ?? ""));
@@ -648,6 +708,194 @@ export function PlaceForm({
           )}
         </div>
 
+        {/*
+          이미지 출처 (결정 D-22).
+
+          공공누리 네 유형은 모두 출처 표시를 요구한다. 확인하지 못한 항목은 **비워 둔다** —
+          기관명으로 저작권자를 대신 채우거나 수집 연도를 작성연도로 쓰면 없는 사실이 생긴다.
+          검토 체크는 사람이 실제 화면을 확인했다는 표시이고, 문구를 넣은 것만으로
+          이용 조건 충족이 확정되지는 않는다.
+        */}
+        <fieldset className="flex flex-col gap-3 rounded border p-3">
+          <legend className="px-1 text-sm font-medium">
+            {t("imageAttribution.legend")}
+          </legend>
+          <p className="text-xs text-muted-foreground">{t("imageAttribution.help")}</p>
+
+          {iv?.imageAttributionStatus && (
+            <p
+              className={cn(
+                "text-xs",
+                iv.imageAttributionStatus === "not_required" ||
+                  iv.imageAttributionStatus === "ready"
+                  ? "text-muted-foreground"
+                  : "font-medium text-destructive",
+              )}
+            >
+              {t(ATTRIBUTION_STATUS_KEY[iv.imageAttributionStatus])}
+            </p>
+          )}
+
+          {iv?.imageAttributionMissing && iv.imageAttributionMissing.length > 0 && (
+            <p className="text-xs font-medium text-destructive">
+              {t("imageAttribution.missingFields", {
+                fields: iv.imageAttributionMissing
+                  .map((field) => t(ATTRIBUTION_FIELD_KEY[field]))
+                  .join(", "),
+              })}
+            </p>
+          )}
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-1">
+              <label htmlFor="imageAttribution.provider" className="text-sm font-medium">
+                {t("imageAttribution.provider")}
+              </label>
+              <input
+                id="imageAttribution.provider"
+                name="imageAttribution.provider"
+                maxLength={200}
+                defaultValue={iv?.imageAttribution?.provider ?? ""}
+                className="rounded border px-3 py-2"
+                onChange={() => clearError("imageAttribution")}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label
+                htmlFor="imageAttribution.copyrightHolder"
+                className="text-sm font-medium"
+              >
+                {t("imageAttribution.copyrightHolder")}
+              </label>
+              <input
+                id="imageAttribution.copyrightHolder"
+                name="imageAttribution.copyrightHolder"
+                maxLength={200}
+                defaultValue={iv?.imageAttribution?.copyrightHolder ?? ""}
+                className="rounded border px-3 py-2"
+                onChange={() => clearError("imageAttribution")}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label htmlFor="imageAttribution.workTitle" className="text-sm font-medium">
+                {t("imageAttribution.workTitle")}
+              </label>
+              <input
+                id="imageAttribution.workTitle"
+                name="imageAttribution.workTitle"
+                maxLength={300}
+                defaultValue={iv?.imageAttribution?.workTitle ?? ""}
+                className="rounded border px-3 py-2"
+                onChange={() => clearError("imageAttribution")}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label htmlFor="imageAttribution.createdYear" className="text-sm font-medium">
+                {t("imageAttribution.createdYear")}
+              </label>
+              <input
+                id="imageAttribution.createdYear"
+                name="imageAttribution.createdYear"
+                inputMode="numeric"
+                maxLength={4}
+                defaultValue={iv?.imageAttribution?.createdYear ?? ""}
+                className="rounded border px-3 py-2"
+                onChange={() => clearError("imageAttribution")}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label htmlFor="imageAttribution.sourceUrl" className="text-sm font-medium">
+              {t("imageAttribution.sourceUrl")}
+            </label>
+            <input
+              id="imageAttribution.sourceUrl"
+              name="imageAttribution.sourceUrl"
+              type="url"
+              defaultValue={iv?.imageAttribution?.sourceUrl ?? ""}
+              className="rounded border px-3 py-2"
+              onChange={() => clearError("imageAttribution")}
+            />
+            <p className="text-xs text-muted-foreground">
+              {t("imageAttribution.sourceUrlHelp")}
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-1">
+              <label htmlFor="imageAttribution.licenseType" className="text-sm font-medium">
+                {t("imageAttribution.licenseType")}
+              </label>
+              <select
+                id="imageAttribution.licenseType"
+                name="imageAttribution.licenseType"
+                defaultValue={iv?.imageAttribution?.licenseType ?? "UNKNOWN"}
+                className="rounded border px-3 py-2"
+                onChange={() => clearError("imageAttribution")}
+              >
+                {IMAGE_LICENSE_TYPES.map((value) => (
+                  <option key={value} value={value}>
+                    {LICENSE_LABELS[value]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label htmlFor="imageAttribution.licenseUrl" className="text-sm font-medium">
+                {t("imageAttribution.licenseUrl")}
+              </label>
+              <input
+                id="imageAttribution.licenseUrl"
+                name="imageAttribution.licenseUrl"
+                type="url"
+                defaultValue={iv?.imageAttribution?.licenseUrl ?? ""}
+                className="rounded border px-3 py-2"
+                onChange={() => clearError("imageAttribution")}
+              />
+            </div>
+          </div>
+
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="imageAttribution.reviewed"
+              value="true"
+              defaultChecked={!!iv?.imageAttribution?.reviewedAt}
+              className="mt-0.5"
+              onChange={() => clearError("imageAttribution")}
+            />
+            <span>
+              {t("imageAttribution.reviewed")}
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                {t("imageAttribution.reviewedHelp")}
+              </span>
+            </span>
+          </label>
+
+          {iv?.imageAttribution?.reviewedAt && (
+            <p className="text-xs text-muted-foreground">
+              {t("imageAttribution.reviewedAt")}: {iv.imageAttribution.reviewedAt}
+              {iv.imageAttribution.reviewedBy ? ` · ${iv.imageAttribution.reviewedBy}` : ""}
+            </p>
+          )}
+
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="imageAttribution.clear" value="true" />
+            <span>{t("imageAttribution.clear")}</span>
+          </label>
+
+          {allFieldErrors["imageAttribution"] && (
+            <p className="text-sm text-destructive">
+              {allFieldErrors["imageAttribution"]}
+            </p>
+          )}
+        </fieldset>
+
         {/* 운영시간 (결정 D-04). 요일별 시작·종료 7행 + 메모 1줄.
             자유 텍스트 단독 저장을 금지한다 — 한국어로 적으면 영어 UI에서 읽히지 않는다. */}
         <fieldset className="flex flex-col gap-2 rounded border p-3">
@@ -707,6 +955,82 @@ export function PlaceForm({
             <p className="text-sm text-destructive">{allFieldErrors["hoursNote"]}</p>
           )}
         </div>
+
+        <fieldset className="flex flex-col gap-1">
+          <legend className="text-sm font-medium">주차</legend>
+          <select
+            name="parking"
+            defaultValue={iv?.parking ?? "UNKNOWN"}
+            className="rounded border px-3 py-2"
+            onChange={() => clearError("parking")}
+          >
+            <option value="UNKNOWN">확인되지 않음</option>
+            <option value="AVAILABLE">가능</option>
+            <option value="UNAVAILABLE">불가</option>
+          </select>
+          <p className="text-xs text-muted-foreground">
+            `확인되지 않음`은 주차 불가가 아닙니다. 확인한 것만 고르세요.
+          </p>
+          <input
+            id="parkingNote"
+            name="parkingNote"
+            maxLength={100}
+            defaultValue={iv?.parkingNote ?? ""}
+            placeholder="예: Free / 20 spaces"
+            className={cn(
+              "rounded border px-3 py-2",
+              allFieldErrors["parkingNote"] && "border-destructive",
+            )}
+            aria-label="주차 메모"
+            aria-invalid={!!allFieldErrors["parkingNote"]}
+            onChange={() => clearError("parkingNote")}
+          />
+          <p className="text-xs text-muted-foreground">
+            사용자 화면에 그대로 노출됩니다. **영어로** 적어 주세요. 최대 100자.
+          </p>
+          {allFieldErrors["parkingNote"] && (
+            <p className="text-sm text-destructive">{allFieldErrors["parkingNote"]}</p>
+          )}
+        </fieldset>
+      </section>
+
+      {/* 장소 소개 — 언어별로 나눠 둔다. 한국어 원문을 영어 칸에 넣지 않는다. */}
+      <section className="flex flex-col gap-4">
+        <div>
+          <h2 className="text-lg font-semibold">장소 소개 (선택)</h2>
+          <p className="text-sm text-muted-foreground">
+            가져오기는 이 칸을 채우지 않습니다. 검토 시트의 원문을 확인해 직접 넣으세요.
+            한국어 칸에 넣은 글은 영어 화면에서 `한국어 원문`으로 표시됩니다.
+          </p>
+        </div>
+        {([
+          ["descriptionKr", "한국어 소개", iv?.descriptionKr],
+          ["descriptionEn", "영어 소개", iv?.descriptionEn],
+          ["usageGuideKr", "한국어 운영·이용 안내 (계절별·시설별 시간, 상시 개방, 주차 상세)", iv?.usageGuideKr],
+          ["usageGuideEn", "영어 운영·이용 안내", iv?.usageGuideEn],
+        ] as const).map(([name, label, value]) => (
+          <div key={name} className="flex flex-col gap-1">
+            <label htmlFor={name} className="text-sm font-medium">
+              {label}
+            </label>
+            <textarea
+              id={name}
+              name={name}
+              rows={4}
+              maxLength={2000}
+              defaultValue={value ?? ""}
+              className={cn(
+                "rounded border px-3 py-2",
+                allFieldErrors[name] && "border-destructive",
+              )}
+              aria-invalid={!!allFieldErrors[name]}
+              onChange={() => clearError(name)}
+            />
+            {allFieldErrors[name] && (
+              <p className="text-sm text-destructive">{allFieldErrors[name]}</p>
+            )}
+          </div>
+        ))}
       </section>
 
       {/* 반려견 동반 조건 */}

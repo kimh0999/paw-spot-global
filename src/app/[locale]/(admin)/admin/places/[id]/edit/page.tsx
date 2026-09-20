@@ -35,8 +35,18 @@ export default async function AdminPlaceEditPage({ params: paramsPromise }: Prop
     website: place.website ?? undefined,
     instagram: place.instagram ?? undefined,
     thumbnailUrl: place.thumbnailUrl ?? undefined,
+    // 출처 기록은 저장된 그대로 넘긴다. 공개 화면과 달리 감추면 고칠 수가 없다(D-22).
+    imageAttribution: place.imageAttribution,
+    imageAttributionStatus: place.imageAttributionStatus,
+    imageAttributionMissing: place.imageAttributionMissing,
     hours: place.hours,
     hoursNote: place.hoursNote,
+    descriptionKr: place.descriptionKr,
+    descriptionEn: place.descriptionEn,
+    parking: place.parking,
+    parkingNote: place.parkingNote,
+    usageGuideKr: place.usageGuideKr,
+    usageGuideEn: place.usageGuideEn,
     tourApiId: place.tourApiId ?? undefined,
     visibility: place.visibility,
     condition: place.condition ?? {

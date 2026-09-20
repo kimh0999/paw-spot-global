@@ -22,3 +22,11 @@ tsconfig.tsbuildinfo
 
 global/screenshots/
 global/.obsidian/workspace.json
+
+# TourAPI 수집·변환 생성물 (docs/02-design/TourAPI-활용-계획-기준.md)
+# 원본 스냅샷·등록용 배열·검토 메타데이터가 쌓이는 곳이다. data/ 전체를 막지 않는다 —
+# 다른 데이터 용도가 생겼을 때 함께 사라지면 안 된다.
+/data/tour-api/
+
+# 격리 브라우저 확인용 빌드 산출물
+/.next-test/
