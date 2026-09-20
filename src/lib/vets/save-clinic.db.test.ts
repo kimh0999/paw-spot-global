@@ -302,4 +302,32 @@ suite("VetClinic DB 왕복 (격리 DB)", () => {
     expect(clinic.distanceMeters).toBeGreaterThan(0);
     expect(clinic.distanceMeters).toBeLessThan(3000);
   });
+
+  /**
+   * 삭제는 **제품 코드에 경로가 없다.** 관리자 화면·서버 액션·`save-clinic` 어디에도
+   * 병원을 지우는 함수가 없으므로 여기서 확인하는 것은 마이그레이션이 선언한
+   * `ON DELETE CASCADE`가 실제로 그렇게 동작하는가뿐이다. 제품에 삭제 기능을 만들어
+   * 넣지 않는다.
+   */
+  it("병원을 지우면 연결된 확인 기록도 함께 사라진다 (FK CASCADE)", async () => {
+    const id = await m.createVetClinic(
+      input({ verifications: [basicCheck] }),
+      admin,
+      NOW,
+    );
+    expect(await m.prisma.vetVerification.count({ where: { clinicId: id } })).toBeGreaterThan(0);
+
+    await m.prisma.vetClinic.delete({ where: { id } });
+
+    expect(await m.prisma.vetClinic.findUnique({ where: { id } })).toBeNull();
+    // 고아 행이 남으면 안 된다.
+    expect(await m.prisma.vetVerification.count({ where: { clinicId: id } })).toBe(0);
+  });
+
+  it("존재하지 않는 ID는 공개·관리자 조회 모두 null이다", async () => {
+    // 형식은 정상이지만 없는 ID. 상세 페이지는 이 null을 받아 notFound()로 간다.
+    const missing = "clw0000000000000000000000";
+    expect(await m.getPublicVetClinicById(missing, null, NOW)).toBeNull();
+    expect(await m.getVetClinicForAdmin(missing)).toBeNull();
+  });
 });

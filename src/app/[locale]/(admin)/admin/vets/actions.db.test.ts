@@ -168,4 +168,51 @@ suite("병원 관리자 액션 권한 (격리 DB)", () => {
     expect(result).toMatchObject({ message: "publishBlocked" });
     expect(await prisma.vetClinic.count()).toBe(0);
   });
+
+  /**
+   * 조회 지점의 가드.
+   *
+   * 저장·수정은 액션이 스스로 거절하지만, **목록·상세 조회**를 막는 것은
+   * `/admin/*` 레이아웃의 `requireAdminPage`다. 세 역할이 각각 어디로 가는지 확인한다.
+   * 역할 판정은 세션의 주장이 아니라 **DB의 `role`**을 읽으므로, 위에서 실제로 만든
+   * 두 사용자가 그대로 쓰인다.
+   *
+   * `redirect()`는 예외를 던지는 방식으로 동작한다 — digest 문자열로 목적지를 읽는다.
+   */
+  describe("조회 가드 (requireAdminPage)", () => {
+    async function redirectTargetOf(email: string | null): Promise<string> {
+      session.current = email ? { user: { email } } : null;
+      const { requireAdminPage } = await import("@/lib/auth/require-admin");
+      try {
+        await requireAdminPage("ko");
+        return "(리다이렉트 없음)";
+      } catch (e) {
+        const digest = (e as { digest?: string }).digest ?? "";
+        if (!digest.startsWith("NEXT_REDIRECT")) throw e;
+        return digest.split(";")[2] ?? digest;
+      }
+    }
+
+    it("비로그인은 로그인으로 보낸다", async () => {
+      expect(await redirectTargetOf(null)).toContain("/ko/login");
+    });
+
+    it("로그인한 일반 회원은 forbidden으로 보낸다 (로그인 화면이 아니다)", async () => {
+      const target = await redirectTargetOf(USER_EMAIL);
+      expect(target).toContain("/ko/forbidden");
+      expect(target).not.toContain("/login");
+    });
+
+    it("관리자는 통과하고 DB에서 읽은 role을 돌려준다", async () => {
+      session.current = { user: { email: ADMIN_EMAIL } };
+      const { requireAdminPage } = await import("@/lib/auth/require-admin");
+      const admin = await requireAdminPage("ko");
+      expect(admin.email).toBe(ADMIN_EMAIL);
+      expect(admin.role).toBe("ADMIN");
+    });
+
+    it("세션 이메일이 DB에 없으면 관리자로 보지 않는다", async () => {
+      expect(await redirectTargetOf("ghost@example.test")).toContain("/ko/forbidden");
+    });
+  });
 });

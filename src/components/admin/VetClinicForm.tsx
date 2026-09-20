@@ -49,6 +49,29 @@ export interface VetClinicFormValues {
   collectedAt: string;
 }
 
+/**
+ * 서버가 돌려주는 코드를 관리자가 읽을 문장으로 옮긴다.
+ *
+ * 이 폼은 next-intl을 쓰지 않고 문구를 한국어로 고정한다 — 나머지 라벨과 같은 방식이다.
+ * **서버의 공개 기준은 건드리지 않는다.** 여기서 바꾸는 것은 표시 문구뿐이다.
+ */
+const FORM_ERROR_MESSAGES: Record<string, string> = {
+  publishBlocked: "공개 기준을 채우지 못해 저장하지 않았습니다. 아래를 채운 뒤 다시 저장하세요.",
+  invalidInput: "입력한 값을 확인해 주세요.",
+  authRequired: "로그인이 필요합니다.",
+  forbidden: "관리자 권한이 필요합니다.",
+  saveFailed: "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+};
+
+/** 공개를 막은 항목(D-20). `findPublishBlockers`가 돌려주는 코드와 짝이다. */
+const PUBLISH_BLOCKER_MESSAGES: Record<string, string> = {
+  nameKr: "병원명(한국어)을 입력하세요.",
+  address: "주소를 입력하세요.",
+  phone: "전화번호를 입력하세요.",
+  basicVerification:
+    "기본 정보 확인 기록이 필요합니다 — `이번에 확인한 항목`에서 `BASIC`을 체크하세요.",
+};
+
 export const EMPTY_VET_FORM: VetClinicFormValues = {
   nameKr: "",
   nameEn: "",
@@ -455,12 +478,18 @@ export default function VetClinicForm({
       </section>
 
       {state.status === "error" && (
-        <div className="rounded border border-destructive p-3 text-sm text-destructive">
-          <p>{state.message}</p>
-          {state.issues && (
+        <div
+          role="alert"
+          className="rounded border border-destructive p-3 text-sm text-destructive"
+        >
+          <p>{FORM_ERROR_MESSAGES[state.message] ?? state.message}</p>
+          {state.issues && state.issues.length > 0 && (
             <ul className="mt-1 list-disc pl-5 text-xs">
               {state.issues.map((issue) => (
-                <li key={issue}>{issue}</li>
+                <li key={issue}>
+                  {/* 공개 차단은 코드 하나가 곧 항목이다. 입력값 오류(zod)는 그대로 보여준다. */}
+                  {PUBLISH_BLOCKER_MESSAGES[issue] ?? issue}
+                </li>
               ))}
             </ul>
           )}
