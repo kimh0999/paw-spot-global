@@ -38,6 +38,7 @@ function place(overrides: Partial<PlaceListItem> = {}): PlaceListItem {
     location: null,
     distanceMeters: null,
     thumbnailUrl: null,
+    imageAttribution: null,
     indoor: "unknown",
     carrierStrollerPolicy: "unknown",
     maxDogSize: "unknown",

@@ -11,6 +11,13 @@ import {
 import { isSupportedLocale } from "@/lib/i18n/locale";
 import { parsePlaceFormData } from "@/lib/places/form-data";
 import {
+  IMAGE_ATTRIBUTION_ERROR_MESSAGE_KEY,
+  IMAGE_ATTRIBUTION_FIELD,
+  parseImageAttributionForm,
+  publishBlockedByImageAttribution,
+  resolveImageAttributionWrite,
+} from "@/lib/places/image-attribution-form";
+import {
   POLICY_DETAILS_ERROR_MESSAGE_KEY,
   PolicyDetailsWriteError,
   parsePolicyDetailsForm,
@@ -106,8 +113,40 @@ export async function updatePlace(
     };
   }
 
+  // 이미지 출처 (D-22). 신규 등록과 같은 규칙을 쓴다.
+  const attributionResult = resolveImageAttributionWrite(
+    parsed.data.thumbnailUrl ?? null,
+    parseImageAttributionForm(formData),
+  );
+  if ("error" in attributionResult) {
+    const tV = await getTranslations({ locale, namespace: "admin.places.form.validation" });
+    const key = IMAGE_ATTRIBUTION_ERROR_MESSAGE_KEY[attributionResult.error];
+    return { fieldErrors: { [IMAGE_ATTRIBUTION_FIELD]: tV(key as Parameters<typeof tV>[0]) } };
+  }
+  if (parsed.data.visibility === "VISIBLE") {
+    const publish = publishBlockedByImageAttribution(
+      parsed.data.thumbnailUrl ?? null,
+      attributionResult.write,
+      new Date(),
+    );
+    if (publish.blocked) {
+      const tV = await getTranslations({ locale, namespace: "admin.places.form.validation" });
+      const tA = await getTranslations({ locale, namespace: "admin.places.form.imageAttribution" });
+      // 비어 있는 항목이 있으면 이름을 적어 준다. 없으면 기록 자체가 없거나 어긋난 경우다.
+      const message =
+        publish.missing.length > 0
+          ? tV("imageAttributionIncomplete", {
+              fields: publish.missing
+                .map((field) => tA(field as Parameters<typeof tA>[0]))
+                .join(", "),
+            })
+          : tV("imageAttributionRequired");
+      return { fieldErrors: { [IMAGE_ATTRIBUTION_FIELD]: message } };
+    }
+  }
+
   try {
-    await updatePlaceRecord(id, parsed.data, admin, policyDetailsForm);
+    await updatePlaceRecord(id, parsed.data, admin, policyDetailsForm, attributionResult.write);
   } catch (err) {
     console.error("[updatePlace]", err);
     const tV = await getTranslations({ locale, namespace: "admin.places.form.validation" });

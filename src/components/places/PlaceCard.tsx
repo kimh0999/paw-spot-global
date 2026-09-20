@@ -156,6 +156,7 @@ export default function PlaceCard({
             category={place.category}
             src={place.thumbnailUrl}
             alt={placeName}
+            attribution={place.imageAttribution}
             className="w-28 shrink-0 self-stretch sm:w-32"
           />
         )}

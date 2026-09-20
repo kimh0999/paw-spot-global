@@ -353,6 +353,7 @@ describe("이동장 판정 — 목록·카드·상세가 일치한다", () => {
       location: null,
       distanceMeters: null,
       thumbnailUrl: null,
+      imageAttribution: null,
       indoor: "allowed",
       carrierStrollerPolicy: "not_required",
       maxDogSize: "large",
