@@ -1,0 +1,110 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# CodeRabbit 리뷰 설정 — 한국어
+#
+# 리뷰 기준은 이 저장소의 기존 규칙에서 가져왔다. 새 규칙을 여기서 만들지 않는다.
+#   - `src/CLAUDE.md`  프론트엔드 작업 규칙 (아래 path_instructions의 출처)
+#   - `docs/02-design/배포-후-작업-절차-체크리스트.md`  운영 DB가 한 벌이라는 전제
+#
+# 스키마: https://coderabbit.ai/integrations/schema.v2.json
+
+language: "ko-KR"
+
+tone_instructions: >
+  한국어로 리뷰한다. 지적할 때는 규칙 이름이나 근거를 함께 적고,
+  무엇을 어떻게 바꿔야 하는지 구체적으로 쓴다. 칭찬이나 요약을 위한 문장을 덧붙이지 않는다.
+  확신이 없으면 단정하지 말고 확인이 필요하다고 적는다.
+
+reviews:
+  # quiet / chill / assertive 중 chill. assertive는 사소한 취향까지 지적해 노이즈가 커진다.
+  profile: "chill"
+
+  # 리뷰가 머지를 막지 않게 한다. 1인 개발이라 change request가 걸리면 스스로 풀어야 한다.
+  request_changes_workflow: false
+
+  high_level_summary: true
+  review_status: true
+  collapse_walkthrough: false
+
+  # 리뷰 끝에 붙는 시. 읽을 것이 늘어날 뿐이라 끈다.
+  poem: false
+
+  auto_review:
+    enabled: true
+    drafts: false
+
+  path_filters:
+    - "!**/package-lock.json"
+    - "!**/*.pdf"
+    - "!**/*.png"
+    - "!data/tour-api/**"
+    - "!**/*.tsbuildinfo"
+
+  path_instructions:
+    - path: "src/**/*.{ts,tsx}"
+      instructions: |
+        `src/CLAUDE.md`의 규칙을 기준으로 본다. 코드만 보고 위반을 판단할 수 있는 것만 지적한다.
+
+        타입
+        - `any`와 `as any`를 쓰지 않는다. `unknown`은 타입을 좁힌 뒤에만 쓴다.
+        - props는 interface 또는 type으로 명시한다.
+
+        스타일
+        - 임의 값을 쓰지 않는다: `bg-[#1F4FE6]`, `p-[13px]`, `text-[15px]`, `rounded-[7px]`, `z-[9999]`.
+          디자인 토큰이나 Tailwind scale을 쓴다. 지도·차트의 동적 계산값은 예외다.
+        - className을 삼항 중첩으로 조립하지 않는다. `cva` 또는 `cn()`을 쓴다.
+
+        React / Next.js
+        - `<img>` 대신 `next/image`의 `<Image>`를 쓴다.
+        - `<div onClick>`을 쓰지 않는다. `<button>` 등 시멘틱 태그를 쓴다.
+        - 파생 상태를 `useState` + `useEffect`로 만들지 않는다. 렌더 중 계산하거나 `useMemo`를 쓴다.
+        - `useEffect`는 외부 시스템 동기화에만 쓴다. 이벤트 핸들러 대체, props 변화에 따른 state 초기화에 쓰지 않는다.
+        - 서버에서 받은 데이터를 이유 없이 local state로 복사하지 않는다.
+        - 검색어·필터·정렬·페이지·탭은 URL(searchParams)에 반영한다.
+        - 목록·상세 같은 비동기 화면은 Loading / Empty / Error / Success를 모두 처리한다.
+          조회 실패를 빈 목록으로 숨기지 않는다.
+
+        구조
+        - props가 7개를 넘거나 boolean props가 3개를 넘으면 분해나 variant union을 제안한다.
+        - 파일이 200줄, 함수가 50줄을 넘으면 신호로 보고 언급한다.
+        - 하위 계층이 상위 계층을 import하지 않는다. (`components/ui` → `features` import 금지)
+        - 같은 코드가 3번 이상 반복될 때만 공통화를 제안한다. 2번까지는 중복을 허용한다.
+
+        접근성
+        - `<img>`에 alt가 있는가. 장식용은 `alt=""`.
+        - input에 label 또는 aria-label이 연결돼 있는가.
+        - focus 스타일을 제거하지 않았는가(`outline-none` 단독 사용).
+
+    - path: "prisma/migrations/**"
+      instructions: |
+        **운영 DB는 Supabase 한 벌뿐이고 되돌릴 스테이징이 없다.** 이 전제로 본다.
+
+        - 컬럼·테이블·enum 값의 삭제나 이름 변경이 있으면 반드시 지적한다.
+          배포 순간 구버전과 신버전이 함께 도는 구간에서 구버전이 깨진다.
+          추가 → 백필 → 코드 배포 → 삭제의 네 단계로 나눌 것을 제안한다.
+        - `NOT NULL` 컬럼을 기본값 없이 추가하면 기존 행에서 실패한다.
+        - 인덱스 생성이 큰 테이블을 잠그는지 확인한다.
+        - 마이그레이션은 Vercel 빌드가 적용하지 않는다. 배포 전에 사람이 `prisma migrate deploy`로
+          적용해야 한다는 점을 PR 설명에서 확인한다.
+
+    - path: "scripts/**/*.mjs"
+      instructions: |
+        이 스크립트들은 **운영 DB에 직접 접속한다.**
+
+        - 쓰기 작업은 기본이 dry-run이고, 실제 반영은 `--commit` 같은 명시적 플래그를 요구해야 한다.
+        - 연결 문자열 전체나 비밀번호를 출력하지 않는다. 호스트와 DB 이름까지만 출력한다.
+        - 외부 API를 부르는 코드는 호출 횟수 상한이 있는지 확인한다.
+          TourAPI 수집은 건당 상세 3회이며 `TOUR_API_CALL_BUDGET`으로 상한을 건다.
+
+    - path: "src/lib/seo/**"
+      instructions: |
+        - 절대 URL의 출처는 `NEXT_PUBLIC_SITE_URL` 하나뿐이다. 운영 도메인을 코드에 적지 않는다.
+        - 요청의 `Host` 헤더를 origin으로 쓰지 않는다. 위조할 수 있다.
+
+    - path: "**/*.test.ts"
+      instructions: |
+        - 테스트가 구현을 그대로 베껴 항상 통과하지 않는지 본다.
+        - 실패해야 할 입력에 대한 검증이 있는가.
+
+chat:
+  auto_reply: true
